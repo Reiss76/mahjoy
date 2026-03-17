@@ -1,0 +1,73 @@
+/* ===================================================
+   MAHJOY BRAND FONTS
+   Think. Play. Mahjong.
+   =================================================== */
+
+/* --- Awesome Serif Italic VAR (Display / Brand) ---
+   Used for: "Mahjong" wordmark, headings, display text
+   → Place your Awesome Serif Italic VAR font files in /fonts/
+   → Uncomment the @font-face block below once you have the files
+*/
+
+/*
+@font-face {
+  font-family: 'Awesome Serif';
+  src: url('../fonts/AwesomeSerif-ItalicVAR.woff2') format('woff2-variations'),
+       url('../fonts/AwesomeSerif-ItalicVAR.woff') format('woff');
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+}
+*/
+
+/* --- Plus Jakarta Sans (UI / Body) ---
+   Used for: "Think. Play." tagline, navigation, body text, buttons
+   Loaded via Google Fonts in each HTML <head>
+*/
+
+/* ===================================================
+   BRAND TOKENS
+   =================================================== */
+
+:root {
+  /* Typography */
+  --font-display: 'Awesome Serif', 'Georgia', serif;   /* headings, brand */
+  --font-ui:      'Plus Jakarta Sans', sans-serif;      /* body, nav, UI   */
+
+  /* Colors — Monochrome brand palette */
+  --color-black:  #000000;
+  --color-white:  #FFFFFF;
+  --color-ink:    #0A0A0A;     /* near-black for body text */
+  --color-muted:  #6B6B6B;     /* secondary text           */
+  --color-border: #E5E5E5;     /* subtle dividers          */
+}
+
+/* ===================================================
+   GLOBAL FONT OVERRIDES
+   Replace template fonts with Mahjoy brand fonts
+   =================================================== */
+
+body {
+  font-family: var(--font-ui) !important;
+}
+
+/* Display / Heading text → Awesome Serif */
+h1, h2, h3,
+.heading-xl,
+.heading-large,
+.brand,
+.brand-logo-text,
+[class*="display-"],
+[class*="heading-"] {
+  font-family: var(--font-display) !important;
+  font-style: italic;
+}
+
+/* Nav, body, UI elements → Plus Jakarta Sans */
+h4, h5, h6,
+p, a, button, input, textarea, select,
+.nav-link, .nav-link-text,
+.body-text, .label,
+[class*="text-"], [class*="body-"] {
+  font-family: var(--font-ui) !important;
+}

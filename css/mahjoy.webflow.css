@@ -1,5 +1,5 @@
 @font-face {
-  font-family: Mona Sans Narrow;
+  font-family: 'Awesome Serif', 'Georgia', serif;
   src: url('../fonts/Mona-Sans-BoldNarrow.otf') format("opentype");
   font-weight: 700;
   font-style: normal;
@@ -7,7 +7,7 @@
 }
 
 @font-face {
-  font-family: Mona Sans Narrow;
+  font-family: 'Awesome Serif', 'Georgia', serif;
   src: url('../fonts/Mona-Sans-SemiBoldNarrow.otf') format("opentype");
   font-weight: 600;
   font-style: normal;
@@ -55,7 +55,7 @@
 
 body {
   color: var(--black);
-  font-family: Inter, sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 14px;
   line-height: 1;
 }
@@ -70,7 +70,7 @@ h2 {
   text-transform: uppercase;
   margin-top: 0;
   margin-bottom: 40px;
-  font-family: Mona Sans Narrow, sans-serif;
+  font-family: 'Awesome Serif', 'Georgia', serif;
   font-size: 60px;
   font-weight: 700;
   line-height: 1;
@@ -80,7 +80,7 @@ h3 {
   text-transform: uppercase;
   margin-top: 10px;
   margin-bottom: 20px;
-  font-family: Mona Sans Narrow, sans-serif;
+  font-family: 'Awesome Serif', 'Georgia', serif;
   font-size: 40px;
   font-weight: 600;
   line-height: 1;
@@ -90,7 +90,7 @@ h4 {
   text-transform: uppercase;
   margin-top: 40px;
   margin-bottom: 10px;
-  font-family: Mona Sans Narrow, sans-serif;
+  font-family: 'Awesome Serif', 'Georgia', serif;
   font-size: 24px;
   font-weight: 600;
   line-height: 1;
@@ -148,7 +148,7 @@ form {
 label {
   text-transform: uppercase;
   margin-bottom: 5px;
-  font-family: Mona Sans Narrow, sans-serif;
+  font-family: 'Awesome Serif', 'Georgia', serif;
   font-size: 34px;
   font-weight: 600;
   display: block;
@@ -240,7 +240,7 @@ figure {
   letter-spacing: -3px;
   text-transform: uppercase;
   padding-top: 20px;
-  font-family: Mona Sans Narrow, sans-serif;
+  font-family: 'Awesome Serif', 'Georgia', serif;
   font-size: 20vh;
   font-weight: 700;
   line-height: .9;
@@ -343,7 +343,7 @@ figure {
   letter-spacing: -2px;
   text-transform: uppercase;
   padding-top: 10px;
-  font-family: Mona Sans Narrow, sans-serif;
+  font-family: 'Awesome Serif', 'Georgia', serif;
   font-size: 150px;
   font-weight: 700;
   line-height: .8;
@@ -359,7 +359,7 @@ figure {
   text-align: center;
   text-transform: uppercase;
   padding-top: 3px;
-  font-family: Mona Sans Narrow, sans-serif;
+  font-family: 'Awesome Serif', 'Georgia', serif;
   font-size: 35px;
   font-weight: 700;
   line-height: .8;
@@ -396,7 +396,7 @@ figure {
   text-align: center;
   text-transform: uppercase;
   padding-top: 7px;
-  font-family: Mona Sans Narrow, sans-serif;
+  font-family: 'Awesome Serif', 'Georgia', serif;
   font-size: 70px;
   font-weight: 700;
   line-height: .8;
@@ -427,7 +427,7 @@ figure {
   text-transform: uppercase;
   white-space: nowrap;
   padding-top: 20px;
-  font-family: Mona Sans Narrow, sans-serif;
+  font-family: 'Awesome Serif', 'Georgia', serif;
   font-size: 29vh;
   font-weight: 700;
   line-height: .8;
@@ -726,7 +726,7 @@ figure {
   margin-top: 20px;
   margin-bottom: 60px;
   padding: 40px 0 50px;
-  font-family: Inter, sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 24px;
   font-weight: 400;
 }
@@ -1031,7 +1031,7 @@ figure {
   width: 200px;
   height: 200px;
   padding: 40px;
-  font-family: Mona Sans Narrow, sans-serif;
+  font-family: 'Awesome Serif', 'Georgia', serif;
   font-size: 34px;
   font-weight: 600;
   display: flex;
@@ -1041,7 +1041,7 @@ figure {
 .field-label {
   letter-spacing: -1px;
   text-transform: none;
-  font-family: Inter, sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 18px;
   font-weight: 500;
 }
@@ -1184,7 +1184,7 @@ figure {
   text-transform: uppercase;
   white-space: nowrap;
   padding-top: 20px;
-  font-family: Mona Sans Narrow, sans-serif;
+  font-family: 'Awesome Serif', 'Georgia', serif;
   font-size: 30vh;
   font-weight: 700;
   line-height: .8;
@@ -1265,7 +1265,7 @@ figure {
   letter-spacing: -2px;
   text-transform: uppercase;
   padding-top: 10px;
-  font-family: Mona Sans Narrow, sans-serif;
+  font-family: 'Awesome Serif', 'Georgia', serif;
   font-size: 10vw;
   font-weight: 700;
   line-height: .8;
@@ -2071,14 +2071,14 @@ figure {
 
 
 @font-face {
-  font-family: 'Mona Sans Narrow';
+  font-family: 'Awesome Serif', 'Georgia', serif;
   src: url('../fonts/Mona-Sans-BoldNarrow.otf') format('opentype');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'Mona Sans Narrow';
+  font-family: 'Awesome Serif', 'Georgia', serif;
   src: url('../fonts/Mona-Sans-SemiBoldNarrow.otf') format('opentype');
   font-weight: 600;
   font-style: normal;
