@@ -216,3 +216,62 @@ input:focus, textarea:focus {
   background-color: var(--orchid);
   color:            var(--white);
 }
+
+/* ─── Mat Pattern ─── */
+.mat-bg {
+  background-image:  url('../images/mat-pattern.jpg');
+  background-size:   280px 280px;
+  background-repeat: repeat;
+}
+
+.mat-overlay {
+  position: relative;
+}
+.mat-overlay::before {
+  content:    '';
+  position:   absolute;
+  inset:      0;
+  background: rgba(74, 10, 42, 0.80);
+  z-index:    1;
+}
+.mat-overlay > * {
+  position: relative;
+  z-index:  2;
+}
+
+/* ─── Works list section: mat bg ─── */
+.works-list {
+  background-image:  url('../images/mat-pattern.jpg') !important;
+  background-size:   300px !important;
+  background-repeat: repeat !important;
+}
+
+/* ─── Favicon / logo in nav ─── */
+.brand-logo {
+  height:        52px !important;
+  width:         auto !important;
+  border-radius: 8px;
+  box-shadow:    0 2px 12px rgba(0,0,0,0.25);
+}
+
+/* ─── Hero background with subtle mat texture ─── */
+.container.hero {
+  background-image:  url('../images/mat-pattern.jpg');
+  background-size:   400px;
+  background-repeat: repeat;
+  background-position: right center;
+  -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,0.12), transparent 60%);
+  mask-image:         linear-gradient(to left, rgba(0,0,0,0.12), transparent 60%);
+}
+
+/* ─── "Get in touch" circle button brand colors ─── */
+.circle-button.link {
+  background-color: var(--orchid)   !important;
+  border-color:     var(--orchid)   !important;
+}
+.circle-button.link:hover {
+  background-color: var(--white)    !important;
+}
+.heading-small.red {
+  color: var(--white) !important;
+}
