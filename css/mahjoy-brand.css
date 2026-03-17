@@ -1,9 +1,10 @@
 /* ===================================================
-   MAH JOY — Brand Identity System
-   Think. Play. Mahjong.
+   MAH JOY — Brand Skin (non-destructive overlay)
+   Keeps ALL Webflow template structure & animations
+   Only overrides: colors, fonts, brand assets
 =================================================== */
 
-/* ─── Awesome Serif (REAL font — now active!) ─── */
+/* ─── Awesome Serif Italic VAR (REAL font) ─── */
 @font-face {
   font-family: 'Awesome Serif';
   src: url('../fonts/AwesomeSerifItalicVAR.ttf') format('truetype');
@@ -19,450 +20,83 @@
   font-display: swap;
 }
 
-/* ─── Google Fonts: Plus Jakarta Sans ─── */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap');
+/* ─── Plus Jakarta Sans ─── */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
 
 /* ─── Brand Tokens ─── */
 :root {
   --font-display: 'Awesome Serif', 'Georgia', serif;
   --font-ui:      'Plus Jakarta Sans', system-ui, sans-serif;
+  --burgundy:     #6B0F2A;
+  --orchid:       #C76BA4;
+  --orchid-mid:   #9B3E7A;
+  --blush:        #F5E8F0;
+  --blush-pink:   #F5D6DC;
+  --periwinkle:   #8B9FD4;
+  --white:        #FFFFFF;
 
-  --burgundy:    #6B0F2A;
-  --orchid:      #C76BA4;
-  --orchid-mid:  #9B3E7A;
-  --blush:       #F5E8F0;
-  --blush-pink:  #F5D6DC;
-  --periwinkle:  #8B9FD4;
-  --white:       #FFFFFF;
-  --ink:         #1A1A1A;
-
-  /* map template vars */
-  --black:       #6B0F2A;
-  --dark-red:    #6B0F2A;
-  --light-red:   #C76BA4;
-  --medium-red:  #9B3E7A;
-  --dark-grey:   #7A3A5A;
-  --light-grey:  #F5E8F0;
+  /* Map template vars to brand palette */
+  --black:        #6B0F2A;
+  --dark-red:     #6B0F2A;
+  --light-red:    #C76BA4;
+  --medium-red:   #9B3E7A;
+  --dark-grey:    #7A3A5A;
+  --light-grey:   #F5E8F0;
 }
 
-/* ─── Global ─── */
-*, *::before, *::after { box-sizing: border-box; }
+/* ─── Typography — keep structure, swap fonts ─── */
+body { font-family: var(--font-ui) !important; }
 
-body { font-family: var(--font-ui) !important; margin: 0; }
-
+.heading-xlarge,
+.heading-large,
+.heading-medium,
+.heading-small,
 h1, h2, h3 {
   font-family: var(--font-display) !important;
   font-style: italic;
 }
 
-/* ─── MAH JOY Navbar ─── */
-.mj-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--burgundy);
-  padding: 0 32px;
-  height: 72px;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-.mj-nav__logo img { height: 52px; width: auto; }
-.mj-nav__tagline {
-  font-family: var(--font-display) !important;
-  font-style: italic;
-  color: rgba(255,255,255,0.75);
-  font-size: 13px;
-  letter-spacing: 0.05em;
-}
-.mj-nav__actions { display: flex; align-items: center; gap: 20px; }
-.mj-nav__actions a { color: white; text-decoration: none; font-size: 20px; line-height: 1; }
-.mj-nav__actions a:hover { color: var(--orchid); }
-@media (max-width: 768px) {
-  .mj-nav__tagline { display: none; }
-  .mj-nav { padding: 0 20px; }
-}
-
-/* ─── Hero ─── */
-.mj-hero {
-  min-height: 100vh;
-  background: var(--blush);
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
-  padding: 80px 64px;
-  gap: 48px;
-}
-.mj-hero__label {
+.heading-small-inter,
+.heading-xsmall,
+.text-regular,
+.text-medium,
+.text-small,
+p, li, a, button, input, label, div {
   font-family: var(--font-ui) !important;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--orchid);
-  margin-bottom: 16px;
-}
-.mj-hero__title {
-  font-family: var(--font-display) !important;
-  font-style: italic;
-  font-size: clamp(56px, 8vw, 100px);
-  font-weight: 800;
-  color: var(--burgundy);
-  line-height: 1;
-  margin: 0 0 24px 0;
-}
-.mj-hero__sub {
-  font-family: var(--font-ui) !important;
-  font-size: 17px;
-  color: #555;
-  margin-bottom: 36px;
-  line-height: 1.6;
-}
-.mj-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--burgundy);
-  color: white !important;
-  font-family: var(--font-ui) !important;
-  font-weight: 600;
-  font-size: 15px;
-  padding: 14px 32px;
-  border-radius: 50px;
-  text-decoration: none;
-  border: none;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.15s;
-}
-.mj-btn:hover { background: var(--orchid); transform: translateY(-1px); }
-.mj-btn--outline {
-  background: transparent;
-  border: 2px solid var(--burgundy);
-  color: var(--burgundy) !important;
-}
-.mj-btn--outline:hover { background: var(--burgundy); color: white !important; }
-
-@media (max-width: 768px) {
-  .mj-hero { grid-template-columns: 1fr; padding: 60px 24px; min-height: auto; }
-  .mj-hero__visual { display: none; }
 }
 
-/* ─── Shipping Banner ─── */
-.mj-banner {
-  background: var(--burgundy);
-  overflow: hidden;
-  height: 40px;
-  display: flex;
-  align-items: center;
-}
-.mj-banner__track {
-  display: flex;
-  white-space: nowrap;
-  animation: mj-scroll 20s linear infinite;
-}
-.mj-banner__text {
-  font-family: var(--font-ui) !important;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  color: white;
-  padding: 0 40px;
-}
-@keyframes mj-scroll {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
-}
+/* ─── Nav: brand colors ─── */
+.nav-bar { background-color: var(--burgundy) !important; }
+.nav-link-text { color: var(--white) !important; font-family: var(--font-ui) !important; font-size:13px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; }
+.brand-logo { height: 54px !important; width: auto !important; }
 
-/* ─── Section heading ─── */
-.mj-section-title {
-  font-family: var(--font-display) !important;
-  font-style: italic;
-  font-size: clamp(32px, 5vw, 48px);
-  color: var(--burgundy);
-  text-align: center;
-  margin: 0 0 48px;
-}
+/* ─── Hero heading colors ─── */
+.heading-xlarge { color: var(--burgundy) !important; }
+.heading-large  { color: var(--burgundy) !important; }
+.heading-small-inter { color: var(--orchid) !important; font-weight: 700 !important; letter-spacing: 0.12em; text-transform: uppercase; font-style: normal !important; }
 
-/* ─── Product Grid ─── */
-.mj-product-section {
-  background: white;
-  padding: 80px 64px;
-}
-.mj-product-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 32px;
-  margin-bottom: 48px;
-}
-.mj-product-card {
-  position: relative;
-  border-radius: 12px;
-  overflow: hidden;
-  background: var(--blush);
-  transition: transform 0.3s, box-shadow 0.3s;
-  cursor: pointer;
-}
-.mj-product-card:hover {
-  transform: translateY(-6px) scale(1.02);
-  box-shadow: 0 20px 60px rgba(107,15,42,0.15);
-}
-.mj-product-card__img {
-  width: 100%;
-  aspect-ratio: 4/5;
-  object-fit: cover;
-  display: block;
-}
-.mj-product-card__info {
-  padding: 16px 20px 20px;
-}
-.mj-product-card__name {
-  font-family: var(--font-display) !important;
-  font-style: italic;
-  font-size: 20px;
-  color: var(--burgundy);
-  margin: 0 0 4px;
-}
-.mj-product-card__price {
-  font-family: var(--font-ui) !important;
-  font-size: 14px;
-  color: var(--orchid-mid);
-  font-weight: 600;
-}
-.mj-nuevo-badge {
-  position: absolute;
-  top: 16px; right: 16px;
-  background: var(--periwinkle);
-  color: var(--burgundy);
-  font-family: var(--font-display) !important;
-  font-style: italic;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 8px 14px;
-  border-radius: 50px;
-  letter-spacing: 0.05em;
-}
-.mj-ver-todo {
-  display: block;
-  text-align: center;
-  font-family: var(--font-display) !important;
-  font-style: italic;
-  font-size: 18px;
-  color: var(--burgundy);
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
-.mj-ver-todo:hover { color: var(--orchid); }
+/* ─── Marquee / works-wrapper ─── */
+.works-wrapper  { background-color: var(--blush) !important; }
 
-@media (max-width: 900px) {
-  .mj-product-grid { grid-template-columns: repeat(2, 1fr); }
-  .mj-product-section { padding: 60px 24px; }
-}
-@media (max-width: 600px) {
-  .mj-product-grid { grid-template-columns: 1fr; }
-}
+/* ─── Circle button (CTA) ─── */
+.circle-button.link .inner-circle-button { background: var(--orchid) !important; border-color: var(--orchid) !important; }
+.heading-small.red { color: var(--white) !important; }
 
-/* ─── Brand Statement ─── */
-.mj-statement {
-  background: var(--blush);
-  padding: 100px 24px;
-  text-align: center;
-}
-.mj-statement h2 {
-  font-family: var(--font-display) !important;
-  font-style: italic;
-  font-size: clamp(36px, 5vw, 52px);
-  color: var(--burgundy);
-  margin: 0 0 24px;
-}
-.mj-statement p {
-  font-family: var(--font-ui) !important;
-  font-size: 18px;
-  color: #444;
-  line-height: 1.75;
-  max-width: 600px;
-  margin: 0 auto;
-}
+/* ─── Footer section ─── */
+.container.footer .heading-large { color: var(--burgundy) !important; }
+.heading-small { color: var(--orchid) !important; }
 
-/* ─── Pattern Divider ─── */
-.mj-pattern {
-  width: 100%;
-  height: 80px;
+/* ─── About ticker ─── */
+.ticker .heading-huge { color: var(--white) !important; }
+
+/* ─── Dark sections keep burgundy ─── */
+.section:not(:first-child) .heading-xlarge { color: var(--burgundy) !important; }
+
+/* ─── Pattern divider (injected via JS below) ─── */
+.mj-pattern-strip {
+  width: 100%; height: 80px;
   background: url('../images/mat-pattern.jpg') repeat-x center / auto 80px;
-}
-
-/* ─── Footer ─── */
-.mj-footer {
-  background: var(--burgundy);
-  color: white;
-  text-align: center;
-  padding: 80px 40px 48px;
-}
-.mj-footer__icon {
-  width: 48px;
-  height: 48px;
-  filter: brightness(0) invert(1);
-  margin-bottom: 24px;
-}
-.mj-footer h3 {
-  font-family: var(--font-display) !important;
-  font-style: italic;
-  font-size: 28px;
-  color: white;
-  margin: 0 0 12px;
-}
-.mj-footer p {
-  font-size: 14px;
-  color: rgba(255,255,255,0.75);
-  margin: 0 0 32px;
-  line-height: 1.6;
-}
-.mj-footer__form {
-  display: flex;
-  max-width: 420px;
-  margin: 0 auto 40px;
-  gap: 12px;
-  align-items: flex-end;
-}
-.mj-footer__input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid rgba(255,255,255,0.6);
-  color: white;
-  font-family: var(--font-display) !important;
-  font-style: italic;
-  font-size: 15px;
-  padding: 8px 0;
-  outline: none;
-}
-.mj-footer__input::placeholder { color: rgba(255,255,255,0.4); }
-.mj-footer__socials {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  margin-bottom: 48px;
-}
-.mj-footer__social {
-  width: 40px; height: 40px;
-  border: 2px solid rgba(255,255,255,0.5);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  text-decoration: none;
-  font-size: 15px;
-  font-weight: 700;
-  font-family: var(--font-ui) !important;
-  transition: border-color 0.2s, background 0.2s;
-}
-.mj-footer__social:hover {
-  border-color: var(--orchid);
-  background: var(--orchid);
-  color: white;
-}
-.mj-footer__copy {
-  font-size: 12px;
-  color: rgba(255,255,255,0.4);
-  letter-spacing: 0.05em;
-}
-
-/* ─── Shop Page ─── */
-.mj-shop-header {
-  background: var(--blush-pink);
-  padding: 60px 24px 20px;
-  text-align: center;
-}
-.mj-shop-header img { width: 60px; margin-bottom: 16px; }
-.mj-shop-header h1 {
-  font-family: var(--font-display) !important;
-  font-style: italic;
-  font-size: clamp(40px, 8vw, 64px);
-  color: var(--burgundy);
-  margin: 0;
-}
-
-.mj-filter-bar {
-  background: var(--blush-pink);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 28px;
-  border-bottom: 1px solid rgba(107,15,42,0.15);
-}
-.mj-filter-bar button, .mj-filter-bar a {
-  font-family: var(--font-display) !important;
-  font-style: italic;
-  font-size: 15px;
-  color: var(--burgundy);
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-decoration: none;
-}
-.mj-filter-bar a { text-decoration: underline; }
-.mj-filter-right { display: flex; align-items: center; gap: 12px; }
-
-.mj-shop-grid {
-  background: var(--blush-pink);
-  padding: 32px 28px 80px;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-}
-.mj-shop-card {
-  position: relative;
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-.mj-shop-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 40px rgba(107,15,42,0.12);
-}
-.mj-shop-card__img {
-  width: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
   display: block;
-}
-.mj-shop-card__label {
-  display: flex;
-  justify-content: center;
-  padding: 16px;
-  border-top: 1px solid var(--blush-pink);
-}
-.mj-shop-card__pill {
-  background: var(--burgundy);
-  color: white;
-  font-family: var(--font-ui) !important;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 6px 22px;
-  border-radius: 50px;
-  letter-spacing: 0.05em;
-}
-.mj-shop-card__info {
-  padding: 12px 16px 4px;
-  text-align: center;
-}
-.mj-shop-card__name {
-  font-family: var(--font-display) !important;
-  font-style: italic;
-  font-size: 18px;
-  color: var(--burgundy);
-  margin: 0 0 4px;
-}
-.mj-shop-card__price {
-  font-size: 13px;
-  color: var(--orchid-mid);
-  font-weight: 600;
-  font-family: var(--font-ui) !important;
-}
-
-@media (max-width: 600px) {
-  .mj-shop-grid { grid-template-columns: 1fr; }
 }
 
 /* ─── Selection ─── */
