@@ -1,73 +1,218 @@
 /* ===================================================
-   MAHJOY BRAND FONTS
+   MAH JOY — Brand Identity System
    Think. Play. Mahjong.
-   =================================================== */
+   ===================================================
 
-/* --- Awesome Serif Italic VAR (Display / Brand) ---
-   Used for: "Mahjong" wordmark, headings, display text
-   → Place your Awesome Serif Italic VAR font files in /fonts/
-   → Uncomment the @font-face block below once you have the files
-*/
+   PALETTE
+   -------
+   Orchid Pink  #C76BA4  → primary bg, illustrations, accents
+   Deep Burgundy #4A0A2A → logo, text, CTA backgrounds
+   Mid Orchid   #9B3E7A  → hover states, borders
+   Blush Tint   #F5E8F0  → light section backgrounds
+   White        #FFFFFF  → pure white where needed
 
+   FONTS
+   -----
+   Display: Awesome Serif Italic VAR → headings, logo
+            (fallback: Georgia, serif — swap once font file is provided)
+   UI:      Plus Jakarta Sans        → nav, body, buttons
+            (loaded from Google Fonts)
+=================================================== */
+
+/* ─── Google Fonts: Plus Jakarta Sans ─── */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap');
+
+/* ─── Awesome Serif (drop files in /fonts/ to activate) ─── */
 /*
 @font-face {
   font-family: 'Awesome Serif';
   src: url('../fonts/AwesomeSerif-ItalicVAR.woff2') format('woff2-variations'),
-       url('../fonts/AwesomeSerif-ItalicVAR.woff') format('woff');
-  font-style: italic;
+       url('../fonts/AwesomeSerif-ItalicVAR.woff')  format('woff');
+  font-style:  italic;
   font-weight: 100 900;
   font-display: swap;
 }
 */
 
-/* --- Plus Jakarta Sans (UI / Body) ---
-   Used for: "Think. Play." tagline, navigation, body text, buttons
-   Loaded via Google Fonts in each HTML <head>
-*/
-
-/* ===================================================
-   BRAND TOKENS
-   =================================================== */
-
+/* ─── Brand Tokens ─── */
 :root {
-  /* Typography */
-  --font-display: 'Awesome Serif', 'Georgia', serif;   /* headings, brand */
-  --font-ui:      'Plus Jakarta Sans', sans-serif;      /* body, nav, UI   */
+  --font-display: 'Awesome Serif', 'Georgia', 'Times New Roman', serif;
+  --font-ui:      'Plus Jakarta Sans', system-ui, sans-serif;
 
-  /* Colors — Monochrome brand palette */
-  --color-black:  #000000;
-  --color-white:  #FFFFFF;
-  --color-ink:    #0A0A0A;     /* near-black for body text */
-  --color-muted:  #6B6B6B;     /* secondary text           */
-  --color-border: #E5E5E5;     /* subtle dividers          */
+  --burgundy:     #4A0A2A;
+  --orchid:       #C76BA4;
+  --orchid-mid:   #9B3E7A;
+  --blush:        #F5E8F0;
+  --white:        #FFFFFF;
+
+  --color-bg-primary:   var(--orchid);
+  --color-bg-dark:      var(--burgundy);
+  --color-bg-light:     var(--blush);
+  --color-text-dark:    var(--burgundy);
+  --color-text-light:   var(--white);
+  --color-text-muted:   var(--orchid-mid);
+  --color-accent:       var(--orchid);
+  --color-accent-dark:  var(--burgundy);
 }
 
-/* ===================================================
-   GLOBAL FONT OVERRIDES
-   Replace template fonts with Mahjoy brand fonts
-   =================================================== */
-
-body {
+/* ─── Global Font Stack ─── */
+body,
+p, li, td, input, textarea, select, button, label {
   font-family: var(--font-ui) !important;
 }
 
-/* Display / Heading text → Awesome Serif */
 h1, h2, h3,
-.heading-xl,
-.heading-large,
-.brand,
-.brand-logo-text,
-[class*="display-"],
-[class*="heading-"] {
+.heading-xl, .heading-large,
+[class*="display-"], [class*="heading-"] {
   font-family: var(--font-display) !important;
-  font-style: italic;
+  font-style:  italic;
+  color:       var(--burgundy);
 }
 
-/* Nav, body, UI elements → Plus Jakarta Sans */
 h4, h5, h6,
-p, a, button, input, textarea, select,
-.nav-link, .nav-link-text,
-.body-text, .label,
-[class*="text-"], [class*="body-"] {
+.nav-link-text, .label, .caption {
   font-family: var(--font-ui) !important;
+  font-weight: 600;
+}
+
+/* ─── Navigation ─── */
+.nav-bar, .w-nav {
+  background-color: var(--burgundy) !important;
+}
+
+.nav-link-text, .nav-link, .w-nav-link {
+  color: var(--white) !important;
+  font-family: var(--font-ui) !important;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+.nav-link:hover .nav-link-text,
+.w-nav-link:hover {
+  color: var(--orchid) !important;
+}
+
+.brand, .w-nav-brand {
+  color: var(--white) !important;
+}
+
+/* ─── Hero / Landing ─── */
+.hero, [class*="hero-"],
+.section-hero {
+  background-color: var(--blush) !important;
+}
+
+/* ─── Buttons ─── */
+.btn, .w-button,
+[class*="button-"], [class*="btn-"] {
+  background-color: var(--burgundy) !important;
+  color:            var(--white)    !important;
+  font-family:      var(--font-ui) !important;
+  font-weight:      600;
+  letter-spacing:   0.05em;
+  border:           none;
+  transition:       background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn:hover, .w-button:hover,
+[class*="button-"]:hover {
+  background-color: var(--orchid)   !important;
+  color:            var(--white)    !important;
+}
+
+/* ─── Links ─── */
+a {
+  color: var(--orchid-mid);
+}
+a:hover {
+  color: var(--burgundy);
+}
+
+/* ─── Dark sections (dark-red bg in template) ─── */
+[style*="background-color: var(--dark-red)"],
+[class*="dark-section"], [class*="section-dark"],
+.section-dark {
+  background-color: var(--burgundy) !important;
+  color:            var(--white)    !important;
+}
+
+/* ─── Light sections ─── */
+[class*="section-light"], .section-light {
+  background-color: var(--blush) !important;
+}
+
+/* ─── Footer ─── */
+footer, .footer, [class*="footer-"] {
+  background-color: var(--burgundy) !important;
+  color:            var(--blush)    !important;
+}
+
+footer a, .footer a {
+  color: var(--orchid) !important;
+}
+
+/* ─── Forms ─── */
+input, textarea, select {
+  border-color: var(--orchid-mid) !important;
+  color:        var(--burgundy)   !important;
+  font-family:  var(--font-ui)    !important;
+}
+
+input:focus, textarea:focus {
+  border-color: var(--burgundy)   !important;
+  outline-color: var(--orchid)    !important;
+}
+
+/* ─── Brand Accent Line ─── */
+.brand-rule {
+  display:          block;
+  width:            100%;
+  height:           2px;
+  background-color: var(--orchid);
+  margin:           0.5rem 0;
+}
+
+/* ─── 8-pointed Star (brand mark, via CSS) ─── */
+.brand-star {
+  display:    inline-block;
+  width:      1em;
+  height:     1em;
+  background: var(--burgundy);
+  clip-path:  polygon(
+    50% 0%, 61% 35%, 98% 35%, 68% 57%,
+    79% 91%, 50% 70%, 21% 91%, 32% 57%,
+    2%  35%, 39% 35%
+  );
+}
+
+/* ─── Organic Curve Shape (brand motif) ─── */
+.brand-curve {
+  position:   relative;
+  overflow:   hidden;
+}
+
+.brand-curve::before {
+  content:    '';
+  position:   absolute;
+  bottom:     0; left: -10%; right: -10%;
+  height:     60%;
+  background: var(--blush);
+  border-radius: 100% 100% 0 0 / 60% 60% 0 0;
+  z-index:    0;
+}
+
+/* ─── Tag / Badge ─── */
+.tag, .badge, [class*="tag-"], [class*="badge-"] {
+  background-color: var(--blush)    !important;
+  color:            var(--burgundy) !important;
+  font-family:      var(--font-ui)  !important;
+  font-weight:      600;
+}
+
+/* ─── Selection color ─── */
+::selection {
+  background-color: var(--orchid);
+  color:            var(--white);
 }

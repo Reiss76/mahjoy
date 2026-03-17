@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 400" preserveAspectRatio="none">
+  <!-- MAH JOY organic curve motif — orchid pink on burgundy background -->
+  <rect width="1440" height="400" fill="#4A0A2A"/>
+  <!-- Left curve -->
+  <path d="M0 400 Q200 100 680 380 L680 400 Z" fill="#C76BA4" opacity="0.9"/>
+  <!-- Right curve -->
+  <path d="M1440 400 Q1240 100 760 380 L760 400 Z" fill="#C76BA4" opacity="0.9"/>
+</svg>

@@ -15,12 +15,20 @@
 }
 
 :root {
-  --black: black;
-  --dark-grey: #8d8d8d;
-  --dark-red: #750823;
-  --light-red: #ee003c;
-  --medium-red: #ba0c38;
-  --light-grey: #f2eaea;
+  /* ── MAH JOY Brand Palette ── */
+  --black:       #4A0A2A;   /* Deep Burgundy  — logo, text, ink          */
+  --dark-grey:   #7A3A5A;   /* Burgundy muted — secondary text            */
+  --dark-red:    #4A0A2A;   /* Deep Burgundy  — backgrounds, CTAs         */
+  --light-red:   #C76BA4;   /* Orchid Pink    — accents, highlights       */
+  --medium-red:  #9B3E7A;   /* Mid-tone       — hover states, borders     */
+  --light-grey:  #F5E8F0;   /* Blush tint     — light backgrounds         */
+
+  /* Extended tokens */
+  --burgundy:    #4A0A2A;
+  --orchid:      #C76BA4;
+  --orchid-mid:  #9B3E7A;
+  --blush:       #F5E8F0;
+  --white:       #FFFFFF;
 }
 
 .w-layout-grid {
