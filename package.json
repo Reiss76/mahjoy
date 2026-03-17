@@ -1,0 +1,12 @@
+{
+  "name": "mahjoy",
+  "version": "1.0.0",
+  "description": "MAH JOY — Think. Play. Mahjong.",
+  "scripts": {
+    "start": "serve . --listen $PORT",
+    "dev": "serve . --listen 3000"
+  },
+  "dependencies": {
+    "serve": "^14.2.3"
+  }
+}
