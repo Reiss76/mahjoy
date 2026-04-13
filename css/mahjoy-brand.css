@@ -101,3 +101,45 @@ p, li, a, button, input, label, div {
 
 /* ─── Selection ─── */
 ::selection { background: var(--orchid); color: white; }
+
+/* ─── Shop Dropdown ─── */
+.mj-shop-dropdown {
+  display: inline-block;
+  vertical-align: top;
+}
+.mj-shop-toggle {
+  color: var(--white) !important;
+  padding: 20px 40px 20px 20px !important;
+  cursor: pointer;
+}
+.mj-shop-toggle .nav-link-text {
+  color: var(--white) !important;
+}
+.mj-shop-toggle .w-icon-dropdown-toggle {
+  color: var(--white) !important;
+}
+.mj-shop-list {
+  background: var(--burgundy) !important;
+  min-width: 180px;
+  border-top: 2px solid var(--orchid);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  border-radius: 0 0 8px 8px;
+}
+.mj-shop-link {
+  color: var(--white) !important;
+  font-family: var(--font-ui) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  padding: 11px 20px !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  transition: background 0.15s ease;
+}
+.mj-shop-link:last-child {
+  border-bottom: none;
+}
+.mj-shop-link:hover {
+  background: var(--orchid-mid) !important;
+  color: var(--white) !important;
+}
