@@ -247,3 +247,47 @@ p, li, a, button, input, label, div {
 @media (max-width: 640px) {
   .mj-product-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
 }
+
+/* ─── Nav menu: mover al top + fix dropdown mobile ─── */
+.nav-menu {
+  justify-content: flex-start !important;
+  padding-top: 120px !important;
+  margin-bottom: 0 !important;
+}
+
+/* Shop dropdown dentro del overlay nav */
+.nav-menu .mj-shop-dropdown {
+  display: block !important;
+  width: 100%;
+  text-align: right;
+}
+.nav-menu .mj-shop-toggle {
+  display: block !important;
+  padding: 10px 0 !important;
+  text-align: right;
+  width: 100%;
+}
+.nav-menu .mj-shop-toggle .nav-link-text {
+  font-size: inherit;
+}
+.nav-menu .mj-shop-list {
+  position: static !important;
+  display: none;
+  background: rgba(0,0,0,0.2) !important;
+  border-top: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  text-align: right;
+}
+.nav-menu .mj-shop-list.mj-open {
+  display: block !important;
+}
+.nav-menu .mj-shop-link {
+  font-size: 5vw !important;
+  padding: 8px 0 !important;
+  text-align: right;
+  letter-spacing: 0.12em !important;
+}
+@media (min-width: 768px) {
+  .nav-menu .mj-shop-link { font-size: 1rem !important; }
+}

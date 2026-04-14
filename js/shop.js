@@ -128,3 +128,18 @@ document.addEventListener('DOMContentLoaded', () => {
     categoryLabel: container.dataset.label || 'esta categoría',
   });
 });
+
+
+/* ─── Mobile nav dropdown toggle ─── */
+document.addEventListener('DOMContentLoaded', function () {
+  const toggle = document.querySelector('.mj-shop-toggle');
+  const list   = document.querySelector('.nav-menu .mj-shop-list');
+  if (!toggle || !list) return;
+
+  toggle.addEventListener('click', function (e) {
+    e.stopPropagation();
+    const isOpen = list.classList.contains('mj-open');
+    list.classList.toggle('mj-open', !isOpen);
+    toggle.setAttribute('aria-expanded', String(!isOpen));
+  });
+});
