@@ -291,3 +291,56 @@ p, li, a, button, input, label, div {
 @media (min-width: 768px) {
   .nav-menu .mj-shop-link { font-size: 1rem !important; }
 }
+
+/* ─── Hamburger button (reemplaza el dot) ─── */
+.dot-menu-button {
+  background: transparent !important;
+  border-radius: 0 !important;
+  width: 28px !important;
+  height: 20px !important;
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  align-items: stretch !important;
+}
+.dot-menu-button::before,
+.dot-menu-button::after {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 2.5px;
+  background-color: var(--orchid);
+  border-radius: 2px;
+}
+.dot-menu-button::before { margin-top: 0; }
+.dot-menu-button::after  { margin-bottom: 0; }
+
+/* Línea del medio via box-shadow */
+.dot-menu-button {
+  box-shadow: 0 9px 0 1.5px var(--orchid) inset !important;
+  padding: 0 !important;
+}
+
+/* ─── Hamburger button (reemplaza el dot) ─── */
+.dot-menu-button {
+  background: transparent !important;
+  border-radius: 0 !important;
+  width: 26px !important;
+  height: 18px !important;
+  position: relative !important;
+  border-top: 2.5px solid var(--orchid) !important;
+  border-bottom: 2.5px solid var(--orchid) !important;
+}
+.dot-menu-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 100%;
+  height: 2.5px;
+  background: var(--orchid);
+  border-radius: 2px;
+}
+
