@@ -128,7 +128,7 @@ p, li, a, button, input, label, div {
 .mj-shop-link {
   color: var(--white) !important;
   font-family: var(--font-ui) !important;
-  font-size: 12px !important;
+  font-size: 13px !important;
   font-weight: 600 !important;
   letter-spacing: 0.08em !important;
   text-transform: uppercase !important;
@@ -283,28 +283,32 @@ p, li, a, button, input, label, div {
   display: block !important;
 }
 .nav-menu .mj-shop-link {
-  font-size: 5vw !important;
+  font-size: 13px !important;
   padding: 8px 0 !important;
   text-align: right;
   letter-spacing: 0.12em !important;
 }
 @media (min-width: 768px) {
-  .nav-menu .mj-shop-link { font-size: 1rem !important; }
+  .nav-menu .mj-shop-link { font-size: 13px !important; }
 }
 
-/* ─── Hamburger button (3 líneas) ─── */
+/* ─── Hamburger button (3 líneas con gradient) ─── */
 .dot-menu-button {
-  background: var(--orchid) !important;
-  border-radius: 2px !important;
-  width: 24px !important;
-  height: 2px !important;
-  margin: 6px 0 !important;
-  box-shadow: 0 7px 0 var(--orchid), 0 14px 0 var(--orchid) !important;
-  display: block !important;
-  position: relative !important;
+  width: 26px !important;
+  height: 18px !important;
+  border-radius: 0 !important;
+  background-color: transparent !important;
+  background-image:
+    linear-gradient(var(--orchid), var(--orchid)),
+    linear-gradient(var(--orchid), var(--orchid)),
+    linear-gradient(var(--orchid), var(--orchid)) !important;
+  background-size: 100% 2px !important;
+  background-position: top center, center center, bottom center !important;
+  background-repeat: no-repeat !important;
+  box-shadow: none !important;
 }
 .dot-menu-button::before,
-.dot-menu-button::after { content: none !important; }
+.dot-menu-button::after { content: none !important; display: none !important; }
 .dot-menu-button {
   background: transparent !important;
   border-radius: 0 !important;
@@ -334,19 +338,23 @@ p, li, a, button, input, label, div {
   padding: 0 !important;
 }
 
-/* ─── Hamburger button (3 líneas) ─── */
+/* ─── Hamburger button (3 líneas con gradient) ─── */
 .dot-menu-button {
-  background: var(--orchid) !important;
-  border-radius: 2px !important;
-  width: 24px !important;
-  height: 2px !important;
-  margin: 6px 0 !important;
-  box-shadow: 0 7px 0 var(--orchid), 0 14px 0 var(--orchid) !important;
-  display: block !important;
-  position: relative !important;
+  width: 26px !important;
+  height: 18px !important;
+  border-radius: 0 !important;
+  background-color: transparent !important;
+  background-image:
+    linear-gradient(var(--orchid), var(--orchid)),
+    linear-gradient(var(--orchid), var(--orchid)),
+    linear-gradient(var(--orchid), var(--orchid)) !important;
+  background-size: 100% 2px !important;
+  background-position: top center, center center, bottom center !important;
+  background-repeat: no-repeat !important;
+  box-shadow: none !important;
 }
 .dot-menu-button::before,
-.dot-menu-button::after { content: none !important; }
+.dot-menu-button::after { content: none !important; display: none !important; }
 .dot-menu-button {
   background: transparent !important;
   border-radius: 0 !important;
