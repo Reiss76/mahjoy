@@ -1,0 +1,155 @@
+{
+  "store": {
+    "id": 3,
+    "name": "Mahjoy",
+    "slug": "mahjoy",
+    "logo_url": null,
+    "primary_color": null
+  },
+  "products": [
+    {
+      "id": 56,
+      "sku": "MAT-010",
+      "name": "Empress Mat",
+      "description": null,
+      "price": "0.00",
+      "stock": 1,
+      "primary_image_url": "/api/public/media?key=products%2F2237696d-bb37-455e-9e2f-23f0debbd900%2Fc609697e-5026-4ba3-bd32-5ea3c3b634ea.jpeg",
+      "images": [
+        "/api/public/media?key=products%2F2237696d-bb37-455e-9e2f-23f0debbd900%2Fc609697e-5026-4ba3-bd32-5ea3c3b634ea.jpeg"
+      ]
+    },
+    {
+      "id": 46,
+      "sku": "MAT-001",
+      "name": "Galaxy Mat",
+      "description": null,
+      "price": "0.00",
+      "stock": 1,
+      "primary_image_url": "/api/public/media?key=products%2F5a088996-085b-4751-a468-5caa00b36377%2F72362678-714d-4ea2-9bfa-2d419366d04f.jpeg",
+      "images": [
+        "/api/public/media?key=products%2F5a088996-085b-4751-a468-5caa00b36377%2F72362678-714d-4ea2-9bfa-2d419366d04f.jpeg"
+      ]
+    },
+    {
+      "id": 49,
+      "sku": "MAT-004",
+      "name": "Garden Plaid Mat",
+      "description": null,
+      "price": "0.00",
+      "stock": 1,
+      "primary_image_url": "/api/public/media?key=products%2F8ff8e0ed-a8b7-4078-b83c-e78f0fc1dbcd%2Fb997806e-37a2-472d-821e-c7bba40c536b.jpeg",
+      "images": [
+        "/api/public/media?key=products%2F8ff8e0ed-a8b7-4078-b83c-e78f0fc1dbcd%2Fb997806e-37a2-472d-821e-c7bba40c536b.jpeg"
+      ]
+    },
+    {
+      "id": 48,
+      "sku": "MAT-003",
+      "name": "Lavender Butterfly Mat",
+      "description": null,
+      "price": "0.00",
+      "stock": 1,
+      "primary_image_url": "/api/public/media?key=products%2F6bd5c9fc-b1a9-4e67-b8db-bd894308b4f1%2F6c1399af-330f-4780-a423-388ee81da02f.jpeg",
+      "images": [
+        "/api/public/media?key=products%2F6bd5c9fc-b1a9-4e67-b8db-bd894308b4f1%2F6c1399af-330f-4780-a423-388ee81da02f.jpeg"
+      ]
+    },
+    {
+      "id": 54,
+      "sku": "MAT-008",
+      "name": "Le Mode Mat",
+      "description": null,
+      "price": "0.00",
+      "stock": 1,
+      "primary_image_url": "/api/public/media?key=products%2Fd780ed8c-8153-41b6-920b-6cf599c3eecf%2Fe3873f18-a8e4-483c-8b14-dfd23fc9d908.jpeg",
+      "images": [
+        "/api/public/media?key=products%2Fd780ed8c-8153-41b6-920b-6cf599c3eecf%2Fe3873f18-a8e4-483c-8b14-dfd23fc9d908.jpeg"
+      ]
+    },
+    {
+      "id": 57,
+      "sku": "MAT-011",
+      "name": "Limoncello Mat",
+      "description": null,
+      "price": "0.00",
+      "stock": 1,
+      "primary_image_url": "/api/public/media?key=products%2F2b910ee9-e32c-428a-83b4-5a11615af951%2F60611b28-1b74-4adc-a4ea-dd88c0799d98.jpeg",
+      "images": [
+        "/api/public/media?key=products%2F2b910ee9-e32c-428a-83b4-5a11615af951%2F60611b28-1b74-4adc-a4ea-dd88c0799d98.jpeg"
+      ]
+    },
+    {
+      "id": 47,
+      "sku": "MAT-002",
+      "name": "Noir Bloom Mat",
+      "description": null,
+      "price": "0.00",
+      "stock": 1,
+      "primary_image_url": "/api/public/media?key=products%2Fcdc45217-f3d8-48b4-bddb-c3336b402be5%2Ffeb400d1-f8b4-4ef6-bb9d-7223f569f4f9.jpeg",
+      "images": [
+        "/api/public/media?key=products%2Fcdc45217-f3d8-48b4-bddb-c3336b402be5%2Ffeb400d1-f8b4-4ef6-bb9d-7223f569f4f9.jpeg"
+      ]
+    },
+    {
+      "id": 53,
+      "sku": "MAT-007",
+      "name": "Noir Botanica Mat",
+      "description": null,
+      "price": "0.00",
+      "stock": 1,
+      "primary_image_url": "/api/public/media?key=products%2F6601d6d6-3e03-43ad-b224-a3cb6f07c593%2Fe4e8a6cc-fab5-4096-b082-e38ff8efe859.jpeg",
+      "images": [
+        "/api/public/media?key=products%2F6601d6d6-3e03-43ad-b224-a3cb6f07c593%2Fe4e8a6cc-fab5-4096-b082-e38ff8efe859.jpeg"
+      ]
+    },
+    {
+      "id": 55,
+      "sku": "MAT-009",
+      "name": "Pagoda Garden Mat",
+      "description": null,
+      "price": "0.00",
+      "stock": 1,
+      "primary_image_url": "/api/public/media?key=products%2F0ea6d3e2-7a5e-43a7-a2b0-ca35bafd9b4c%2F07f52364-035f-4c27-9444-44a225c4ada7.jpeg",
+      "images": [
+        "/api/public/media?key=products%2F0ea6d3e2-7a5e-43a7-a2b0-ca35bafd9b4c%2F07f52364-035f-4c27-9444-44a225c4ada7.jpeg"
+      ]
+    },
+    {
+      "id": 52,
+      "sku": "MAT-006",
+      "name": "Peony Garden Mat",
+      "description": null,
+      "price": "0.00",
+      "stock": 1,
+      "primary_image_url": "/api/public/media?key=products%2Fd9d8ff87-54c5-4abc-9f7f-9c5b748604f4%2F09e714a8-9c97-4087-ab2d-043ae96e2866.jpeg",
+      "images": [
+        "/api/public/media?key=products%2Fd9d8ff87-54c5-4abc-9f7f-9c5b748604f4%2F09e714a8-9c97-4087-ab2d-043ae96e2866.jpeg"
+      ]
+    },
+    {
+      "id": 50,
+      "sku": "MAT-005",
+      "name": "Pink Palace Mat",
+      "description": null,
+      "price": "0.00",
+      "stock": 1,
+      "primary_image_url": "/api/public/media?key=products%2F43d9dcd0-1c12-44ff-a1f8-448af1ef9780%2Fd90f5051-f0e6-40d0-a8cb-fc9a01cad646.jpeg",
+      "images": [
+        "/api/public/media?key=products%2F43d9dcd0-1c12-44ff-a1f8-448af1ef9780%2Fd90f5051-f0e6-40d0-a8cb-fc9a01cad646.jpeg"
+      ]
+    },
+    {
+      "id": 58,
+      "sku": "MAT-012",
+      "name": "Pink Plaid Mat",
+      "description": null,
+      "price": "0.00",
+      "stock": 1,
+      "primary_image_url": "/api/public/media?key=products%2F1c26431f-88d9-4e28-bb39-0d06bde69804%2Fd50fd5d2-f48c-4444-9a24-5c65adee5695.jpeg",
+      "images": [
+        "/api/public/media?key=products%2F1c26431f-88d9-4e28-bb39-0d06bde69804%2Fd50fd5d2-f48c-4444-9a24-5c65adee5695.jpeg"
+      ]
+    }
+  ]
+}

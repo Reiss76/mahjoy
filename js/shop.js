@@ -3,7 +3,8 @@
  * Fetches live inventory from Proax API and renders product cards.
  */
 
-const MJ_API = 'https://api-production-b888.up.railway.app/public/shop/mahjoy/products';
+// Usar products.json local (evita CORS) — actualizar al agregar productos
+const MJ_API = '/products.json';
 
 // Category keyword map — matches product names/SKUs to category pages
 const CATEGORY_MAP = {
