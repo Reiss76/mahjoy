@@ -292,7 +292,19 @@ p, li, a, button, input, label, div {
   .nav-menu .mj-shop-link { font-size: 1rem !important; }
 }
 
-/* ─── Hamburger button (reemplaza el dot) ─── */
+/* ─── Hamburger button (3 líneas) ─── */
+.dot-menu-button {
+  background: var(--orchid) !important;
+  border-radius: 2px !important;
+  width: 24px !important;
+  height: 2px !important;
+  margin: 6px 0 !important;
+  box-shadow: 0 7px 0 var(--orchid), 0 14px 0 var(--orchid) !important;
+  display: block !important;
+  position: relative !important;
+}
+.dot-menu-button::before,
+.dot-menu-button::after { content: none !important; }
 .dot-menu-button {
   background: transparent !important;
   border-radius: 0 !important;
@@ -322,7 +334,19 @@ p, li, a, button, input, label, div {
   padding: 0 !important;
 }
 
-/* ─── Hamburger button (reemplaza el dot) ─── */
+/* ─── Hamburger button (3 líneas) ─── */
+.dot-menu-button {
+  background: var(--orchid) !important;
+  border-radius: 2px !important;
+  width: 24px !important;
+  height: 2px !important;
+  margin: 6px 0 !important;
+  box-shadow: 0 7px 0 var(--orchid), 0 14px 0 var(--orchid) !important;
+  display: block !important;
+  position: relative !important;
+}
+.dot-menu-button::before,
+.dot-menu-button::after { content: none !important; }
 .dot-menu-button {
   background: transparent !important;
   border-radius: 0 !important;
@@ -344,3 +368,24 @@ p, li, a, button, input, label, div {
   border-radius: 2px;
 }
 
+
+/* ─── Fix overflow horizontal (white gap) ─── */
+html, body {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+}
+.nav-bar, .navmenu, .w-nav, .quick-stack, .wf-layout-layout {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+.menu-button-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+.w-nav-button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 8px !important;
+}
