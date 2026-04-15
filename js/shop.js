@@ -99,8 +99,10 @@ async function loadShopProducts({ containerId, category = null, categoryLabel = 
 
     // Filter by category if specified
     if (category) {
-      const keywords = CATEGORY_MAP[category] || [];
       products = products.filter(p => {
+        // Prefer API category field, fallback to keyword matching
+        if (p.category) return p.category === category;
+        const keywords = CATEGORY_MAP[category] || [];
         const text = (p.name + ' ' + (p.sku || '') + ' ' + (p.description || '')).toLowerCase();
         return keywords.some(kw => text.includes(kw));
       });
