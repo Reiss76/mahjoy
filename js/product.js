@@ -195,7 +195,51 @@ async function loadProduct() {
   // Order button with product info pre-filled in contact URL
   const contactUrl = `checkout.html#${product.id}`;
   document.getElementById('pdp-order-btn').href = contactUrl;
-  document.getElementById('pdp-order-btn').textContent = 'Ordenar ahora →';
+  document.getElementById('pdp-order-btn').textContent = 'Comprar ahora →';
+
+  // ── Agregar al carrito ──────────────────────────────────────────────────
+  const ctaWrap = document.querySelector('.mj-pdp-cta-wrap');
+  if (ctaWrap) {
+    const addBtn = document.createElement('button');
+    addBtn.id = 'pdp-add-cart-btn';
+    addBtn.style.cssText = [
+      'display:block','width:100%','text-align:center',
+      'background:transparent','color:var(--burgundy)',
+      "font-family:'Plus Jakarta Sans',sans-serif",'font-size:.95rem','font-weight:700',
+      'letter-spacing:.06em','text-transform:uppercase',
+      'padding:1.05rem 2rem','border-radius:999px',
+      'border:2.5px solid var(--burgundy)','cursor:pointer',
+      'transition:all .2s','margin-bottom:0',
+    ].join(';');
+    addBtn.textContent = 'Agregar al carrito';
+    addBtn.onmouseenter = () => { addBtn.style.background='var(--burgundy)'; addBtn.style.color='#fff'; };
+    addBtn.onmouseleave = () => { addBtn.style.background='transparent'; addBtn.style.color='var(--burgundy)'; };
+    addBtn.onclick = () => {
+      // Save to localStorage directly (no MJCart dependency)
+      try {
+        const cart = JSON.parse(localStorage.getItem('mj_cart') || '[]');
+        const idx = cart.findIndex(i => i.id === product.id);
+        if (idx >= 0) { cart[idx].qty += 1; }
+        else { cart.push({ id: product.id, sku: product.sku, name: product.name,
+          price: parseFloat(product.price) || 0, image: product.primary_image_url || null, qty: 1 }); }
+        localStorage.setItem('mj_cart', JSON.stringify(cart));
+        // Update badge
+        const total = cart.reduce((a, i) => a + i.qty, 0);
+        document.querySelectorAll('.mj-cart-badge').forEach(el => {
+          el.textContent = total; el.style.display = total > 0 ? 'flex' : 'none';
+        });
+      } catch(e) { console.error(e); }
+      addBtn.textContent = '✓ Agregado al carrito';
+      addBtn.style.background = 'var(--burgundy)';
+      addBtn.style.color = '#fff';
+      setTimeout(() => {
+        addBtn.textContent = 'Agregar al carrito';
+        addBtn.style.background = 'transparent';
+        addBtn.style.color = 'var(--burgundy)';
+      }, 2200);
+    };
+    ctaWrap.insertBefore(addBtn, ctaWrap.firstChild);
+  }
 
   // Meta
   document.getElementById('pdp-meta-cat').textContent = catLabel;
