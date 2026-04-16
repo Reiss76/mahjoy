@@ -96,8 +96,11 @@ function showError() {
 
 async function loadProduct() {
   const params = new URLSearchParams(window.location.search);
-  const productId = params.get('id') ? parseInt(params.get('id')) : null;
-  const productSku = params.get('sku');
+  // Support ?id=, ?sku=, and hash #46 or #MAT-001
+  const hashVal = window.location.hash.replace('#', '').trim();
+  const rawId = params.get('id') || (hashVal && !isNaN(hashVal) ? hashVal : null);
+  const productId = rawId ? parseInt(rawId) : null;
+  const productSku = params.get('sku') || (hashVal && isNaN(parseInt(hashVal)) ? hashVal : null);
 
   if (!productId && !productSku) { showError(); return; }
 
