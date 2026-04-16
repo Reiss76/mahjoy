@@ -193,8 +193,9 @@ async function loadProduct() {
   }
 
   // Order button with product info pre-filled in contact URL
-  const contactUrl = `contact.html?product=${encodeURIComponent(product.name)}&sku=${encodeURIComponent(product.sku || '')}`;
+  const contactUrl = `checkout.html#${product.id}`;
   document.getElementById('pdp-order-btn').href = contactUrl;
+  document.getElementById('pdp-order-btn').textContent = 'Ordenar ahora →';
 
   // Meta
   document.getElementById('pdp-meta-cat').textContent = catLabel;

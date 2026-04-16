@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html data-wf-site="69b8b6457fb4b98c000aa3ab" lang="es">
+<head>
+  <meta charset="utf-8">
+  <title id="page-title">Ordenar — MAH JOY</title>
+  <meta content="Ordena tu producto MAH JOY" name="description">
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <link href="css/normalize.css" rel="stylesheet" type="text/css">
+  <link href="css/webflow.css" rel="stylesheet" type="text/css">
+  <link href="css/mahjoy.webflow.css" rel="stylesheet" type="text/css">
+  <link href="css/mahjoy-brand.css" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin="anonymous">
+  <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+  <script>WebFont.load({ google: { families: ["Plus Jakarta Sans:300,400,500,600,700,800"] } });</script>
+  <link href="images/icon-burgundy.svg" rel="shortcut icon" type="image/svg+xml">
+</head>
+<body style="background:#fdf8fb;">
+
+  <!-- NAV -->
+  <div class="nav-bar" style="background-color:var(--burgundy)">
+    <div data-animation="over-right" class="navmenu w-nav" data-easing2="ease" data-easing="ease" data-collapse="all" role="banner" data-no-scroll="1" data-duration="0" data-doc-height="1">
+      <div class="w-layout-layout quick-stack wf-layout-layout">
+        <div class="w-layout-cell cell-slogan">
+          <div class="we-are-box">
+            <div style="color:var(--orchid);letter-spacing:0.12em;font-size:0.7rem;text-transform:uppercase;font-weight:600">We are</div>
+          </div>
+        </div>
+        <div class="w-layout-cell cell-brand">
+          <a href="index.html" class="brand w-nav-brand"><img src="images/logotag-blue.svg" loading="lazy" alt="MAH JOY" class="brand-logo" style="height:54px;width:auto;filter:brightness(0) invert(1)"></a>
+        </div>
+        <div class="w-layout-cell cell-menu">
+          <div class="menu-button-wrapper">
+            <div class="menu-button w-nav-button"><div class="dot-menu-button"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="nav-menu">
+        <a href="index.html" class="nav-link w-inline-block"><div class="nav-link-text">Home</div></a>
+        <a href="about.html" class="nav-link w-inline-block"><div class="nav-link-text">About</div></a>
+        <a href="contact.html" class="nav-link w-inline-block"><div class="nav-link-text">Contact</div></a>
+        <div class="mj-shop-dropdown">
+          <div class="nav-link mj-shop-toggle" tabindex="0" role="button"
+               onclick="var l=this.nextElementSibling;l.style.display=l.style.display==='block'?'none':'block';" style="cursor:pointer">
+            <div class="nav-link-text">Shop ▾</div>
+          </div>
+          <div class="mj-shop-list" style="display:none">
+            <a href="shop-tiles.html" class="w-dropdown-link mj-shop-link">Tiles</a>
+            <a href="shop-mats.html" class="w-dropdown-link mj-shop-link">Mats</a>
+            <a href="shop-racks.html" class="w-dropdown-link mj-shop-link">Racks</a>
+            <a href="shop-mahjoy-bags.html" class="w-dropdown-link mj-shop-link">Mahjoy Bags</a>
+            <a href="shop-tile-bags.html" class="w-dropdown-link mj-shop-link">Tile Bags</a>
+            <a href="shop-rack-bags.html" class="w-dropdown-link mj-shop-link">Rack Bags</a>
+            <a href="shop-accessories.html" class="w-dropdown-link mj-shop-link">Accessories</a>
+            <a href="shop-card-holders.html" class="w-dropdown-link mj-shop-link">Card Holders</a>
+            <a href="shop-shufflers.html" class="w-dropdown-link mj-shop-link">Shufflers</a>
+            <a href="shop-line-finder.html" class="w-dropdown-link mj-shop-link">Line Finder</a>
+          </div>
+        </div>
+      </div>
+      <div class="overlay-menu"></div>
+    </div>
+  </div>
+
+  <!-- CHECKOUT -->
+  <div id="co-loading" style="min-height:60vh;display:flex;align-items:center;justify-content:center;">
+    <div style="text-align:center;color:var(--burgundy);opacity:.4;font-family:'Plus Jakarta Sans',sans-serif;">
+      <div style="font-size:2rem;">✦</div><div style="font-size:.85rem;letter-spacing:.1em;text-transform:uppercase;margin-top:.5rem;">Cargando...</div>
+    </div>
+  </div>
+
+  <!-- THANK YOU STATE -->
+  <div id="co-thanks" style="display:none;min-height:70vh;align-items:center;justify-content:center;text-align:center;padding:3rem 1.5rem;">
+    <div style="max-width:480px;margin:auto;">
+      <div style="font-size:3rem;margin-bottom:1rem;">🎉</div>
+      <h2 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:2rem;font-weight:800;color:var(--burgundy);margin-bottom:1rem;">¡Pedido enviado!</h2>
+      <p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1rem;color:#666;line-height:1.7;margin-bottom:2rem;">
+        Recibimos tu pedido. Te contactaremos pronto vía WhatsApp o email para confirmar los detalles y coordinar el envío.
+      </p>
+      <a href="shop.html" style="display:inline-block;background:var(--burgundy);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:.9rem;letter-spacing:.06em;text-transform:uppercase;padding:1rem 2.5rem;border-radius:999px;text-decoration:none;">
+        Seguir comprando
+      </a>
+    </div>
+  </div>
+
+  <!-- MAIN CHECKOUT CONTENT -->
+  <div id="co-content" style="display:none;padding:2rem 0 4rem;">
+    <div style="max-width:1000px;margin:0 auto;padding:0 1.5rem;">
+
+      <!-- Breadcrumb -->
+      <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.78rem;color:#aaa;margin-bottom:2rem;letter-spacing:.03em;">
+        <a href="index.html" style="color:var(--orchid-mid);text-decoration:none;">Home</a>
+        <span style="margin:0 .4rem;">›</span>
+        <a id="co-cat-link" href="shop.html" style="color:var(--orchid-mid);text-decoration:none;"></a>
+        <span style="margin:0 .4rem;">›</span>
+        <span id="co-bc-name" style="color:#777;"></span>
+        <span style="margin:0 .4rem;">›</span>
+        <span style="color:#333;font-weight:600;">Ordenar</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:3rem;align-items:flex-start;">
+      <!-- LEFT: Order summary -->
+      <div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--orchid);margin-bottom:1rem;">Tu pedido</div>
+
+        <!-- Product card -->
+        <div style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 16px rgba(107,15,42,.08);margin-bottom:1.5rem;">
+          <div id="co-img-wrap" style="background:#fdf8fb;aspect-ratio:1/1;overflow:hidden;">
+            <img id="co-img" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">
+          </div>
+          <div style="padding:1.25rem;">
+            <div id="co-cat-badge" style="display:inline-block;background:var(--blush);color:var(--orchid-mid);font-family:'Plus Jakarta Sans',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:.3rem .9rem;border-radius:999px;margin-bottom:.75rem;"></div>
+            <div id="co-name" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.15rem;font-weight:800;color:var(--burgundy);margin-bottom:.3rem;"></div>
+            <div id="co-sku" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.72rem;color:#aaa;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.75rem;"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding-top:.75rem;border-top:1px solid #f0e4ec;">
+              <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;color:#888;">Precio unitario</span>
+              <span id="co-price" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.1rem;font-weight:700;color:var(--burgundy);"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Order total -->
+        <div style="background:#fff;border-radius:12px;padding:1.25rem;box-shadow:0 2px 16px rgba(107,15,42,.06);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
+            <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:#888;">Subtotal</span>
+            <span id="co-subtotal" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;font-weight:600;color:#555;"></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
+            <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:#888;">Envío</span>
+            <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:var(--orchid-mid);font-weight:600;">A cotizar</span>
+          </div>
+          <div style="border-top:1px solid #f0e4ec;padding-top:.75rem;display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1rem;font-weight:700;color:var(--burgundy);">Total estimado</span>
+            <span id="co-total" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.2rem;font-weight:800;color:var(--burgundy);"></span>
+          </div>
+        </div>
+
+        <div style="margin-top:1.25rem;padding:1rem;background:var(--blush);border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:.8rem;color:var(--orchid-mid);line-height:1.6;">
+          🔒 Tu pedido es seguro. Te contactaremos para coordinar pago y envío.
+        </div>
+      </div>
+
+      <!-- RIGHT: Form -->
+      <div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--orchid);margin-bottom:1rem;">Tus datos</div>
+
+        <form id="co-form" style="display:flex;flex-direction:column;gap:1.1rem;">
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div>
+              <label class="mj-co-label">Nombre *</label>
+              <input class="mj-co-input" type="text" name="name" placeholder="Tu nombre" required>
+            </div>
+            <div>
+              <label class="mj-co-label">Apellido *</label>
+              <input class="mj-co-input" type="text" name="lastname" placeholder="Tu apellido" required>
+            </div>
+          </div>
+
+          <div>
+            <label class="mj-co-label">Email *</label>
+            <input class="mj-co-input" type="email" name="email" placeholder="tu@email.com" required>
+          </div>
+
+          <div>
+            <label class="mj-co-label">WhatsApp / Teléfono *</label>
+            <input class="mj-co-input" type="tel" name="phone" placeholder="+52 55 0000 0000" required>
+          </div>
+
+          <div>
+            <label class="mj-co-label">Cantidad</label>
+            <div style="display:flex;align-items:center;gap:1rem;">
+              <button type="button" onclick="changeQty(-1)" style="width:40px;height:40px;border-radius:50%;border:2px solid var(--burgundy);background:transparent;color:var(--burgundy);font-size:1.2rem;cursor:pointer;font-weight:700;">−</button>
+              <span id="co-qty-display" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.1rem;font-weight:700;color:var(--burgundy);min-width:2rem;text-align:center;">1</span>
+              <button type="button" onclick="changeQty(1)" style="width:40px;height:40px;border-radius:50%;border:2px solid var(--burgundy);background:var(--burgundy);color:#fff;font-size:1.2rem;cursor:pointer;font-weight:700;">+</button>
+            </div>
+            <input type="hidden" name="qty" id="co-qty" value="1">
+          </div>
+
+          <div>
+            <label class="mj-co-label">Estado / Ciudad *</label>
+            <input class="mj-co-input" type="text" name="city" placeholder="Ciudad de México" required>
+          </div>
+
+          <div>
+            <label class="mj-co-label">Notas adicionales</label>
+            <textarea class="mj-co-input" name="notes" rows="3" placeholder="Color preferido, variante, instrucciones de entrega..." style="resize:vertical;"></textarea>
+          </div>
+
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.78rem;color:#aaa;line-height:1.6;">
+            Al enviar tu pedido, un asesor de MAH JOY te contactará vía WhatsApp para confirmar disponibilidad, coordinar el pago y el envío.
+          </div>
+
+          <button type="submit" id="co-submit" style="display:block;width:100%;background:var(--burgundy);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:1rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:1.2rem 2rem;border-radius:999px;border:none;cursor:pointer;transition:background .2s;margin-top:.5rem;">
+            Enviar pedido →
+          </button>
+
+          <a id="co-wa-btn" href="#" target="_blank" style="display:block;text-align:center;background:#25D366;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;font-weight:700;letter-spacing:.04em;padding:1rem 2rem;border-radius:999px;text-decoration:none;transition:background .2s;">
+            📲 Ordenar por WhatsApp
+          </a>
+
+        </form>
+      </div>
+      </div><!-- /grid -->
+    </div>
+  </div>
+
+  <script src="https://d3e54v103j8qbb.cloudfront.net/js/jquery-3.5.1.min.dc5e7f18c8.js?site=69b8b6457fb4b98c000aa3ab" type="text/javascript" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+  <script src="js/webflow.js"></script>
+  <script src="js/checkout.js"></script>
+
+  <style>
+    .mj-co-label {
+      display: block;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: .78rem;
+      font-weight: 600;
+      color: #555;
+      letter-spacing: .04em;
+      margin-bottom: .4rem;
+    }
+    .mj-co-input {
+      width: 100%;
+      padding: .85rem 1.1rem;
+      border: 1.5px solid #e8d6e0;
+      border-radius: 10px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: .9rem;
+      color: #333;
+      background: #fff;
+      box-sizing: border-box;
+      transition: border-color .2s;
+      outline: none;
+    }
+    .mj-co-input:focus { border-color: var(--orchid); }
+    .mj-co-input::placeholder { color: #bbb; }
+    @media (max-width: 680px) {
+      #co-content > div > div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+      }
+      #co-form > div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+      }
+    }
+  </style>
+</body>
+</html>
