@@ -5,7 +5,7 @@
 
 const MJ_API_BASE = 'https://api-production-b888.up.railway.app';
 const MJ_WA_NUMBER = '525500000000'; // TODO: cambiar por número real de Mahjoy
-const MJ_CENTUMPAY_ENDPOINT = 'https://api-production-b888.up.railway.app/public/centumpay/checkout';
+const MJ_CENTUMPAY_ENDPOINT = '/api/centumpay/checkout';
 
 const CATEGORY_LABELS = {
   'tiles':'Tiles','mats':'Mats','racks':'Racks','mahjoy-bags':'Mahjoy Bags',

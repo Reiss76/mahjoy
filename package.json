@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "MAH JOY — Think. Play. Mahjong.",
   "scripts": {
-    "start": "serve . --listen $PORT",
-    "dev": "serve . --listen 3000"
+    "start": "node server.js",
+    "dev": "node server.js"
   },
   "dependencies": {
-    "serve": "^14.2.3"
+    "express": "^4.18.2"
   }
 }
