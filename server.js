@@ -128,6 +128,11 @@ app.options('/api/centumpay/checkout', (_req, res) => {
   res.sendStatus(200);
 });
 
+// ─── Explicit routes ─────────────────────────────────────────────────────────
+app.get('/cart', (req, res) => res.sendFile(path.join(__dirname, 'cart.html')));
+app.get('/product', (req, res) => res.sendFile(path.join(__dirname, 'product.html')));
+app.get('/checkout', (req, res) => res.sendFile(path.join(__dirname, 'checkout.html')));
+
 // ─── Static files ─────────────────────────────────────────────────────────────
 
 app.use(express.static(path.join(__dirname), {

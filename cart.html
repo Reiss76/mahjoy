@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html data-wf-site="69b8b6457fb4b98c000aa3ab" lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Carrito — MAH JOY</title>
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <link href="css/normalize.css" rel="stylesheet">
+  <link href="css/webflow.css" rel="stylesheet">
+  <link href="css/mahjoy.webflow.css" rel="stylesheet">
+  <link href="css/mahjoy-brand.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+  <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+  <script>WebFont.load({ google: { families: ["Plus Jakarta Sans:300,400,500,600,700,800"] } });</script>
+  <link href="images/icon-burgundy.svg" rel="shortcut icon" type="image/svg+xml">
+  <style>
+    .mj-cart-page { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+    .mj-cart-header { margin-bottom: 2rem; }
+    .mj-cart-header h1 { font-family:'Plus Jakarta Sans',sans-serif; font-size: clamp(1.8rem,5vw,2.8rem); font-weight:800; color:var(--burgundy); margin:0 0 .25rem; }
+    .mj-cart-header p { font-family:'Plus Jakarta Sans',sans-serif; font-size:.85rem; color:#aaa; }
+    .mj-cart-item { display:grid; grid-template-columns:80px 1fr auto; gap:1rem; align-items:center; background:#fff; border-radius:12px; padding:1rem; margin-bottom:.75rem; box-shadow:0 2px 12px rgba(107,15,42,.06); }
+    .mj-cart-item-img { width:80px; height:80px; object-fit:cover; border-radius:8px; background:#fdf8fb; }
+    .mj-cart-item-img-placeholder { width:80px; height:80px; border-radius:8px; background:var(--blush); display:flex; align-items:center; justify-content:center; color:var(--orchid); font-size:1.5rem; }
+    .mj-cart-item-name { font-family:'Plus Jakarta Sans',sans-serif; font-size:.95rem; font-weight:700; color:var(--burgundy); margin-bottom:.2rem; }
+    .mj-cart-item-sku { font-family:'Plus Jakarta Sans',sans-serif; font-size:.72rem; color:#aaa; letter-spacing:.08em; text-transform:uppercase; }
+    .mj-cart-item-price { font-family:'Plus Jakarta Sans',sans-serif; font-size:.9rem; font-weight:600; color:var(--orchid-mid); margin-top:.3rem; }
+    .mj-cart-qty { display:flex; align-items:center; gap:.5rem; margin-top:.5rem; }
+    .mj-cart-qty button { width:28px; height:28px; border-radius:50%; border:1.5px solid var(--burgundy); background:transparent; color:var(--burgundy); font-size:1rem; cursor:pointer; font-weight:700; line-height:1; }
+    .mj-cart-qty button.plus { background:var(--burgundy); color:#fff; }
+    .mj-cart-qty span { font-family:'Plus Jakarta Sans',sans-serif; font-size:.9rem; font-weight:700; color:var(--burgundy); min-width:1.5rem; text-align:center; }
+    .mj-cart-remove { font-family:'Plus Jakarta Sans',sans-serif; font-size:.75rem; color:#ccc; cursor:pointer; background:none; border:none; padding:0; transition:color .2s; }
+    .mj-cart-remove:hover { color:var(--burgundy); }
+    .mj-cart-summary { background:#fff; border-radius:16px; padding:1.5rem; box-shadow:0 2px 16px rgba(107,15,42,.07); margin-top:1.5rem; }
+    .mj-cart-summary-row { display:flex; justify-content:space-between; font-family:'Plus Jakarta Sans',sans-serif; font-size:.9rem; color:#777; margin-bottom:.75rem; }
+    .mj-cart-summary-total { display:flex; justify-content:space-between; font-family:'Plus Jakarta Sans',sans-serif; font-size:1.1rem; font-weight:800; color:var(--burgundy); border-top:1px solid #f0e4ec; padding-top:.75rem; margin-top:.25rem; }
+    .mj-cart-actions { display:flex; flex-direction:column; gap:.75rem; margin-top:1.5rem; }
+    .mj-cart-btn-primary { display:block; text-align:center; background:var(--burgundy); color:#fff !important; font-family:'Plus Jakarta Sans',sans-serif; font-size:1rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; padding:1.1rem 2rem; border-radius:999px; text-decoration:none !important; border:none; cursor:pointer; transition:background .2s; }
+    .mj-cart-btn-primary:hover { background:var(--orchid-mid); }
+    .mj-cart-btn-secondary { display:block; text-align:center; background:transparent; color:var(--burgundy) !important; font-family:'Plus Jakarta Sans',sans-serif; font-size:.9rem; font-weight:600; padding:.9rem 2rem; border-radius:999px; border:2px solid var(--burgundy); text-decoration:none !important; cursor:pointer; transition:all .2s; }
+    .mj-cart-btn-secondary:hover { background:var(--burgundy); color:#fff !important; }
+    .mj-cart-empty { text-align:center; padding:4rem 2rem; }
+    .mj-cart-empty-icon { font-size:3rem; margin-bottom:1rem; opacity:.3; }
+    .mj-cart-empty h2 { font-family:'Plus Jakarta Sans',sans-serif; font-size:1.3rem; font-weight:700; color:var(--burgundy); margin-bottom:.5rem; }
+    .mj-cart-empty p { font-family:'Plus Jakarta Sans',sans-serif; font-size:.85rem; color:#aaa; margin-bottom:2rem; }
+    @media(max-width:500px) { .mj-cart-item { grid-template-columns:64px 1fr; } .mj-cart-item-img,.mj-cart-item-img-placeholder { width:64px; height:64px; } }
+  </style>
+</head>
+<body style="background:#fdf8fb;">
+
+  <!-- NAV -->
+  <div class="nav-bar" style="background-color:var(--burgundy)">
+    <div data-animation="over-right" class="navmenu w-nav" data-easing2="ease" data-easing="ease" data-collapse="all" role="banner" data-no-scroll="1" data-duration="0" data-doc-height="1">
+      <div class="w-layout-layout quick-stack wf-layout-layout">
+        <div class="w-layout-cell cell-slogan"><div class="we-are-box"><div style="color:var(--orchid);letter-spacing:0.12em;font-size:0.7rem;text-transform:uppercase;font-weight:600">We are</div></div></div>
+        <div class="w-layout-cell cell-brand"><a href="index.html" class="brand w-nav-brand"><img src="images/logotag-blue.svg" loading="lazy" alt="MAH JOY" class="brand-logo" style="height:54px;width:auto;filter:brightness(0) invert(1)"></a></div>
+        <div class="w-layout-cell cell-menu"><div class="menu-button-wrapper"><div class="menu-button w-nav-button"><div class="dot-menu-button"></div></div></div></div>
+      </div>
+      <div class="nav-menu">
+        <a href="index.html" class="nav-link w-inline-block"><div class="nav-link-text">Home</div></a>
+        <a href="about.html" class="nav-link w-inline-block"><div class="nav-link-text">About</div></a>
+        <a href="contact.html" class="nav-link w-inline-block"><div class="nav-link-text">Contact</div></a>
+        <div class="mj-shop-dropdown">
+          <div class="nav-link mj-shop-toggle" tabindex="0" role="button" onclick="var l=this.nextElementSibling;l.style.display=l.style.display==='block'?'none':'block';" style="cursor:pointer"><div class="nav-link-text">Shop ▾</div></div>
+          <div class="mj-shop-list" style="display:none">
+            <a href="shop-mats.html" class="w-dropdown-link mj-shop-link">Mats</a>
+            <a href="shop-tiles.html" class="w-dropdown-link mj-shop-link">Tiles</a>
+            <a href="shop-racks.html" class="w-dropdown-link mj-shop-link">Racks</a>
+            <a href="shop-accessories.html" class="w-dropdown-link mj-shop-link">Accessories</a>
+          </div>
+        </div>
+      </div>
+      <div class="overlay-menu"></div>
+    </div>
+  </div>
+
+  <div class="mj-cart-page">
+    <div class="mj-cart-header">
+      <div style="font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--orchid);margin-bottom:.4rem;">MAH JOY</div>
+      <h1>Tu carrito</h1>
+      <p id="cart-subtitle"></p>
+    </div>
+
+    <!-- Empty state -->
+    <div id="cart-empty" style="display:none;" class="mj-cart-empty">
+      <div class="mj-cart-empty-icon">🛍️</div>
+      <h2>Tu carrito está vacío</h2>
+      <p>Agrega productos desde el shop para comenzar</p>
+      <a href="shop-mats.html" class="mj-cart-btn-primary" style="display:inline-block;width:auto;">Ver Mats →</a>
+    </div>
+
+    <!-- Cart items -->
+    <div id="cart-items"></div>
+
+    <!-- Summary -->
+    <div id="cart-summary" style="display:none;">
+      <div class="mj-cart-summary">
+        <div class="mj-cart-summary-row"><span>Subtotal</span><span id="cart-subtotal"></span></div>
+        <div class="mj-cart-summary-row"><span>Envío</span><span style="color:var(--orchid-mid);font-weight:600;">A cotizar</span></div>
+        <div class="mj-cart-summary-total"><span>Total estimado</span><span id="cart-total"></span></div>
+      </div>
+      <div class="mj-cart-actions">
+        <button onclick="proceedToCheckout()" class="mj-cart-btn-primary">Pagar con tarjeta →</button>
+        <button onclick="proceedWhatsApp()" class="mj-cart-btn-secondary">Continuar por WhatsApp</button>
+        <a href="shop-mats.html" style="text-align:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;color:var(--orchid-mid);text-decoration:none;margin-top:.25rem;">← Seguir comprando</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://d3e54v103j8qbb.cloudfront.net/js/jquery-3.5.1.min.dc5e7f18c8.js?site=69b8b6457fb4b98c000aa3ab" type="text/javascript" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+  <script src="js/webflow.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+    const MJ_API_BASE = 'https://api-production-b888.up.railway.app';
+    const MJ_WA_NUMBER = '525500000000';
+
+    function fmt(price) {
+      return new Intl.NumberFormat('es-MX', { style:'currency', currency:'MXN' }).format(price);
+    }
+
+    function resolveImg(url) {
+      if (!url) return null;
+      if (url.startsWith('/api/public/media')) return MJ_API_BASE + url.replace('/api/public/media', '/public/media');
+      if (url.startsWith('/public/media')) return MJ_API_BASE + url;
+      return url;
+    }
+
+    function renderCart() {
+      const cart = window.MJCart.getCart();
+      const itemsEl = document.getElementById('cart-items');
+      const summaryEl = document.getElementById('cart-summary');
+      const emptyEl = document.getElementById('cart-empty');
+      const subtitleEl = document.getElementById('cart-subtitle');
+
+      if (!cart.length) {
+        itemsEl.innerHTML = '';
+        summaryEl.style.display = 'none';
+        emptyEl.style.display = 'block';
+        subtitleEl.textContent = '';
+        return;
+      }
+
+      emptyEl.style.display = 'none';
+      summaryEl.style.display = 'block';
+      const total = window.MJCart.cartTotal();
+      const count = window.MJCart.cartCount();
+      subtitleEl.textContent = `${count} producto${count > 1 ? 's' : ''}`;
+      document.getElementById('cart-subtotal').textContent = fmt(total);
+      document.getElementById('cart-total').textContent = fmt(total);
+
+      itemsEl.innerHTML = cart.map(item => {
+        const img = resolveImg(item.image);
+        return `
+          <div class="mj-cart-item">
+            ${img
+              ? `<img src="${img}" alt="${item.name}" class="mj-cart-item-img">`
+              : `<div class="mj-cart-item-img-placeholder">✦</div>`}
+            <div>
+              <div class="mj-cart-item-name">${item.name}</div>
+              ${item.sku ? `<div class="mj-cart-item-sku">${item.sku}</div>` : ''}
+              <div class="mj-cart-item-price">${item.price > 0 ? fmt(item.price) : 'Consultar precio'}</div>
+              <div class="mj-cart-qty">
+                <button onclick="changeItemQty(${item.id}, ${item.qty - 1})">−</button>
+                <span>${item.qty}</span>
+                <button class="plus" onclick="changeItemQty(${item.id}, ${item.qty + 1})">+</button>
+                <button class="mj-cart-remove" onclick="removeItem(${item.id})">Eliminar</button>
+              </div>
+            </div>
+            <div></div>
+          </div>`;
+      }).join('');
+    }
+
+    function changeItemQty(id, qty) { window.MJCart.updateQty(id, qty); renderCart(); }
+    function removeItem(id) { window.MJCart.removeFromCart(id); renderCart(); }
+
+    async function proceedToCheckout() {
+      const cart = window.MJCart.getCart();
+      if (!cart.length) return;
+      const btn = event.target;
+      btn.textContent = 'Procesando...'; btn.disabled = true;
+      try {
+        const res = await fetch('/api/centumpay/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cart: cart.map(i => ({ name: i.name, price: i.price, qty: i.qty })),
+            orderId: `mahjoy-${Date.now()}`,
+          }),
+        });
+        const data = await res.json();
+        if (data.ok && data.checkoutUrl) {
+          window.MJCart.clearCart();
+          window.location.href = data.checkoutUrl;
+        } else {
+          alert('Error al procesar pago. Intenta por WhatsApp.');
+          btn.textContent = 'Pagar con tarjeta →'; btn.disabled = false;
+        }
+      } catch (e) {
+        alert('Error de conexión. Intenta por WhatsApp.');
+        btn.textContent = 'Pagar con tarjeta →'; btn.disabled = false;
+      }
+    }
+
+    function proceedWhatsApp() {
+      const cart = window.MJCart.getCart();
+      const lines = cart.map(i => `• ${i.name} x${i.qty}${i.price > 0 ? ' = ' + fmt(i.price * i.qty) : ''}`);
+      const total = window.MJCart.cartTotal();
+      const msg = `Hola MAH JOY! 🀄\n\nQuiero ordenar:\n${lines.join('\n')}\n\n${total > 0 ? 'Total aprox: ' + fmt(total) : ''}`;
+      window.open(`https://wa.me/${MJ_WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    window.addEventListener('mj:cartUpdated', renderCart);
+    document.addEventListener('DOMContentLoaded', renderCart);
+  </script>
+</body>
+</html>
