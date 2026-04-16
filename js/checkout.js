@@ -5,6 +5,7 @@
 
 const MJ_API_BASE = 'https://api-production-b888.up.railway.app';
 const MJ_WA_NUMBER = '525500000000'; // TODO: cambiar por número real de Mahjoy
+const MJ_CENTUMPAY_ENDPOINT = 'https://api-production-b888.up.railway.app/public/centumpay/checkout';
 
 const CATEGORY_LABELS = {
   'tiles':'Tiles','mats':'Mats','racks':'Racks','mahjoy-bags':'Mahjoy Bags',
@@ -177,32 +178,53 @@ document.addEventListener('DOMContentLoaded', () => {
       sku: currentProduct ? currentProduct.sku : '—',
     };
 
-    btn.textContent = 'Enviando...';
+    btn.textContent = 'Procesando pago...';
     btn.disabled = true;
+    btn.style.opacity = '0.7';
 
-    // Send via WhatsApp as primary action + email fallback
-    const msg = [
-      `🀄 *Nuevo pedido MAH JOY*`,
-      ``,
-      `*Producto:* ${data.product} (${data.sku})`,
-      `*Cantidad:* ${data.qty}`,
-      ``,
-      `*Cliente:* ${data.name}`,
-      `*Email:* ${data.email}`,
-      `*WhatsApp:* ${data.phone}`,
-      `*Ciudad:* ${data.city}`,
-      data.notes ? `*Notas:* ${data.notes}` : '',
-    ].filter(Boolean).join('\n');
+    // Build cart
+    const cart = currentProduct
+      ? [{ name: currentProduct.name, price: parseFloat(currentProduct.price) || 0, qty: data.qty }]
+      : [];
 
-    // Open WhatsApp with the order
-    const waUrl = `https://wa.me/${MJ_WA_NUMBER}?text=${encodeURIComponent(msg)}`;
-    window.open(waUrl, '_blank');
+    const orderId = `mahjoy-${currentProduct?.id || ''}-${Date.now()}`;
 
-    // Show thank you
-    setTimeout(() => {
-      document.getElementById('co-content').style.display = 'none';
-      document.getElementById('co-thanks').style.display = 'flex';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 800);
+    try {
+      // Call CentumPay proxy on Proax API
+      const res = await fetch(MJ_CENTUMPAY_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cart,
+          orderId,
+          webSite: 'https://mahjoy-production.up.railway.app',
+        }),
+      });
+
+      const result = await res.json();
+
+      if (result.ok && result.checkoutUrl) {
+        // Redirect to CentumPay hosted checkout
+        window.location.href = result.checkoutUrl;
+      } else {
+        // Fallback to WhatsApp if CentumPay fails
+        const msg = [`🀄 *Nuevo pedido MAH JOY*`, ``, `*Producto:* ${data.product} (${data.sku})`,
+          `*Cantidad:* ${data.qty}`, ``, `*Cliente:* ${data.name}`, `*Email:* ${data.email}`,
+          `*WhatsApp:* ${data.phone}`, `*Ciudad:* ${data.city}`,
+          data.notes ? `*Notas:* ${data.notes}` : ''].filter(Boolean).join('\n');
+        window.open(`https://wa.me/${MJ_WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+        document.getElementById('co-content').style.display = 'none';
+        document.getElementById('co-thanks').style.display = 'flex';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    } catch (err) {
+      // Network error — fallback to WhatsApp
+      console.error('CentumPay error:', err);
+      const msg = `🀄 Pedido MAH JOY: ${data.product} x${data.qty}\nCliente: ${data.name} | ${data.phone}`;
+      window.open(`https://wa.me/${MJ_WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+      btn.textContent = 'Enviar pedido →';
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    }
   });
 });
