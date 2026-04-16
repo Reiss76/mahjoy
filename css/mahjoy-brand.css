@@ -397,3 +397,241 @@ html, body {
   justify-content: center !important;
   padding: 8px !important;
 }
+
+
+/* ============================================================
+   PRODUCT DETAIL PAGE (PDP) — mahjoy-brand.css
+   ============================================================ */
+
+/* Breadcrumb */
+.mj-pdp-breadcrumb {
+  background: #fdf8fb;
+  border-bottom: 1px solid #f0e4ec;
+  padding: 0.75rem 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.78rem;
+  color: #999;
+  letter-spacing: 0.03em;
+}
+.mj-pdp-breadcrumb a {
+  color: var(--orchid-mid);
+  text-decoration: none;
+}
+.mj-pdp-breadcrumb a:hover { text-decoration: underline; }
+.mj-pdp-breadcrumb span { margin: 0 0.4rem; }
+
+/* Main section */
+.mj-pdp-section {
+  padding: 3rem 0 4rem;
+}
+
+/* Two-column layout */
+.mj-pdp-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: flex-start;
+}
+@media (max-width: 768px) {
+  .mj-pdp-layout {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+/* Gallery */
+.mj-pdp-gallery { position: sticky; top: 2rem; }
+.mj-pdp-main-img-wrap {
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fdf8fb;
+  aspect-ratio: 1 / 1;
+}
+.mj-pdp-main-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s ease;
+}
+.mj-pdp-main-img:hover { transform: scale(1.03); }
+.mj-pdp-thumbnails {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+.mj-pdp-thumb {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.2s;
+  opacity: 0.7;
+}
+.mj-pdp-thumb:hover, .mj-pdp-thumb.active {
+  border-color: var(--orchid);
+  opacity: 1;
+}
+
+/* Product info */
+.mj-pdp-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.mj-pdp-cat-badge {
+  display: inline-block;
+  background: var(--blush);
+  color: var(--orchid-mid);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0.35rem 1rem;
+  border-radius: 999px;
+  width: fit-content;
+}
+.mj-pdp-name {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  font-weight: 800;
+  color: var(--burgundy);
+  line-height: 1.1;
+  margin: 0;
+}
+.mj-pdp-sku {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.75rem;
+  color: #aaa;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.mj-pdp-price {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--burgundy);
+}
+.mj-pdp-description {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.95rem;
+  color: #555;
+  line-height: 1.7;
+}
+
+/* Stock badge */
+.mj-pdp-stock-badge {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  display: inline-block;
+}
+.mj-pdp-stock-badge.in  { background: #e8f5e9; color: #2e7d32; }
+.mj-pdp-stock-badge.low { background: #fff3e0; color: #e65100; }
+.mj-pdp-stock-badge.out { background: #fce4ec; color: #c62828; }
+
+/* CTA buttons */
+.mj-pdp-cta-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.mj-pdp-btn-primary {
+  display: block;
+  text-align: center;
+  background: var(--burgundy);
+  color: #fff !important;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 1.1rem 2rem;
+  border-radius: 999px;
+  text-decoration: none !important;
+  transition: background 0.2s, transform 0.15s;
+}
+.mj-pdp-btn-primary:hover {
+  background: var(--orchid-mid);
+  transform: translateY(-1px);
+}
+.mj-pdp-btn-secondary {
+  display: block;
+  text-align: center;
+  background: transparent;
+  color: var(--burgundy) !important;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 0.9rem 2rem;
+  border-radius: 999px;
+  border: 2px solid var(--burgundy);
+  text-decoration: none !important;
+  transition: all 0.2s;
+}
+.mj-pdp-btn-secondary:hover {
+  background: var(--burgundy);
+  color: #fff !important;
+}
+
+/* Meta grid */
+.mj-pdp-meta {
+  border-top: 1px solid #f0e4ec;
+  padding-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.mj-pdp-meta-row {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.85rem;
+}
+.mj-pdp-meta-label { color: #999; font-weight: 500; }
+.mj-pdp-meta-val   { color: var(--burgundy); font-weight: 600; }
+
+/* Share */
+.mj-pdp-share {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.mj-pdp-share-btn {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--orchid-mid) !important;
+  border: 1.5px solid var(--orchid);
+  padding: 0.3rem 0.9rem;
+  border-radius: 999px;
+  text-decoration: none !important;
+  transition: all 0.2s;
+}
+.mj-pdp-share-btn:hover {
+  background: var(--orchid);
+  color: #fff !important;
+}
+
+/* Related products */
+.mj-pdp-related {
+  padding: 3rem 0 4rem;
+  background: #fdf8fb;
+}
+.mj-pdp-related-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+/* Make product cards clickable */
+.mj-product-card[onclick] { cursor: pointer; }

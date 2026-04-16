@@ -42,7 +42,7 @@ function buildProductCard(product) {
     : null;
 
   return `
-    <div class="mj-product-card">
+    <div class="mj-product-card" onclick="window.location='product.html?id=${product.id}'" style="cursor:pointer;">
       <div class="mj-product-img-wrap">
         ${imgSrc
           ? `<img src="${imgSrc}" alt="${product.name}" class="mj-product-img" loading="lazy">`
@@ -56,7 +56,7 @@ function buildProductCard(product) {
         ${product.description ? `<div class="mj-product-desc">${product.description}</div>` : ''}
         <div class="mj-product-price">${formatPrice(product.price)}</div>
       </div>
-      <a href="contact.html" class="mj-product-cta">Ordenar</a>
+      <a href="product.html?id=${product.id}" class="mj-product-cta">Ver producto</a>
     </div>
   `;
 }
