@@ -34,9 +34,11 @@ function getProductCategory(product) {
 
 function buildProductCard(product) {
   const imgSrc = product.primary_image_url
-    ? (product.primary_image_url.startsWith('/api/public')
-        ? 'https://api-production-b888.up.railway.app' + product.primary_image_url
-        : product.primary_image_url)
+    ? (product.primary_image_url.startsWith('/api/public/media')
+        ? 'https://api-production-b888.up.railway.app' + product.primary_image_url.replace('/api/public/media', '/public/media')
+        : product.primary_image_url.startsWith('/public/media')
+          ? 'https://api-production-b888.up.railway.app' + product.primary_image_url
+          : product.primary_image_url)
     : null;
 
   return `
