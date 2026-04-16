@@ -75,7 +75,7 @@ function buildRelatedCard(product) {
   const imgSrc = resolveImageUrl(product.primary_image_url);
   const cat = guessCategory(product);
   return `
-    <div class="mj-product-card" onclick="window.location='product.html?id=${product.id}'" style="cursor:pointer;">
+    <div class="mj-product-card" onclick="window.location='product.html#'+product.id" style="cursor:pointer;">
       <div class="mj-product-img-wrap">
         ${imgSrc
           ? `<img src="${imgSrc}" alt="${product.name}" class="mj-product-img" loading="lazy">`
@@ -95,12 +95,14 @@ function showError() {
 }
 
 async function loadProduct() {
+  // Hash routing: product.html#46 or product.html#MAT-001
+  // Also supports legacy ?id= and ?sku= params
   const params = new URLSearchParams(window.location.search);
-  // Support ?id=, ?sku=, and hash #46 or #MAT-001
   const hashVal = window.location.hash.replace('#', '').trim();
-  const rawId = params.get('id') || (hashVal && !isNaN(hashVal) ? hashVal : null);
+  const rawId = hashVal && !isNaN(hashVal) ? hashVal : params.get('id');
   const productId = rawId ? parseInt(rawId) : null;
-  const productSku = params.get('sku') || (hashVal && isNaN(parseInt(hashVal)) ? hashVal : null);
+  const productSku = (!productId && hashVal && isNaN(parseInt(hashVal)))
+    ? hashVal : params.get('sku');
 
   if (!productId && !productSku) { showError(); return; }
 
