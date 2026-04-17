@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html data-wf-site="69b8b6457fb4b98c000aa3ab" lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Torneo — MAH JOY Social Club</title>
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <link href="css/normalize.css" rel="stylesheet">
+  <link href="css/webflow.css" rel="stylesheet">
+  <link href="css/mahjoy.webflow.css" rel="stylesheet">
+  <link href="css/mahjoy-brand.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+  <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+  <script>WebFont.load({ google: { families: ["Plus Jakarta Sans:300,400,500,600,700,800"] } });</script>
+  <link href="images/icon-burgundy.svg" rel="shortcut icon" type="image/svg+xml">
+  <style>
+    * { box-sizing: border-box; }
+    body { background: #fdf8fb; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+    .tp-wrap { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+
+    /* ── Header ── */
+    .tp-back { font-size: .8rem; color: var(--orchid-mid); text-decoration: none; display: inline-flex; align-items: center; gap: .3rem; margin-bottom: 1.5rem; font-weight: 600; }
+    .tp-back:hover { color: var(--burgundy); }
+    .tp-header { background: var(--burgundy); color: #fff; border-radius: 20px; padding: 2rem 2rem 1.75rem; margin-bottom: 2rem; }
+    .tp-eyebrow { font-size: .65rem; letter-spacing: .2em; text-transform: uppercase; color: var(--orchid); font-weight: 700; margin-bottom: .5rem; }
+    .tp-title { font-size: clamp(1.6rem, 5vw, 2.4rem); font-weight: 900; margin: 0 0 1rem; line-height: 1.1; }
+    .tp-meta { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; font-size: .82rem; color: rgba(255,255,255,.7); }
+    .tp-meta span { display: flex; align-items: center; gap: .35rem; }
+    .tp-badge {
+      display: inline-block; font-size: .65rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+      padding: .35rem .9rem; border-radius: 999px; margin-left: .75rem; vertical-align: middle;
+    }
+    .badge-open { background: rgba(26,122,74,.2); color: #7df0b0; border: 1px solid rgba(125,240,176,.25); }
+    .badge-full { background: rgba(192,68,10,.2); color: #ffb07a; border: 1px solid rgba(255,176,122,.25); }
+    .badge-started { background: rgba(107,47,160,.2); color: #d0a0ff; border: 1px solid rgba(208,160,255,.25); }
+
+    /* ── Progress ── */
+    .tp-progress-wrap { background: rgba(255,255,255,.12); border-radius: 999px; height: 8px; margin-top: 1.25rem; overflow: hidden; }
+    .tp-progress-bar { background: linear-gradient(90deg, var(--orchid), #e899d0); height: 100%; border-radius: 999px; transition: width .6s; }
+    .tp-progress-label { display: flex; justify-content: space-between; font-size: .72rem; color: rgba(255,255,255,.5); margin-top: .4rem; font-weight: 600; }
+
+    /* ── Join ── */
+    .tp-join-box { background: #fff; border-radius: 16px; padding: 1.75rem; box-shadow: 0 2px 16px rgba(107,15,42,.07); margin-bottom: 2rem; }
+    .tp-join-title { font-size: 1.05rem; font-weight: 800; color: var(--burgundy); margin-bottom: 1.25rem; }
+    .tp-join-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-bottom: .75rem; }
+    .sc-input { width: 100%; padding: .8rem 1rem; border: 1.5px solid #e8d8e8; border-radius: 10px; font-family: 'Plus Jakarta Sans',sans-serif; font-size: .9rem; color: #333; background: #fdf8fb; outline: none; transition: border-color .2s; }
+    .sc-input:focus { border-color: var(--orchid); }
+    .sc-label { font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--burgundy); display: block; margin-bottom: .4rem; }
+    .tp-join-btn {
+      display: block; width: 100%; text-align: center; background: var(--burgundy); color: #fff;
+      font-family: 'Plus Jakarta Sans',sans-serif; font-size: .95rem; font-weight: 800;
+      letter-spacing: .07em; text-transform: uppercase; padding: 1rem; border-radius: 999px;
+      border: none; cursor: pointer; transition: background .2s; margin-top: .75rem;
+    }
+    .tp-join-btn:hover { background: var(--orchid-mid); }
+    .tp-join-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .tp-share { display: flex; gap: .75rem; margin-top: 1rem; flex-wrap: wrap; }
+    .tp-share-btn {
+      flex: 1; min-width: 130px; text-align: center; background: transparent; color: var(--burgundy);
+      font-family: 'Plus Jakarta Sans',sans-serif; font-size: .8rem; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase; padding: .75rem 1rem; border-radius: 999px;
+      border: 1.5px solid var(--burgundy); cursor: pointer; transition: all .2s;
+    }
+    .tp-share-btn:hover { background: var(--burgundy); color: #fff; }
+
+    /* ── Tables ── */
+    .tp-tables-title { font-size: 1.2rem; font-weight: 800; color: var(--burgundy); margin-bottom: 1.25rem; }
+    .tp-tables-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+    .tp-table-card { background: #fff; border-radius: 14px; padding: 1.25rem; box-shadow: 0 2px 12px rgba(107,15,42,.06); }
+    .tp-table-num { font-size: .7rem; letter-spacing: .15em; text-transform: uppercase; color: var(--orchid); font-weight: 700; margin-bottom: .75rem; }
+    .tp-seat { display: flex; align-items: center; gap: .75rem; padding: .5rem 0; border-bottom: 1px solid #f5eaf2; }
+    .tp-seat:last-child { border-bottom: none; }
+    .tp-seat-icon {
+      width: 32px; height: 32px; border-radius: 50%; background: var(--blush);
+      display: flex; align-items: center; justify-content: center; font-size: .8rem;
+      color: var(--orchid); font-weight: 800; flex-shrink: 0;
+    }
+    .tp-seat-icon.filled { background: var(--burgundy); color: #fff; }
+    .tp-seat-name { font-size: .88rem; font-weight: 700; color: var(--burgundy); }
+    .tp-seat-empty { font-size: .82rem; color: #ccc; font-style: italic; }
+    .tp-seat-wa { font-size: .7rem; color: var(--orchid-mid); }
+
+    /* ── Waiting list ── */
+    .tp-waiting { background: #fff; border-radius: 14px; padding: 1.25rem; box-shadow: 0 2px 12px rgba(107,15,42,.06); margin-top: 1rem; }
+    .tp-waiting-title { font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: #aaa; font-weight: 700; margin-bottom: .75rem; }
+    .tp-waiting-player { font-size: .85rem; color: #888; padding: .3rem 0; border-bottom: 1px solid #f5eaf2; }
+    .tp-waiting-player:last-child { border-bottom: none; }
+
+    /* ── Alerts ── */
+    .tp-alert { padding: .75rem 1rem; border-radius: 10px; font-size: .82rem; font-weight: 600; margin-top: .75rem; display: none; }
+    .tp-alert-error { background: #fff0f0; color: #c0440a; border: 1px solid #ffd0d0; }
+    .tp-alert-success { background: #f0fbf4; color: #1a7a4a; border: 1px solid #b0e8c0; }
+
+    @media(max-width:500px) { .tp-join-row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <div class="nav-bar" style="background-color:var(--burgundy)">
+    <div data-animation="over-right" class="navmenu w-nav" data-easing2="ease" data-easing="ease" data-collapse="all" role="banner" data-no-scroll="1" data-duration="0" data-doc-height="1">
+      <div class="w-layout-layout quick-stack wf-layout-layout">
+        <div class="w-layout-cell cell-slogan"><div class="we-are-box"><div style="color:var(--orchid);letter-spacing:0.12em;font-size:0.7rem;text-transform:uppercase;font-weight:600">We are</div></div></div>
+        <div class="w-layout-cell cell-brand"><a href="index.html" class="brand w-nav-brand"><img src="images/logotag-blue.svg" loading="lazy" alt="MAH JOY" class="brand-logo" style="height:54px;width:auto;filter:brightness(0) invert(1)"></a></div>
+        <div class="w-layout-cell cell-menu"><div class="menu-button-wrapper"><div class="menu-button w-nav-button"><div class="dot-menu-button"></div></div></div></div>
+      </div>
+      <div class="nav-menu">
+        <a href="cart.html" class="nav-link w-inline-block mj-cart-nav" style="position:relative;">
+          <div class="nav-link-text" style="display:flex;align-items:center;gap:.4rem;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+            Carrito
+          </div>
+          <span class="mj-cart-badge" style="display:none;position:absolute;top:-4px;right:-8px;background:var(--orchid);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:.6rem;font-weight:800;width:18px;height:18px;border-radius:50%;align-items:center;justify-content:center;line-height:1;">0</span>
+        </a>
+        <a href="index.html" class="nav-link w-inline-block"><div class="nav-link-text">Home</div></a>
+        <a href="social-club.html" class="nav-link w-inline-block"><div class="nav-link-text" style="color:var(--orchid);">Social Club</div></a>
+        <a href="about.html" class="nav-link w-inline-block"><div class="nav-link-text">About</div></a>
+        <div class="mj-shop-dropdown">
+          <div class="nav-link mj-shop-toggle" tabindex="0" role="button" onclick="var l=this.nextElementSibling;l.style.display=l.style.display==='block'?'none':'block';" style="cursor:pointer"><div class="nav-link-text">Shop ▾</div></div>
+          <div class="mj-shop-list" style="display:none">
+            <a href="shop-mats.html" class="w-dropdown-link mj-shop-link">Mats</a>
+            <a href="shop-tiles.html" class="w-dropdown-link mj-shop-link">Tiles</a>
+            <a href="shop-racks.html" class="w-dropdown-link mj-shop-link">Racks</a>
+            <a href="shop-accessories.html" class="w-dropdown-link mj-shop-link">Accessories</a>
+          </div>
+        </div>
+      </div>
+      <div class="overlay-menu"></div>
+    </div>
+  </div>
+
+  <div class="tp-wrap">
+    <a href="social-club.html" class="tp-back">← Volver a Social Club</a>
+
+    <!-- Tournament header -->
+    <div id="tp-header-area">
+      <div class="tp-header">
+        <div class="tp-eyebrow">MAH JOY · Social Club</div>
+        <div class="tp-title" id="tp-title">Cargando...</div>
+        <div class="tp-meta" id="tp-meta"></div>
+        <div class="tp-progress-wrap"><div class="tp-progress-bar" id="tp-bar" style="width:0%"></div></div>
+        <div class="tp-progress-label"><span id="tp-count-label">0 inscritos</span><span id="tp-avail-label"></span></div>
+      </div>
+    </div>
+
+    <!-- Join form -->
+    <div class="tp-join-box" id="join-box">
+      <div class="tp-join-title">🀄 Únete al torneo</div>
+      <div class="tp-join-row">
+        <div>
+          <label class="sc-label">Tu nombre *</label>
+          <input class="sc-input" id="join-name" placeholder="¿Cómo te llaman?">
+        </div>
+        <div>
+          <label class="sc-label">WhatsApp (opcional)</label>
+          <input class="sc-input" id="join-wa" placeholder="+521..." type="tel">
+        </div>
+      </div>
+      <button class="tp-join-btn" onclick="joinTournament()" id="join-btn">Unirme →</button>
+      <div class="tp-alert tp-alert-error" id="join-error"></div>
+      <div class="tp-alert tp-alert-success" id="join-success"></div>
+
+      <div class="tp-share">
+        <button class="tp-share-btn" onclick="shareLink()">📋 Copiar link</button>
+        <button class="tp-share-btn" onclick="shareWhatsApp()">Compartir por WhatsApp</button>
+      </div>
+    </div>
+
+    <!-- Tables -->
+    <div id="tables-area"></div>
+  </div>
+
+  <script src="js/webflow.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+    const API_BASE = 'https://api-production-b888.up.railway.app';
+    const params = new URLSearchParams(window.location.search);
+    const tournamentId = parseInt(params.get('id'));
+    let tournamentData = null;
+
+    function escHtml(s) {
+      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    async function loadTournament() {
+      if (!tournamentId) { document.getElementById('tp-title').textContent = 'Torneo no encontrado'; return; }
+      try {
+        const res = await fetch(`${API_BASE}/public/social-club/tournaments/${tournamentId}`);
+        tournamentData = await res.json();
+        renderTournament(tournamentData);
+      } catch(e) {
+        document.getElementById('tp-title').textContent = 'Error al cargar torneo';
+      }
+    }
+
+    function renderTournament(t) {
+      document.title = `${t.name} — MAH JOY Social Club`;
+      document.getElementById('tp-title').innerHTML = escHtml(t.name) +
+        `<span class="tp-badge badge-${t.status}">${{open:'Abierto',full:'Lleno',started:'En juego',finished:'Finalizado',cancelled:'Cancelado'}[t.status]||t.status}</span>`;
+
+      const meta = [];
+      if (t.host_name) meta.push(`<span>🎲 ${escHtml(t.host_name)}</span>`);
+      if (t.date_text) meta.push(`<span>📅 ${escHtml(t.date_text)}</span>`);
+      if (t.location) meta.push(`<span>📍 ${escHtml(t.location)}</span>`);
+      document.getElementById('tp-meta').innerHTML = meta.join('');
+
+      const count = parseInt(t.player_count || 0);
+      const pct = Math.min(100, Math.round(count / t.max_players * 100));
+      document.getElementById('tp-bar').style.width = pct + '%';
+      document.getElementById('tp-count-label').textContent = `${count} inscritos`;
+      document.getElementById('tp-avail-label').textContent = `${t.max_players - count} lugares disponibles`;
+
+      if (t.status !== 'open') {
+        const jb = document.getElementById('join-box');
+        jb.querySelector('button').disabled = true;
+        jb.querySelector('button').textContent = t.status === 'full' ? 'Torneo lleno' : 'Torneo cerrado';
+      }
+
+      renderTables(t);
+    }
+
+    function renderTables(t) {
+      const area = document.getElementById('tables-area');
+      const players = t.players || [];
+      if (!players.length) {
+        area.innerHTML = `<div style="text-align:center;padding:2rem;color:#bbb;font-size:.9rem;">Sin jugadores aún — ¡sé el primero!</div>`;
+        return;
+      }
+
+      // Group into tables of 4
+      const tables = {};
+      players.forEach((p, i) => {
+        const tNum = Math.floor(i / 4) + 1;
+        if (!tables[tNum]) tables[tNum] = [];
+        tables[tNum].push({ ...p, seat: (i % 4) + 1 });
+      });
+
+      const winds = ['🀀 Este', '🀁 Sur', '🀂 Oeste', '🀃 Norte'];
+      let html = `<div class="tp-tables-title">🀄 Mesas</div><div class="tp-tables-grid">`;
+
+      Object.entries(tables).forEach(([num, seats]) => {
+        html += `<div class="tp-table-card"><div class="tp-table-num">Mesa ${num}</div>`;
+        for (let s = 0; s < 4; s++) {
+          const player = seats[s];
+          if (player) {
+            html += `<div class="tp-seat">
+              <div class="tp-seat-icon filled">${s + 1}</div>
+              <div>
+                <div class="tp-seat-name">${escHtml(player.player_name)}</div>
+                ${player.player_wa ? `<div class="tp-seat-wa">${escHtml(player.player_wa)}</div>` : ''}
+                <div style="font-size:.65rem;color:#ccc;margin-top:1px">${winds[s]}</div>
+              </div>
+            </div>`;
+          } else {
+            html += `<div class="tp-seat">
+              <div class="tp-seat-icon">·</div>
+              <div class="tp-seat-empty">Lugar disponible</div>
+            </div>`;
+          }
+        }
+        html += `</div>`;
+      });
+
+      html += `</div>`;
+
+      // Players beyond last full table already shown inside tables
+      area.innerHTML = html;
+    }
+
+    async function joinTournament() {
+      const name = document.getElementById('join-name').value.trim();
+      const wa = document.getElementById('join-wa').value.trim();
+      const errEl = document.getElementById('join-error');
+      const successEl = document.getElementById('join-success');
+      errEl.style.display = 'none'; successEl.style.display = 'none';
+
+      if (!name) { errEl.textContent = 'Escribe tu nombre'; errEl.style.display='block'; return; }
+
+      const btn = document.getElementById('join-btn');
+      btn.textContent = 'Registrando...'; btn.disabled = true;
+
+      try {
+        const res = await fetch(`${API_BASE}/public/social-club/tournaments/${tournamentId}/join`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ player_name: name, player_wa: wa || null }),
+        });
+        const data = await res.json();
+        if (data.id || data.player_name) {
+          const tableNum = data.table_number || '?';
+          const seat = data.seat || '?';
+          successEl.textContent = `✓ ¡Registrado! Mesa ${tableNum}, asiento ${seat}`;
+          successEl.style.display = 'block';
+          btn.textContent = '✓ ¡Ya estás inscrito!';
+          setTimeout(() => loadTournament(), 800);
+        } else {
+          errEl.textContent = data.error || 'Error al registrarse';
+          errEl.style.display = 'block';
+          btn.textContent = 'Unirme →'; btn.disabled = false;
+        }
+      } catch(e) {
+        errEl.textContent = 'Error de conexión';
+        errEl.style.display = 'block';
+        btn.textContent = 'Unirme →'; btn.disabled = false;
+      }
+    }
+
+    function shareLink() {
+      const url = window.location.href;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(() => {
+          const btn = event.target; btn.textContent = '✓ Copiado!';
+          setTimeout(() => btn.textContent = '📋 Copiar link', 2000);
+        });
+      }
+    }
+
+    function shareWhatsApp() {
+      const name = tournamentData?.name || 'torneo';
+      const url = window.location.href;
+      window.open(`https://wa.me/?text=${encodeURIComponent(`¡Únete a mi torneo de Mahjong! 🀄\n*${name}*\n\n${url}`)}`, '_blank');
+    }
+
+    document.addEventListener('DOMContentLoaded', loadTournament);
+  </script>
+</body>
+</html>
