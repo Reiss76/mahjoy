@@ -187,7 +187,9 @@ document.addEventListener('DOMContentLoaded', () => {
       ? [{ name: currentProduct.name, price: parseFloat(currentProduct.price) || 0, qty: data.qty }]
       : [];
 
-    const orderId = `mahjoy-${currentProduct?.id || ''}-${Date.now()}`;
+    // Include vendor ref in order ID
+    const vendorCode = window.MJVendor?.getCode() || null;
+    const orderId = `mahjoy-${currentProduct?.id || ''}-${vendorCode ? vendorCode + '-' : ''}${Date.now()}`;
 
     try {
       // Call CentumPay proxy on Proax API
@@ -204,7 +206,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const result = await res.json();
 
       if (result.ok && result.checkoutUrl) {
-        // Redirect to CentumPay hosted checkout
+        // Register vendor sale if applicable
+        if (vendorCode && window.MJVendor) {
+          const total = cart.reduce((a, i) => a + i.price * i.qty, 0);
+          window.MJVendor.registerSale({
+            orderId,
+            productNames: cart.map(i => i.name).join(', '),
+            amount: total,
+          });
+        }
         window.location.href = result.checkoutUrl;
       } else {
         // Fallback to WhatsApp if CentumPay fails
