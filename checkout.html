@@ -133,6 +133,10 @@
             <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:#888;">Subtotal</span>
             <span id="co-subtotal" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;font-weight:600;color:#555;"></span>
           </div>
+          <div id="co-discount-row" style="display:none;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
+            <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:#16a34a;font-weight:600;" id="co-discount-label">Descuento</span>
+            <span id="co-discount-amount" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:#16a34a;font-weight:700;"></span>
+          </div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
             <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:#888;">Envío</span>
             <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:var(--orchid-mid);font-weight:600;">A cotizar</span>
@@ -193,6 +197,20 @@
           <div>
             <label class="mj-co-label">Notas adicionales</label>
             <textarea class="mj-co-input" name="notes" rows="3" placeholder="Color preferido, variante, instrucciones de entrega..." style="resize:vertical;"></textarea>
+          </div>
+
+          <!-- Discount Code -->
+          <div id="co-discount-wrap" style="border:1.5px solid #f0e4ec;border-radius:12px;padding:1rem;background:#fdf8fb;">
+            <label class="mj-co-label" style="margin-bottom:.5rem;">Código de descuento</label>
+            <div style="display:flex;gap:.6rem;align-items:center;">
+              <input class="mj-co-input" type="text" id="co-discount-input" placeholder="Ingresa tu código" autocomplete="off"
+                style="flex:1;text-transform:uppercase;letter-spacing:.08em;margin-bottom:0;" maxlength="20">
+              <button type="button" id="co-discount-btn"
+                style="background:var(--burgundy);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;font-weight:700;padding:.6rem 1.1rem;border-radius:999px;border:none;cursor:pointer;white-space:nowrap;">
+                Aplicar
+              </button>
+            </div>
+            <div id="co-discount-msg" style="display:none;margin-top:.55rem;font-family:'Plus Jakarta Sans',sans-serif;font-size:.8rem;font-weight:600;"></div>
           </div>
 
           <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.78rem;color:#aaa;line-height:1.6;">

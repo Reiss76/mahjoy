@@ -30,6 +30,14 @@ const CATEGORY_MAP = {
 
 let currentProduct = null;
 let qty = 1;
+let appliedDiscount = null; // { code, vendorCode, vendorName, pct }
+
+function getDiscountedTotal() {
+  if (!currentProduct) return 0;
+  const sub = (parseFloat(currentProduct.price) || 0) * qty;
+  if (!appliedDiscount || appliedDiscount.pct <= 0) return sub;
+  return sub * (1 - appliedDiscount.pct / 100);
+}
 
 function resolveImageUrl(url) {
   if (!url) return null;
@@ -62,7 +70,21 @@ function updateTotals() {
   const unit = formatPriceNum(currentProduct.price);
   const sub = unit * qty;
   document.getElementById('co-subtotal').textContent = unit ? formatPrice(sub) : 'Consultar';
-  document.getElementById('co-total').textContent = unit ? formatPrice(sub) : 'Consultar';
+
+  // Discount row
+  const discRow = document.getElementById('co-discount-row');
+  if (appliedDiscount && appliedDiscount.pct > 0 && unit) {
+    const saving = sub * (appliedDiscount.pct / 100);
+    discRow.style.display = 'flex';
+    document.getElementById('co-discount-label').textContent =
+      `Descuento ${appliedDiscount.pct}% (${appliedDiscount.vendorName})`;
+    document.getElementById('co-discount-amount').textContent = `-${formatPrice(saving)}`;
+  } else {
+    discRow.style.display = 'none';
+  }
+
+  const total = getDiscountedTotal();
+  document.getElementById('co-total').textContent = unit ? formatPrice(total) : 'Consultar';
   updateWaLink();
 }
 
@@ -182,9 +204,13 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.disabled = true;
     btn.style.opacity = '0.7';
 
-    // Build cart
+    // Build cart — apply discount if active
+    const basePrice = parseFloat(currentProduct?.price) || 0;
+    const discountedPrice = appliedDiscount && appliedDiscount.pct > 0
+      ? Math.round(basePrice * (1 - appliedDiscount.pct / 100) * 100) / 100
+      : basePrice;
     const cart = currentProduct
-      ? [{ name: currentProduct.name, price: parseFloat(currentProduct.price) || 0, qty: data.qty }]
+      ? [{ name: currentProduct.name, price: discountedPrice, qty: data.qty }]
       : [];
 
     // Include vendor ref in order ID
@@ -237,4 +263,73 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.style.opacity = '1';
     }
   });
+
+  // ── Discount code handler ─────────────────────────────────────────────────
+  const discInput = document.getElementById('co-discount-input');
+  const discBtn   = document.getElementById('co-discount-btn');
+  const discMsg   = document.getElementById('co-discount-msg');
+
+  discBtn.addEventListener('click', async () => {
+    const code = discInput.value.trim().toUpperCase();
+    if (!code) return;
+
+    discBtn.textContent = '...';
+    discBtn.disabled = true;
+    discMsg.style.display = 'none';
+
+    try {
+      const res = await fetch(`${MJ_API_BASE}/public/vendors/discount/${encodeURIComponent(code)}`);
+      const data = await res.json();
+
+      if (!res.ok || !data.valid) {
+        discMsg.style.display = 'block';
+        discMsg.style.color = '#dc2626';
+        discMsg.textContent = '✗ Código no válido o expirado';
+        appliedDiscount = null;
+        updateTotals();
+      } else {
+        appliedDiscount = {
+          code: data.discount_code,
+          vendorCode: data.vendor_code,
+          vendorName: data.vendor_name,
+          pct: data.discount_pct,
+        };
+        // Also set vendor ref for commission tracking
+        if (window.MJVendor) {
+          try {
+            const resp = await fetch(`${MJ_API_BASE}/public/vendors/by-code/${data.vendor_code}`);
+            const vd = await resp.json();
+            if (vd?.code) {
+              localStorage.setItem('mj_vendor_ref', JSON.stringify({ code: vd.code, name: vd.name, ts: Date.now() }));
+            }
+          } catch {}
+        }
+        discInput.disabled = true;
+        discInput.style.opacity = '.6';
+        discBtn.textContent = '✓';
+        discBtn.style.background = '#16a34a';
+        discMsg.style.display = 'block';
+        if (data.discount_pct > 0) {
+          discMsg.style.color = '#16a34a';
+          discMsg.textContent = `✓ ${data.discount_pct}% de descuento aplicado — referido de ${data.vendor_name} 🎉`;
+        } else {
+          discMsg.style.color = '#9B3E7A';
+          discMsg.textContent = `✓ Código registrado — referido de ${data.vendor_name}`;
+        }
+        updateTotals();
+      }
+    } catch {
+      discMsg.style.display = 'block';
+      discMsg.style.color = '#dc2626';
+      discMsg.textContent = '✗ No se pudo validar el código';
+    } finally {
+      if (!appliedDiscount) {
+        discBtn.textContent = 'Aplicar';
+        discBtn.disabled = false;
+      }
+    }
+  });
+
+  // Allow pressing Enter in discount input
+  discInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); discBtn.click(); } });
 });
