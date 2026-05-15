@@ -106,15 +106,21 @@ async function loadProduct() {
 
   if (!productId && !productSku) { showError(); return; }
 
-  let data;
+  let products;
   try {
-    const res = await fetch('products.json');
-    data = await res.json();
+    const res = await fetch(MJ_API_BASE + '/public/shop/mahjoy/products');
+    if (!res.ok) throw new Error('API error');
+    const data = await res.json();
+    products = (data.products || []).map(p => ({
+      ...p,
+      primary_image_url: p.primary_image_url
+        ? (p.primary_image_url.startsWith('http') ? p.primary_image_url : MJ_API_BASE + p.primary_image_url)
+        : null,
+      images: (p.images || []).map(u => u.startsWith('http') ? u : MJ_API_BASE + u),
+    }));
   } catch (e) {
     showError(); return;
   }
-
-  const products = data.products || [];
   const product = productId
     ? products.find(p => p.id === productId)
     : products.find(p => p.sku === productSku);

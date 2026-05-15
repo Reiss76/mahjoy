@@ -3,8 +3,9 @@
  * Fetches live inventory from Proax API and renders product cards.
  */
 
-// Usar products.json local (evita CORS) — actualizar al agregar productos
-const MJ_API = '/products.json';
+// Fetch en vivo desde Proax API — siempre sincronizado con el inventario
+const MJ_API_BASE = 'https://api-production-b888.up.railway.app';
+const MJ_API = MJ_API_BASE + '/public/shop/mahjoy/products';
 
 // Category keyword map — matches product names/SKUs to category pages
 const CATEGORY_MAP = {
@@ -98,7 +99,14 @@ async function loadShopProducts({ containerId, category = null, categoryLabel = 
     if (!res.ok) throw new Error('API error');
     const data = await res.json();
 
-    let products = data.products || [];
+    // Normalizar URLs de imágenes (la API puede devolver paths relativos)
+    let products = (data.products || []).map(p => ({
+      ...p,
+      primary_image_url: p.primary_image_url
+        ? (p.primary_image_url.startsWith('http') ? p.primary_image_url : MJ_API_BASE + p.primary_image_url)
+        : null,
+      images: (p.images || []).map(u => u.startsWith('http') ? u : MJ_API_BASE + u),
+    }));
 
     // Filter by category if specified
     if (category) {
