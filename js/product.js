@@ -114,9 +114,13 @@ async function loadProduct() {
     products = (data.products || []).map(p => ({
       ...p,
       primary_image_url: p.primary_image_url
-        ? (p.primary_image_url.startsWith('http') ? p.primary_image_url : MJ_API_BASE + p.primary_image_url)
+        ? (p.primary_image_url.startsWith('http')
+            ? p.primary_image_url
+            : MJ_API_BASE + p.primary_image_url.replace('/api/public/media', '/public/media'))
         : null,
-      images: (p.images || []).map(u => u.startsWith('http') ? u : MJ_API_BASE + u),
+      images: (p.images || []).map(u =>
+        u.startsWith('http') ? u : MJ_API_BASE + u.replace('/api/public/media', '/public/media')
+      ),
     }));
   } catch (e) {
     showError(); return;
