@@ -7,19 +7,44 @@
 const MJ_API_BASE = 'https://api-production-b888.up.railway.app';
 const MJ_API = MJ_API_BASE + '/public/shop/mahjoy/products';
 
-// Category keyword map — matches product names/SKUs to category pages
-const CATEGORY_MAP = {
-  'tiles':         ['tile', 'ficha', 'pieza'],
-  'mats':          ['mat', 'tapete', 'base'],
-  'racks':         ['rack', 'rack', 'soporte', 'atril'],
-  'mahjoy-bags':   ['mahjoy bag', 'bolsa mahjoy', 'mj bag'],
-  'tile-bags':     ['tile bag', 'bolsa ficha', 'bolsa tile'],
-  'rack-bags':     ['rack bag', 'bolsa rack', 'bolsa atril'],
-  'accessories':   ['accessory', 'accesorio', 'set', 'kit'],
-  'card-holders':  ['card holder', 'porta carta', 'card'],
-  'shufflers':     ['shuffler', 'mezclador', 'revolvedor'],
-  'line-finder':   ['line finder', 'buscador', 'guía'],
-};
+// Category matching — SKU-prefix based (precise, no false positives)
+// SKU patterns: TILE-* | MAT-* | RACK-* | RAKBAG-* | RACK-BAG* | BAG-tile* | BAG-lila|pink|blue|rouge|fiucsa | LINE-* | SHUF-*
+function matchCategory(product, category) {
+  const sku = (product.sku || '').toUpperCase();
+  const name = (product.name || '').toLowerCase();
+
+  switch (category) {
+    case 'tiles':
+      return sku.startsWith('TILE-');
+    case 'mats':
+      return sku.startsWith('MAT-') || sku.startsWith('MAT');
+    case 'racks':
+      return (sku.startsWith('RACK-') || sku.startsWith('RACK')) &&
+             !sku.includes('BAG') && !sku.startsWith('RAKBAG');
+    case 'rack-bags':
+      return sku.startsWith('RAKBAG') || (sku.startsWith('RACK') && sku.includes('BAG'));
+    case 'tile-bags':
+      return sku.startsWith('BAG-TILE') || name.includes('tile bag');
+    case 'mahjoy-bags':
+      // Bags that are NOT tile bags: BAG-lila, BAG-pink, BAG-blue, BAG-rouge, BAG-fiucsa, etc.
+      return sku.startsWith('BAG-') && !sku.startsWith('BAG-TILE');
+    case 'shufflers':
+      return sku.startsWith('SHUF-');
+    case 'line-finder':
+      return sku.startsWith('LINE-');
+    case 'accessories':
+      return sku.startsWith('ACC-') || sku.startsWith('CARD-') ||
+             (!sku.startsWith('TILE-') && !sku.startsWith('MAT') &&
+              !sku.startsWith('RACK') && !sku.startsWith('RAKBAG') &&
+              !sku.startsWith('BAG-') && !sku.startsWith('SHUF-') &&
+              !sku.startsWith('LINE-'));
+    default:
+      return false;
+  }
+}
+
+// Legacy map kept for reference (not used for filtering)
+const CATEGORY_MAP = {};
 
 function formatPrice(price) {
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(price);
@@ -112,15 +137,9 @@ async function loadShopProducts({ containerId, category = null, categoryLabel = 
       ),
     }));
 
-    // Filter by category if specified
+    // Filter by category if specified — SKU-based matching
     if (category) {
-      products = products.filter(p => {
-        // Prefer API category field, fallback to keyword matching
-        if (p.category) return p.category === category;
-        const keywords = CATEGORY_MAP[category] || [];
-        const text = (p.name + ' ' + (p.sku || '') + ' ' + (p.description || '')).toLowerCase();
-        return keywords.some(kw => text.includes(kw));
-      });
+      products = products.filter(p => matchCategory(p, category));
     }
 
     if (products.length === 0) {
