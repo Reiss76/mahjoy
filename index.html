@@ -48,65 +48,42 @@
     }
     .mj-hero-headline span { display: block; }
 
-    /* Diamond badge */
-    .mj-diamond-wrap {
+    /* Circle badge (original) */
+    .mj-circle-wrap {
       position: relative;
       display: flex;
       justify-content: center;
-      margin: -2rem 0 -2rem;
+      margin: -3rem 0 -3rem;
       z-index: 2;
     }
-    .mj-diamond {
-      width: 220px;
-      height: 220px;
-      background-color: var(--burgundy);
-      transform: rotate(45deg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 12px;
-    }
-    .mj-diamond-inner {
-      transform: rotate(-45deg);
-      text-align: center;
-      color: #FAF6F0;
-      padding: 12px;
-    }
-    .mj-diamond-inner .mj-badge-circle {
-      width: 160px;
-      height: 160px;
+    .mj-circle-badge {
+      width: 240px;
+      height: 240px;
+      position: relative;
       border-radius: 50%;
-      border: 1.5px solid rgba(250,246,240,0.4);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      margin: auto;
-      gap: 4px;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(107,15,42,0.25);
     }
-    .mj-badge-join {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 0.52rem;
-      font-weight: 700;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--orchid);
-      opacity: 0.9;
+    .mj-circle-badge .circle-text-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      animation: mj-spin 18s linear infinite;
+      z-index: 2;
     }
-    .mj-badge-logo {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.4rem;
-      font-weight: 900;
-      color: #FAF6F0;
-      letter-spacing: 0.08em;
-      line-height: 1;
+    .mj-circle-badge .circle-gif {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
     }
-    .mj-badge-sub {
-      font-family: 'Playfair Display', serif;
-      font-size: 0.55rem;
-      font-style: italic;
-      color: rgba(250,246,240,0.7);
-      letter-spacing: 0.06em;
+    @keyframes mj-spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
 
     /* ── Categories ── */
@@ -367,15 +344,10 @@
       <span>THINK.</span>
       <span>MAHJONG.</span>
     </h1>
-    <div class="mj-diamond-wrap">
-      <div class="mj-diamond">
-        <div class="mj-diamond-inner">
-          <div class="mj-badge-circle">
-            <span class="mj-badge-join">Join the Mahjoy Society</span>
-            <span class="mj-badge-logo">MAH JOY</span>
-            <span class="mj-badge-sub">Think. Play. Mahjong.</span>
-          </div>
-        </div>
+    <div class="mj-circle-wrap">
+      <div class="mj-circle-badge">
+        <img src="images/gifhero.gif" alt="MAH JOY" class="circle-gif">
+        <img src="images/Circle-Hero-Text-2.svg" alt="" class="circle-text-svg">
       </div>
     </div>
   </section>
