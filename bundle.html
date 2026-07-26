@@ -57,7 +57,7 @@
     .mj-step-price-tag{margin-left:auto;font-family:'Plus Jakarta Sans',sans-serif;font-size:.8rem;font-weight:700;color:var(--orchid);}
 
     /* Category cards (horizontal scroll) */
-    .mj-cat-cards{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
+    .mj-cat-cards{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x;overscroll-behavior-x:contain;}
     .mj-cat-cards::-webkit-scrollbar{display:none;}
     .mj-cat-card{flex:0 0 auto;width:110px;cursor:pointer;border:2px solid transparent;border-radius:12px;overflow:hidden;transition:border-color .2s,transform .2s;background:#faf0f5;}
     .mj-cat-card:hover{transform:translateY(-2px);border-color:var(--orchid);}
@@ -184,51 +184,51 @@
       <!-- RIGHT: Selectors -->
       <div class="mj-bundle-form">
 
-        <!-- Step 1: Tapete -->
+        <!-- Step 1: Mats -->
         <div class="mj-bundle-step">
           <div class="mj-step-header">
             <div class="mj-step-num">1</div>
-            <div class="mj-step-label">🎯 Tapete</div>
+            <div class="mj-step-label">🎯 Mats</div>
             <div class="mj-step-price-tag" id="price-mat">—</div>
           </div>
           <div class="mj-cat-cards" id="cards-mat"><span class="mj-cat-loading">Cargando…</span></div>
         </div>
 
-        <!-- Step 2: Fichas -->
+        <!-- Step 2: Tiles -->
         <div class="mj-bundle-step">
           <div class="mj-step-header">
             <div class="mj-step-num">2</div>
-            <div class="mj-step-label">🀄 Fichas</div>
+            <div class="mj-step-label">🀄 Tiles</div>
             <div class="mj-step-price-tag" id="price-tiles">—</div>
           </div>
           <div class="mj-cat-cards" id="cards-tiles"><span class="mj-cat-loading">Cargando…</span></div>
         </div>
 
-        <!-- Step 3: Atril -->
+        <!-- Step 3: Racks -->
         <div class="mj-bundle-step">
           <div class="mj-step-header">
             <div class="mj-step-num">3</div>
-            <div class="mj-step-label">🪵 Atriles</div>
+            <div class="mj-step-label">🪵 Racks</div>
             <div class="mj-step-price-tag" id="price-rack">—</div>
           </div>
           <div class="mj-cat-cards" id="cards-rack"><span class="mj-cat-loading">Cargando…</span></div>
         </div>
 
-        <!-- Step 4: Bolsa -->
+        <!-- Step 4: Bags -->
         <div class="mj-bundle-step">
           <div class="mj-step-header">
             <div class="mj-step-num">4</div>
-            <div class="mj-step-label">👜 Bolsa</div>
+            <div class="mj-step-label">👜 Bags</div>
             <div class="mj-step-price-tag" id="price-bag">—</div>
           </div>
           <div class="mj-cat-cards" id="cards-bag"><span class="mj-cat-loading">Cargando…</span></div>
         </div>
 
-        <!-- Step 5: Barajeadora (optional) -->
+        <!-- Step 5: Shufflers (optional) -->
         <div class="mj-bundle-step">
           <div class="mj-step-header">
             <div class="mj-step-num">5</div>
-            <div class="mj-step-label">🎰 Barajeadora <span style="font-size:.6rem;font-weight:400;color:var(--orchid);text-transform:none;letter-spacing:0;">(opcional)</span></div>
+            <div class="mj-step-label">🎰 Shufflers <span style="font-size:.6rem;font-weight:400;color:var(--orchid);text-transform:none;letter-spacing:0;">(optional)</span></div>
             <div class="mj-step-price-tag" id="price-shuf">—</div>
           </div>
           <div class="mj-cat-cards" id="cards-shuf"><span class="mj-cat-loading">Cargando…</span></div>
@@ -268,11 +268,11 @@
 
     // Category config: id, previewEl, cardsEl, pricEl, SKU matcher
     const CATS = [
-      { id:'mat',   label:'Tapete',      prev:'prev-mat',   cards:'cards-mat',   priceEl:'price-mat',   match: s => s.startsWith('MAT-') },
-      { id:'tiles', label:'Fichas',      prev:'prev-tiles', cards:'cards-tiles', priceEl:'price-tiles', match: s => s.startsWith('TILE-') },
-      { id:'rack',  label:'Atril',       prev:'prev-rack',  cards:'cards-rack',  priceEl:'price-rack',  match: s => s.startsWith('RACK-') || s.startsWith('RAKBAG-') },
-      { id:'bag',   label:'Bolsa',       prev:'prev-bag',   cards:'cards-bag',   priceEl:'price-bag',   match: s => s.startsWith('BAG-') },
-      { id:'shuf',  label:'Barajeadora', prev:null,         cards:'cards-shuf',  priceEl:'price-shuf',  match: s => s.startsWith('SHUF-') || s.startsWith('LINE-') },
+      { id:'mat',   label:'Mat',      prev:'prev-mat',   cards:'cards-mat',   priceEl:'price-mat',   match: s => s.startsWith('MAT-') },
+      { id:'tiles', label:'Tiles',    prev:'prev-tiles', cards:'cards-tiles', priceEl:'price-tiles', match: s => s.startsWith('TILE-') },
+      { id:'rack',  label:'Rack',     prev:'prev-rack',  cards:'cards-rack',  priceEl:'price-rack',  match: s => s.startsWith('RACK-') || s.startsWith('RAKBAG-') },
+      { id:'bag',   label:'Bag',      prev:'prev-bag',   cards:'cards-bag',   priceEl:'price-bag',   match: s => s.startsWith('BAG-') },
+      { id:'shuf',  label:'Shuffler', prev:null,         cards:'cards-shuf',  priceEl:'price-shuf',  match: s => s.startsWith('SHUF-') || s.startsWith('LINE-') },
     ];
 
     // Selection state: catId → product object
