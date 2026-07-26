@@ -212,7 +212,7 @@
     }
 
     function imgUrl(product) {
-      const urls = product.published_image_urls;
+      const urls = [product.primary_image_url, ...(product.published_image_urls||[]), ...(product.images||[])].filter(Boolean);
       if (urls && urls.length > 0) {
         let key = urls[0];
         if (key.startsWith('/api/public/media')) key = key.replace('/api/public/media', '/public/media');
