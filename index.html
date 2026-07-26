@@ -48,37 +48,37 @@
     }
     .mj-hero-headline span { display: block; }
 
-    /* Circle badge — clean implementation, no Webflow JS needed */
+    /* Badge — cuadrado original con logo + anillo rotando */
     .mj-circle-outer {
       display: flex;
       justify-content: center;
-      margin: -3rem 0 -3rem;
+      margin: -3.5rem 0 -3.5rem;
       position: relative;
       z-index: 2;
     }
-    .mj-badge {
-      width: 240px;
-      height: 240px;
-      border-radius: 50%;
-      overflow: hidden;
+    .mj-badge-square {
+      width: 320px;
+      height: 320px;
+      background-color: var(--burgundy);
       position: relative;
-      box-shadow: 0 8px 40px rgba(107,15,42,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .mj-badge-gif {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+    .mj-badge-logo {
+      width: 70%;
+      height: 70%;
+      object-fit: contain;
+      filter: brightness(0) invert(1);
+      position: relative;
       z-index: 1;
     }
-    .mj-badge-svg {
+    .mj-badge-ring {
       position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 2;
+      top: 10%; left: 10%;
+      width: 80%; height: 80%;
       animation: mj-spin 18s linear infinite;
+      z-index: 2;
       pointer-events: none;
     }
     @keyframes mj-spin {
@@ -86,7 +86,7 @@
       to { transform: rotate(360deg); }
     }
     @media (max-width: 768px) {
-      .mj-badge { width: 180px; height: 180px; }
+      .mj-badge-square { width: 240px; height: 240px; }
     }
 
     /* ── Categories ── */
@@ -348,40 +348,14 @@
       <span>MAHJONG.</span>
     </h1>
     <div class="mj-circle-outer">
-      <div class="mj-badge">
-        <img src="images/gifhero.gif" alt="MAH JOY" class="mj-badge-gif">
-        <img src="images/Circle-Hero-Text-2.svg" alt="" class="mj-badge-svg">
+      <div class="mj-badge-square">
+        <img src="images/logotag-blue.svg" alt="MAH JOY" class="mj-badge-logo">
+        <img src="images/Circle-Hero-Text-2.svg" alt="" class="mj-badge-ring">
       </div>
     </div>
   </section>
 
   <!-- ── CATEGORIES ── -->
-  <section class="mj-categories">
-    <div class="mj-categories-grid">
-      <div class="mj-cat-item">
-        <div class="mj-cat-label">Mats</div>
-        <a href="shop-mats.html" class="mj-cat-img-wrap" style="display:block;">
-          <img src="images/home-mats.jpg" alt="Mahjoy Mats" loading="lazy">
-        </a>
-        <a href="shop-mats.html" class="mj-cat-link">New Mats Available!</a>
-      </div>
-      <div class="mj-cat-item">
-        <div class="mj-cat-label">Tiles</div>
-        <a href="shop-tiles.html" class="mj-cat-img-wrap" style="display:block;">
-          <img src="images/home-tiles.jpg" alt="Mahjoy Tiles" loading="lazy">
-        </a>
-        <a href="shop-tiles.html" class="mj-cat-link">From $380.00</a>
-      </div>
-      <div class="mj-cat-item">
-        <div class="mj-cat-label">Accessories</div>
-        <a href="shop-racks.html" class="mj-cat-img-wrap" style="display:block;">
-          <img src="images/home-racks.jpg" alt="Mahjoy Accessories" loading="lazy">
-        </a>
-        <a href="shop-racks.html" class="mj-cat-link">From $10.00</a>
-      </div>
-    </div>
-  </section>
-
   <!-- ── TAGLINE ── -->
   <section class="mj-tagline">
     <p class="mj-tagline-eyebrow">✦ Think. Play. Mahjong. ✦</p>
