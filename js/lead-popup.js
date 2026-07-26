@@ -74,12 +74,11 @@
     <div id="mj-lead-modal" role="dialog" aria-modal="true" aria-label="Únete a la comunidad Mahjoy">
       <button id="mj-lead-close" aria-label="Cerrar">✕</button>
       <div id="mj-lead-form">
-        <p class="mj-popup-eyebrow">Únete a la comunidad</p>
-        <h2>Encuentra tu mesa.<br><em>Conoce tu gente.</em></h2>
+        <h2><em>Únete a la comunidad</em></h2>
         <p>Novedades, tips para principiantes y acceso anticipado a nuevos sets — directo a tu correo y WhatsApp.</p>
         <input class="mj-lead-input" id="mj-name" type="text" placeholder="Tu nombre (opcional)" autocomplete="name" />
         <input class="mj-lead-input" id="mj-email" type="email" placeholder="Email" autocomplete="email" />
-        <input class="mj-lead-input" id="mj-wa" type="tel" placeholder="WhatsApp (ej. 8112345678)" autocomplete="tel" />
+        <input class="mj-lead-input" id="mj-wa" type="tel" placeholder="WhatsApp (opcional, ej. 8112345678)" autocomplete="tel" />
         <button id="mj-lead-submit">Únete ahora</button>
         <span class="mj-lead-skip" id="mj-lead-skip">No gracias, quizás luego</span>
       </div>
