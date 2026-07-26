@@ -50,31 +50,27 @@
 
     /* ── Selector pane ── */
     .mj-bundle-form{display:flex;flex-direction:column;gap:20px;}
-    .mj-bundle-step{background:#fff;border-radius:16px;padding:20px 20px 18px;box-shadow:0 2px 12px rgba(107,15,42,.07);}
-    .mj-step-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+    /* Step card: no horizontal padding — scroll container gets full width */
+    .mj-bundle-step{background:#fff;border-radius:16px;padding:20px 0 18px;overflow:hidden;box-shadow:0 2px 12px rgba(107,15,42,.07);}
+    .mj-step-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:0 20px;}
     .mj-step-num{width:28px;height:28px;background:var(--burgundy);color:#fff;border-radius:50%;font-family:'Plus Jakarta Sans',sans-serif;font-size:.75rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
     .mj-step-label{font-family:'Plus Jakarta Sans',sans-serif;font-size:.8rem;font-weight:700;color:var(--burgundy);text-transform:uppercase;letter-spacing:.1em;}
     .mj-step-price-tag{margin-left:auto;font-family:'Plus Jakarta Sans',sans-serif;font-size:.8rem;font-weight:700;color:var(--orchid);}
 
-    /* ── Mobile: native select ── */
+    /* ── Card scroll — full width, iOS friendly ── */
     .mj-cat-select{display:none;}
-    @media(max-width:768px){
-      .mj-cat-select{display:block;width:100%;padding:12px 14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;color:var(--burgundy);border:1.5px solid rgba(107,15,42,.2);border-radius:10px;background:#fff;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B0F2A' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;cursor:pointer;}
-      .mj-cat-cards-wrap{display:none!important;}
-    }
-    /* ── Desktop: card scroll ── */
-    .mj-cat-cards-wrap{overflow:hidden;width:100%;}
-    .mj-cat-cards{overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;width:100%;padding-bottom:8px;scrollbar-width:none;}
+    .mj-cat-cards-wrap{width:100%;}
+    .mj-cat-cards{overflow-x:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;width:100%;padding:0 20px 10px;scrollbar-width:none;}
     .mj-cat-cards::-webkit-scrollbar{display:none;}
-    .mj-cat-cards-inner{display:inline-block;white-space:nowrap;padding:0 4px;}
-    .mj-cat-card{display:inline-block;vertical-align:top;width:110px;white-space:normal;cursor:pointer;border:2px solid transparent;border-radius:12px;overflow:hidden;transition:border-color .2s,transform .2s;background:#faf0f5;margin-right:10px;}
+    .mj-cat-cards-inner{display:inline-flex;gap:10px;vertical-align:top;}
+    .mj-cat-card{flex:0 0 110px;cursor:pointer;border:2px solid transparent;border-radius:12px;overflow:hidden;transition:border-color .2s,transform .2s;background:#faf0f5;}
     .mj-cat-card:hover{transform:translateY(-2px);border-color:var(--orchid);}
     .mj-cat-card.selected{border-color:var(--burgundy);box-shadow:0 0 0 3px rgba(107,15,42,.12);}
     .mj-cat-card img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;}
     .mj-cat-card-noimg{width:100%;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;background:#f5e8f0;}
     .mj-cat-card-name{padding:6px 6px 7px;font-family:'Plus Jakarta Sans',sans-serif;font-size:.62rem;font-weight:700;color:var(--burgundy);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .mj-cat-card-price{font-family:'Plus Jakarta Sans',sans-serif;font-size:.58rem;color:var(--orchid-mid);text-align:center;padding-bottom:6px;}
-    .mj-cat-loading{font-family:'Plus Jakarta Sans',sans-serif;font-size:.75rem;color:rgba(107,15,42,.4);padding:8px 0;}
+    .mj-cat-loading{font-family:'Plus Jakarta Sans',sans-serif;font-size:.75rem;color:rgba(107,15,42,.4);padding:0 20px 8px;}
 
     /* ── Total bar ── */
     .mj-bundle-total-bar{background:#fff;border-radius:16px;padding:20px 24px;box-shadow:0 4px 20px rgba(107,15,42,.12);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:4px;}
@@ -377,6 +373,7 @@
       container.innerHTML = '';
       const inner = document.createElement('div');
       inner.className = 'mj-cat-cards-inner';
+      inner.style.cssText = 'display:inline-flex;gap:10px;padding-right:20px;';
       container.appendChild(inner);
 
       // "Ninguno" card for optional/deselect
