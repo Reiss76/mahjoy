@@ -195,7 +195,7 @@ async function loadProduct() {
   if (product.stock > 5) {
     stockEl.innerHTML = '<span class="mj-pdp-stock-badge in">● En stock</span>';
   } else if (product.stock > 0) {
-    stockEl.innerHTML = `<span class="mj-pdp-stock-badge low">● Últimas ${product.stock} piezas</span>`;
+    stockEl.innerHTML = '<span class="mj-pdp-stock-badge low">● Pocas piezas disponibles</span>';
   } else {
     stockEl.innerHTML = '<span class="mj-pdp-stock-badge out">● Agotado</span>';
     document.getElementById('pdp-order-btn').style.opacity = '0.4';
@@ -255,7 +255,7 @@ async function loadProduct() {
   document.getElementById('pdp-meta-cat').textContent = catLabel;
   document.getElementById('pdp-meta-sku').textContent = product.sku || '—';
   document.getElementById('pdp-meta-stock').textContent =
-    product.stock > 0 ? `${product.stock} disponibles` : 'Sin stock';
+    product.stock > 0 ? 'Disponible' : 'Sin stock';
 
   // WhatsApp share
   const waText = `Hola! Me interesa este producto de MAH JOY:\n*${product.name}*\n${window.location.href}`;
