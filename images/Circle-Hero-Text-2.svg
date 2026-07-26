@@ -8,8 +8,8 @@
     "/>
   </defs>
   <text font-family="'Plus Jakarta Sans', sans-serif" font-size="19" font-weight="700" letter-spacing="8" fill="#C76BA4" text-anchor="start">
-    <textPath href="#circle-path" startOffset="0%">
-      THINK. ✦ PLAY. ✦ MAHJONG. ✦ MAH JOY ✦ THINK. ✦ PLAY. ✦ MAHJONG. ✦
+    <textPath href="#circle-path" startOffset="0%" textLength="1055" lengthAdjust="spacing">
+      THINK. ✦ PLAY. ✦ MAHJONG. ✦ MAH JOY ✦ THINK. ✦ PLAY. ✦ MAHJONG.
     </textPath>
   </text>
 </svg>
