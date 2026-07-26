@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Colección — MAH JOY</title>
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <link href="css/normalize.css" rel="stylesheet" type="text/css">
+  <link href="css/webflow.css" rel="stylesheet" type="text/css">
+  <link href="css/mahjoy.webflow.css" rel="stylesheet" type="text/css">
+  <link href="css/mahjoy-brand.css" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="images/icon-burgundy.svg" rel="shortcut icon" type="image/svg+xml">
+  <style>
+    :root { --burgundy:#6B0F2A; --orchid:#C76BA4; --orchid-mid:#9B3E7A; --blush:#F5E8F0; --navy:#1A1034; --cream:#FAF6F0; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+
+    .mj-cat-header {
+      background-color: var(--navy);
+      text-align: center;
+      padding: 48px 24px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    .mj-cat-header::before, .mj-cat-header::after {
+      content:''; position:absolute; left:0; right:0; height:4px;
+      background:linear-gradient(90deg,transparent,var(--orchid),var(--burgundy),var(--orchid),transparent);
+    }
+    .mj-cat-header::before { top:12px; }
+    .mj-cat-header::after { bottom:12px; }
+    .mj-cat-header-deco { position:absolute; width:60px; height:60px; border:2px solid rgba(199,107,164,0.35); }
+    .mj-cat-header-deco.tl { top:20px;left:20px;border-right:none;border-bottom:none; }
+    .mj-cat-header-deco.tr { top:20px;right:20px;border-left:none;border-bottom:none; }
+    .mj-cat-header-deco.bl { bottom:20px;left:20px;border-right:none;border-top:none; }
+    .mj-cat-header-deco.br { bottom:20px;right:20px;border-left:none;border-top:none; }
+    .mj-cat-header-eyebrow { font-family:'Plus Jakarta Sans',sans-serif; font-size:0.65rem; font-weight:700; letter-spacing:0.25em; text-transform:uppercase; color:var(--orchid); margin-bottom:10px; }
+    .mj-cat-header-title { font-family:'Playfair Display',serif; font-size:clamp(3rem,10vw,7rem); font-weight:900; font-style:italic; color:var(--cream); line-height:1; }
+
+    /* Filter pills */
+    .mj-filter-bar {
+      background-color: var(--blush);
+      padding: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    .mj-filter-pill {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 8px 20px;
+      border-radius: 999px;
+      border: 1.5px solid var(--burgundy);
+      color: var(--burgundy);
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .mj-filter-pill.active, .mj-filter-pill:hover {
+      background: var(--burgundy);
+      color: #fff;
+    }
+
+    /* Product grid */
+    .mj-collection-section {
+      background-color: var(--blush);
+      padding: 8px 24px 64px;
+    }
+    #mj-product-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .mj-prod-card {
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(107,15,42,0.07);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .mj-prod-card:hover { transform:translateY(-3px); box-shadow:0 8px 28px rgba(107,15,42,0.14); }
+    .mj-prod-card-img { width:100%; aspect-ratio:1/1; object-fit:cover; background:#f0e0ea; display:block; }
+    .mj-prod-card-img.placeholder { display:flex; align-items:center; justify-content:center; }
+    .mj-prod-card-img.placeholder svg { opacity:0.2; }
+    .mj-prod-card-body { padding:12px 14px 14px; }
+    .mj-prod-card-name { font-family:'Playfair Display',serif; font-size:0.88rem; font-weight:700; color:var(--burgundy); margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .mj-prod-card-price { font-family:'Plus Jakarta Sans',sans-serif; font-size:0.75rem; font-weight:700; color:var(--orchid); }
+    .mj-prod-card-add { width:100%; margin-top:10px; padding:7px; background:var(--burgundy); color:#fff; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.68rem; font-weight:800; letter-spacing:0.1em; text-transform:uppercase; border:none; border-radius:6px; cursor:pointer; transition:background 0.2s; }
+    .mj-prod-card-add:hover { background:var(--orchid-mid); }
+
+    /* Loading / empty */
+    #mj-loading { text-align:center; padding:48px; font-family:'Plus Jakarta Sans',sans-serif; color:var(--orchid); font-size:0.9rem; letter-spacing:0.1em; grid-column:1/-1; }
+
+    /* Footer */
+    .mj-footer { background-color:var(--burgundy); padding:40px 24px; text-align:center; }
+    .mj-footer-logo { font-family:'Playfair Display',serif; font-size:1.5rem; font-weight:900; color:#FAF6F0; letter-spacing:0.15em; margin-bottom:16px; }
+    .mj-footer-links { display:flex; flex-wrap:wrap; justify-content:center; gap:20px; margin-bottom:20px; }
+    .mj-footer-links a { font-family:'Plus Jakarta Sans',sans-serif; font-size:0.75rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:rgba(250,246,240,0.6); text-decoration:none; }
+    .mj-footer-links a:hover { color:var(--orchid); }
+    .mj-footer-copy { font-family:'Plus Jakarta Sans',sans-serif; font-size:0.7rem; color:rgba(250,246,240,0.35); }
+
+    @media (max-width: 900px) { #mj-product-grid { grid-template-columns:repeat(3,1fr); } }
+    @media (max-width: 640px) { #mj-product-grid { grid-template-columns:repeat(2,1fr); } }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <div class="nav-bar" style="background-color:var(--burgundy)">
+    <div data-animation="over-right" class="navmenu w-nav" data-easing2="ease" data-easing="ease" data-collapse="all" role="banner" data-no-scroll="1" data-duration="0" data-doc-height="1">
+      <div class="w-layout-layout quick-stack wf-layout-layout">
+        <div class="w-layout-cell cell-slogan"><div class="we-are-box"><div style="color:var(--orchid);letter-spacing:0.12em;font-size:0.7rem;text-transform:uppercase;font-weight:600">We are</div></div></div>
+        <div class="w-layout-cell cell-brand"><a href="index.html" class="brand w-nav-brand"><img src="images/logotag-blue.svg" alt="MAH JOY" class="brand-logo" style="height:54px;width:auto;filter:brightness(0) invert(1)"></a></div>
+        <div class="w-layout-cell cell-menu"><div class="menu-button-wrapper"><div class="menu-button w-nav-button"><div class="dot-menu-button"></div></div></div></div>
+      </div>
+      <div class="nav-menu">
+        <a href="cart.html" class="nav-link w-inline-block mj-cart-nav" style="position:relative;">
+          <div class="nav-link-text" style="display:flex;align-items:center;gap:.4rem;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+            Carrito
+          </div>
+          <span class="mj-cart-badge" style="display:none;position:absolute;top:-4px;right:-8px;background:var(--orchid);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:.6rem;font-weight:800;width:18px;height:18px;border-radius:50%;align-items:center;justify-content:center;line-height:1;">0</span>
+        </a>
+        <a href="index.html" class="nav-link w-inline-block"><div class="nav-link-text">Home</div></a>
+        <a href="collection.html" aria-current="page" class="nav-link w-inline-block w--current"><div class="nav-link-text">Colección</div></a>
+        <a href="social-club.html" class="nav-link w-inline-block"><div class="nav-link-text">Social Club</div></a>
+        <a href="about.html" class="nav-link w-inline-block"><div class="nav-link-text">About</div></a>
+        <a href="contact.html" class="nav-link w-inline-block"><div class="nav-link-text">Contact</div></a>
+        <div class="mj-shop-dropdown">
+          <div class="nav-link mj-shop-toggle" tabindex="0" role="button" onclick="var l=this.nextElementSibling;l.style.display=l.style.display==='block'?'none':'block';" style="cursor:pointer"><div class="nav-link-text">Shop ▾</div></div>
+          <div class="mj-shop-list" style="display:none">
+            <a href="shop-tiles.html" class="w-dropdown-link mj-shop-link">Tiles</a>
+            <a href="shop-mats.html" class="w-dropdown-link mj-shop-link">Mats</a>
+            <a href="shop-racks.html" class="w-dropdown-link mj-shop-link">Racks</a>
+            <a href="shop-mahjoy-bags.html" class="w-dropdown-link mj-shop-link">Mahjoy Bags</a>
+            <a href="shop-tile-bags.html" class="w-dropdown-link mj-shop-link">Tile Bags</a>
+            <a href="shop-rack-bags.html" class="w-dropdown-link mj-shop-link">Rack Bags</a>
+            <a href="shop-accessories.html" class="w-dropdown-link mj-shop-link">Accessories</a>
+            <a href="shop-card-holders.html" class="w-dropdown-link mj-shop-link">Card Holders</a>
+            <a href="shop-shufflers.html" class="w-dropdown-link mj-shop-link">Shufflers</a>
+            <a href="shop-line-finder.html" class="w-dropdown-link mj-shop-link">Line Finder</a>
+          </div>
+        </div>
+      </div>
+      <div class="overlay-menu"></div>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="mj-cat-header">
+    <div class="mj-cat-header-deco tl"></div>
+    <div class="mj-cat-header-deco tr"></div>
+    <div class="mj-cat-header-deco bl"></div>
+    <div class="mj-cat-header-deco br"></div>
+    <p class="mj-cat-header-eyebrow">✦ MAH JOY — Tienda ✦</p>
+    <h1 class="mj-cat-header-title">Collection</h1>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="mj-filter-bar">
+    <button class="mj-filter-pill active" data-cat="all">Todos</button>
+    <button class="mj-filter-pill" data-cat="mats">Mats</button>
+    <button class="mj-filter-pill" data-cat="tiles">Tiles</button>
+    <button class="mj-filter-pill" data-cat="racks">Racks</button>
+    <button class="mj-filter-pill" data-cat="bags">Bags</button>
+    <button class="mj-filter-pill" data-cat="accessories">Accessories</button>
+  </div>
+
+  <!-- PRODUCTS -->
+  <section class="mj-collection-section">
+    <div id="mj-product-grid">
+      <div id="mj-loading">Cargando productos…</div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="mj-footer">
+    <div class="mj-footer-logo">MAH JOY</div>
+    <nav class="mj-footer-links">
+      <a href="collection.html">Shop</a>
+      <a href="social-club.html">Social Club</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <p class="mj-footer-copy">© 2025 MAH JOY — Think. Play. Mahjong.</p>
+  </footer>
+
+  <script src="js/cart.js"></script>
+  <script src="js/vendor-ref.js"></script>
+  <script>
+    const MJ_API = 'https://api-production-b888.up.railway.app';
+    const MEDIA  = MJ_API + '/public/media?key=';
+
+    function matchCat(sku, cat) {
+      if (!sku) return false;
+      const s = sku.toUpperCase();
+      if (cat === 'mats') return s.startsWith('MAT-');
+      if (cat === 'tiles') return s.startsWith('TILE-');
+      if (cat === 'racks') return s.startsWith('RACK-') && !s.startsWith('RAKBAG-');
+      if (cat === 'bags') return s.startsWith('BAG-') || s.startsWith('RAKBAG-');
+      if (cat === 'accessories') return !['MAT-','TILE-','RACK-','BAG-','RAKBAG-','SHUF-','LINE-'].some(p => s.startsWith(p));
+      return true;
+    }
+
+    function imgUrl(product) {
+      const urls = product.published_image_urls;
+      if (urls && urls.length > 0) {
+        let key = urls[0];
+        if (key.startsWith('/api/public/media')) key = key.replace('/api/public/media', '/public/media');
+        if (key.startsWith('/public/media')) return MJ_API + key;
+        if (!key.startsWith('http')) return MEDIA + encodeURIComponent(key);
+        return key;
+      }
+      return null;
+    }
+
+    let allProducts = [];
+    let activeCat = 'all';
+
+    function renderGrid(products) {
+      const grid = document.getElementById('mj-product-grid');
+      grid.innerHTML = '';
+      if (!products.length) {
+        grid.innerHTML = '<div id="mj-loading">Sin productos en esta categoría.</div>';
+        return;
+      }
+      products.forEach(p => {
+        const img = imgUrl(p);
+        const price = p.sale_price ? '$' + Number(p.sale_price).toFixed(2) : (p.cost ? '$' + Number(p.cost).toFixed(2) : '');
+        const card = document.createElement('div');
+        card.className = 'mj-prod-card';
+        card.innerHTML = `
+          ${img
+            ? `<img src="${img}" alt="${p.name}" class="mj-prod-card-img" onerror="this.style.display='none'">`
+            : `<div class="mj-prod-card-img placeholder" style="background:#f0e0ea;height:200px;display:flex;align-items:center;justify-content:center;"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C76BA4" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg></div>`
+          }
+          <div class="mj-prod-card-body">
+            <div class="mj-prod-card-name" title="${p.name}">${p.name}</div>
+            <div class="mj-prod-card-price">${price}</div>
+            <button class="mj-prod-card-add" onclick="addToCart(${JSON.stringify(p).split('"').join('&quot;')})">+ Agregar</button>
+          </div>`;
+        card.querySelector('.mj-prod-card-img, .mj-prod-card-img.placeholder') && (card.onclick = function(e){
+          if (!e.target.classList.contains('mj-prod-card-add')) {
+            window.location.href = 'product.html#' + p.id;
+          }
+        });
+        grid.appendChild(card);
+      });
+    }
+
+    function addToCart(p) {
+      if (window.MJCart) {
+        window.MJCart.add({ id: p.id, name: p.name, price: p.sale_price || p.cost || 0, image: imgUrl(p) });
+      }
+    }
+
+    document.querySelectorAll('.mj-filter-pill').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.mj-filter-pill').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        activeCat = this.dataset.cat;
+        const filtered = activeCat === 'all' ? allProducts : allProducts.filter(p => matchCat(p.sku, activeCat));
+        renderGrid(filtered);
+      });
+    });
+
+    fetch(MJ_API + '/public/shop/mahjoy/products')
+      .then(r => r.json())
+      .then(data => {
+        allProducts = data.products || data || [];
+        renderGrid(allProducts);
+      })
+      .catch(() => {
+        document.getElementById('mj-loading').textContent = 'Error cargando productos.';
+      });
+
+    // Nav hamburger
+    document.addEventListener('DOMContentLoaded', function () {
+      var btn = document.querySelector('.w-nav-button');
+      var menu = document.querySelector('.nav-menu');
+      var overlay = document.querySelector('.overlay-menu');
+      if (!btn || !menu) return;
+      function closeNav() { menu.classList.remove('w--nav-menu-open'); btn.classList.remove('w--open'); document.body.classList.remove('w-nav-open'); if (overlay) overlay.style.display='none'; }
+      btn.addEventListener('click', function(e) { e.stopPropagation(); var isOpen=btn.classList.contains('w--open'); if(isOpen){closeNav();}else{menu.classList.add('w--nav-menu-open');btn.classList.add('w--open');document.body.classList.add('w-nav-open');if(overlay)overlay.style.display='block';} });
+      if (overlay) overlay.addEventListener('click', closeNav);
+      document.addEventListener('click', function(e) { if(!menu.contains(e.target)&&!btn.contains(e.target))closeNav(); });
+    });
+  </script>
+</body>
+</html>
