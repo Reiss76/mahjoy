@@ -56,8 +56,15 @@
     .mj-step-label{font-family:'Plus Jakarta Sans',sans-serif;font-size:.8rem;font-weight:700;color:var(--burgundy);text-transform:uppercase;letter-spacing:.1em;}
     .mj-step-price-tag{margin-left:auto;font-family:'Plus Jakarta Sans',sans-serif;font-size:.8rem;font-weight:700;color:var(--orchid);}
 
-    /* Category cards (horizontal scroll) */
-    .mj-cat-cards{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;white-space:nowrap;width:100%;padding-bottom:8px;scrollbar-width:none;}
+    /* ── Mobile: native select ── */
+    .mj-cat-select{display:none;}
+    @media(max-width:768px){
+      .mj-cat-select{display:block;width:100%;padding:12px 14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;color:var(--burgundy);border:1.5px solid rgba(107,15,42,.2);border-radius:10px;background:#fff;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B0F2A' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;cursor:pointer;}
+      .mj-cat-cards-wrap{display:none!important;}
+    }
+    /* ── Desktop: card scroll ── */
+    .mj-cat-cards-wrap{overflow:hidden;width:100%;}
+    .mj-cat-cards{overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;width:100%;padding-bottom:8px;scrollbar-width:none;}
     .mj-cat-cards::-webkit-scrollbar{display:none;}
     .mj-cat-cards-inner{display:inline-block;white-space:nowrap;padding:0 4px;}
     .mj-cat-card{display:inline-block;vertical-align:top;width:110px;white-space:normal;cursor:pointer;border:2px solid transparent;border-radius:12px;overflow:hidden;transition:border-color .2s,transform .2s;background:#faf0f5;margin-right:10px;}
@@ -192,7 +199,8 @@
             <div class="mj-step-label">Mats</div>
             <div class="mj-step-price-tag" id="price-mat">—</div>
           </div>
-          <div class="mj-cat-cards" id="cards-mat"><span class="mj-cat-loading">Cargando…</span></div>
+          <select class="mj-cat-select" id="sel-mat"><option value="">— Selecciona un Mat —</option></select>
+          <div class="mj-cat-cards-wrap"><div class="mj-cat-cards" id="cards-mat"><span class="mj-cat-loading">Cargando…</span></div></div>
         </div>
 
         <!-- Step 2: Tiles -->
@@ -202,7 +210,8 @@
             <div class="mj-step-label">Tiles</div>
             <div class="mj-step-price-tag" id="price-tiles">—</div>
           </div>
-          <div class="mj-cat-cards" id="cards-tiles"><span class="mj-cat-loading">Cargando…</span></div>
+          <select class="mj-cat-select" id="sel-tiles"><option value="">— Selecciona Tiles —</option></select>
+          <div class="mj-cat-cards-wrap"><div class="mj-cat-cards" id="cards-tiles"><span class="mj-cat-loading">Cargando…</span></div></div>
         </div>
 
         <!-- Step 3: Racks -->
@@ -212,7 +221,8 @@
             <div class="mj-step-label">Racks</div>
             <div class="mj-step-price-tag" id="price-rack">—</div>
           </div>
-          <div class="mj-cat-cards" id="cards-rack"><span class="mj-cat-loading">Cargando…</span></div>
+          <select class="mj-cat-select" id="sel-rack"><option value="">— Selecciona Racks —</option></select>
+          <div class="mj-cat-cards-wrap"><div class="mj-cat-cards" id="cards-rack"><span class="mj-cat-loading">Cargando…</span></div></div>
         </div>
 
         <!-- Step 4: Bags -->
@@ -222,7 +232,8 @@
             <div class="mj-step-label">Bags</div>
             <div class="mj-step-price-tag" id="price-bag">—</div>
           </div>
-          <div class="mj-cat-cards" id="cards-bag"><span class="mj-cat-loading">Cargando…</span></div>
+          <select class="mj-cat-select" id="sel-bag"><option value="">— Selecciona una Bag —</option></select>
+          <div class="mj-cat-cards-wrap"><div class="mj-cat-cards" id="cards-bag"><span class="mj-cat-loading">Cargando…</span></div></div>
         </div>
 
         <!-- Step 5: Shufflers (optional) -->
@@ -232,7 +243,8 @@
             <div class="mj-step-label">Shufflers <span style="font-size:.6rem;font-weight:400;color:var(--orchid);text-transform:none;letter-spacing:0;">(optional)</span></div>
             <div class="mj-step-price-tag" id="price-shuf">—</div>
           </div>
-          <div class="mj-cat-cards" id="cards-shuf"><span class="mj-cat-loading">Cargando…</span></div>
+          <select class="mj-cat-select" id="sel-shuf"><option value="">— Ninguno —</option></select>
+          <div class="mj-cat-cards-wrap"><div class="mj-cat-cards" id="cards-shuf"><span class="mj-cat-loading">Cargando…</span></div></div>
         </div>
 
         <!-- Total bar mobile -->
@@ -269,11 +281,11 @@
 
     // Category config: id, previewEl, cardsEl, pricEl, SKU matcher
     const CATS = [
-      { id:'mat',   label:'Mat',      prev:'prev-mat',   cards:'cards-mat',   priceEl:'price-mat',   match: s => s.startsWith('MAT-') },
-      { id:'tiles', label:'Tiles',    prev:'prev-tiles', cards:'cards-tiles', priceEl:'price-tiles', match: s => s.startsWith('TILE-') },
-      { id:'rack',  label:'Rack',     prev:'prev-rack',  cards:'cards-rack',  priceEl:'price-rack',  match: s => s.startsWith('RACK-') || s.startsWith('RAKBAG-') },
-      { id:'bag',   label:'Bag',      prev:'prev-bag',   cards:'cards-bag',   priceEl:'price-bag',   match: s => s.startsWith('BAG-') },
-      { id:'shuf',  label:'Shuffler', prev:null,         cards:'cards-shuf',  priceEl:'price-shuf',  match: s => s.startsWith('SHUF-') || s.startsWith('LINE-') },
+      { id:'mat',   label:'Mat',      prev:'prev-mat',   cards:'cards-mat',   sel:'sel-mat',   priceEl:'price-mat',   match: s => s.startsWith('MAT-') },
+      { id:'tiles', label:'Tiles',    prev:'prev-tiles', cards:'cards-tiles', sel:'sel-tiles', priceEl:'price-tiles', match: s => s.startsWith('TILE-') },
+      { id:'rack',  label:'Rack',     prev:'prev-rack',  cards:'cards-rack',  sel:'sel-rack',  priceEl:'price-rack',  match: s => s.startsWith('RACK-') || s.startsWith('RAKBAG-') },
+      { id:'bag',   label:'Bag',      prev:'prev-bag',   cards:'cards-bag',   sel:'sel-bag',   priceEl:'price-bag',   match: s => s.startsWith('BAG-') },
+      { id:'shuf',  label:'Shuffler', prev:null,         cards:'cards-shuf',  sel:'sel-shuf',  priceEl:'price-shuf',  match: s => s.startsWith('SHUF-') || s.startsWith('LINE-') },
     ];
 
     // Selection state: catId → product object
@@ -329,12 +341,40 @@
 
     function buildCards(cat, products){
       const container = document.getElementById(cat.cards);
+      const selEl = document.getElementById(cat.sel);
+
       if(!products.length){
         container.innerHTML = '<span class="mj-cat-loading">Sin productos disponibles</span>';
         return;
       }
+
+      // ── Mobile: populate <select> ──
+      if(selEl){
+        products.forEach(p => {
+          const price = getPrice(p);
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = p.name + (price ? '  —  ' + fmt(price) : '');
+          opt.dataset.idx = products.indexOf(p);
+          selEl.appendChild(opt);
+        });
+        selEl.addEventListener('change', function(){
+          const p = products.find(prod => String(prod.id) === this.value);
+          if(p){
+            selected[cat.id] = p;
+            document.getElementById(cat.priceEl).textContent = fmt(getPrice(p));
+            updatePreview(cat.id, p);
+          } else {
+            delete selected[cat.id];
+            document.getElementById(cat.priceEl).textContent = '—';
+            updatePreview(cat.id, null);
+          }
+          updateTotal();
+        });
+      }
+
+      // ── Desktop: build card scroll ──
       container.innerHTML = '';
-      // Two-div pattern: outer=scroll, inner=flex width:max-content (iOS Safari fix)
       const inner = document.createElement('div');
       inner.className = 'mj-cat-cards-inner';
       container.appendChild(inner);
