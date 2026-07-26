@@ -30,20 +30,23 @@
     /* ── Bundle builder layout ── */
     .mj-bundle-section{background:var(--blush);padding:56px 24px 80px;min-height:60vh;}
     .mj-bundle-container{max-width:1040px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;}
-    @media(max-width:768px){.mj-bundle-container{grid-template-columns:1fr;gap:32px;}}
+    @media(max-width:768px){
+      .mj-bundle-container{grid-template-columns:1fr;gap:32px;}
+      #total-bar-desktop,#note-desktop{display:none!important;}
+    }
 
     /* ── Preview pane ── */
     .mj-bundle-preview{position:sticky;top:24px;}
     .mj-preview-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:.65rem;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--orchid-mid);margin-bottom:16px;text-align:center;}
     .mj-preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-    .mj-preview-slot{aspect-ratio:1/1;background:#fff;border-radius:14px;overflow:hidden;position:relative;border:2px dashed rgba(199,107,164,.25);transition:border-color .3s;}
+    .mj-preview-slot{height:160px;background:#fff;border-radius:14px;overflow:hidden;position:relative;border:2px dashed rgba(199,107,164,.25);transition:border-color .3s;}
     .mj-preview-slot.filled{border:2px solid rgba(199,107,164,.5);}
     .mj-preview-slot img{width:100%;height:100%;object-fit:cover;display:block;}
     .mj-preview-slot-label{position:absolute;bottom:6px;left:0;right:0;text-align:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(107,15,42,.6);}
     .mj-preview-slot-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:8px;padding:12px;}
     .mj-preview-slot-empty svg{opacity:.25;}
     .mj-preview-slot-empty span{font-family:'Plus Jakarta Sans',sans-serif;font-size:.62rem;color:rgba(107,15,42,.4);text-align:center;}
-    .mj-preview-full{grid-column:1/-1;aspect-ratio:16/7;}
+    @media(max-width:768px){.mj-bundle-preview{position:static;display:none;}}
 
     /* ── Selector pane ── */
     .mj-bundle-form{display:flex;flex-direction:column;gap:20px;}
