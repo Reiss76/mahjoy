@@ -48,42 +48,13 @@
     }
     .mj-hero-headline span { display: block; }
 
-    /* Circle badge (original) */
-    .mj-circle-wrap {
-      position: relative;
+    /* Circle badge wrapper (Webflow classes take over from mahjoy.webflow.css) */
+    .mj-circle-outer {
       display: flex;
       justify-content: center;
-      margin: -3rem 0 -3rem;
-      z-index: 2;
-    }
-    .mj-circle-badge {
-      width: 240px;
-      height: 240px;
+      margin: -3.5rem 0 -3.5rem;
       position: relative;
-      border-radius: 50%;
-      overflow: hidden;
-      box-shadow: 0 8px 40px rgba(107,15,42,0.25);
-    }
-    .mj-circle-badge .circle-text-svg {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      animation: mj-spin 18s linear infinite;
       z-index: 2;
-    }
-    .mj-circle-badge .circle-gif {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      z-index: 1;
-    }
-    @keyframes mj-spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
     }
 
     /* ── Categories ── */
@@ -344,10 +315,23 @@
       <span>THINK.</span>
       <span>MAHJONG.</span>
     </h1>
-    <div class="mj-circle-wrap">
-      <div class="mj-circle-badge">
-        <img src="images/gifhero.gif" alt="MAH JOY" class="circle-gif">
-        <img src="images/Circle-Hero-Text-2.svg" alt="" class="circle-text-svg">
+    <div class="mj-circle-outer">
+      <div data-w-id="8788a8b3-4540-1e69-11b9-8432bff39bf1" class="circle-wrapper">
+        <div class="inner-circle">
+          <div class="front">
+            <div class="behind-circle" style="width:70%;height:70%;overflow:visible">
+              <img src="images/logotag-blue.svg" loading="lazy" alt="MAH JOY" class="cover-image" style="width:100%;height:100%;object-fit:contain;filter:brightness(0) invert(1);">
+            </div>
+            <div class="circle-text-wrapper">
+              <img src="images/Circle-Hero-Text-2.svg" loading="lazy" alt="" class="cover-image">
+            </div>
+          </div>
+          <div class="behind">
+            <div class="front-circle">
+              <img src="images/gifhero.gif" loading="lazy" alt="" class="cover-image">
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
