@@ -397,7 +397,7 @@
       var overlay = document.querySelector('.overlay-menu');
       if (!btn || !menu) return;
       function closeNav() { menu.classList.remove('w--nav-menu-open'); btn.classList.remove('w--open'); document.body.classList.remove('w-nav-open'); if (overlay) overlay.style.display='none'; }
-      btn.addEventListener('click', function(e) { e.stopPropagation(); var isOpen=btn.classList.contains('w--open'); if(isOpen){closeNav();}else{menu.classList.add('w--nav-menu-open');btn.classList.add('w--open');document.body.classList.add('w-nav-open');if(overlay)overlay.style.display='block';} });
+      btn.addEventListener('click', function(e) { e.stopPropagation(); var isOpen=btn.classList.contains('w--open'); if(isOpen){closeNav();}else{menu.classList.add('w--nav-menu-open');menu.style.display='flex';btn.classList.add('w--open');document.body.classList.add('w-nav-open');if(overlay)overlay.style.display='block';} });
       if (overlay) overlay.addEventListener('click', closeNav);
       document.addEventListener('click', function(e) { if(!menu.contains(e.target)&&!btn.contains(e.target))closeNav(); });
     });

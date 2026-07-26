@@ -635,3 +635,30 @@ html, body {
 
 /* Make product cards clickable */
 .mj-product-card[onclick] { cursor: pointer; }
+
+/* ── Mobile Nav Fix ── */
+.nav-menu.w--nav-menu-open {
+  display: flex !important;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 40px;
+  gap: 8px;
+  background-color: var(--burgundy, #6B0F2A);
+  z-index: 200;
+}
+.nav-menu .nav-link,
+.nav-menu .mj-shop-toggle {
+  color: #FAF6F0 !important;
+}
+.nav-menu .nav-link-text {
+  color: #FAF6F0 !important;
+  font-size: 1.1rem;
+}
+.nav-menu .mj-shop-list .mj-shop-link {
+  color: rgba(250,246,240,0.75) !important;
+}
+.overlay-menu {
+  z-index: 150;
+  cursor: pointer;
+}
