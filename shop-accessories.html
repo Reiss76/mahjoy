@@ -101,7 +101,7 @@
   <script src="js/cart.js"></script><script src="js/vendor-ref.js"></script>
   <script>
     const MJ_API='https://api-production-b888.up.railway.app';
-    function imgUrl(p){const u=p.published_image_urls;if(u&&u.length){let k=u[0];if(k.startsWith('/api/public/media'))k=k.replace('/api/public/media','/public/media');return k.startsWith('/public/media')?MJ_API+k:(k.startsWith('http')?k:MJ_API+'/public/media?key='+encodeURIComponent(k));}return null;}
+    function imgUrl(p){let k=null;if(p.primary_image_url)k=p.primary_image_url;else if(p.published_image_urls&&p.published_image_urls.length)k=p.published_image_urls[0];else if(p.images&&p.images.length)k=p.images[0];if(!k)return null;if(k.startsWith('/api/public/media'))k=k.replace('/api/public/media','/public/media');return k.startsWith('/public/media')?MJ_API+k:(k.startsWith('http')?k:MJ_API+'/public/media?key='+encodeURIComponent(k));}
     function skuMatch(sku){if(!sku)return false;const s=sku.toUpperCase();return !['MAT-','TILE-','RACK-','BAG-','RAKBAG-','SHUF-','LINE-'].some(pr=>s.startsWith(pr));}
     fetch(MJ_API+'/public/shop/mahjoy/products').then(r=>r.json()).then(data=>{
       const prods=(data.products||data||[]).filter(p=>skuMatch(p.sku));

@@ -370,13 +370,9 @@
         if (!products.length) { grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:32px;font-family:Plus Jakarta Sans,sans-serif;color:#C76BA4;">Sin productos disponibles.</div>'; return; }
         grid.innerHTML = '';
         products.forEach(p => {
-          const urls = p.published_image_urls;
           let img = null;
-          if (urls && urls.length) {
-            let k = urls[0];
-            if (k.startsWith('/api/public/media')) k = k.replace('/api/public/media','/public/media');
-            img = k.startsWith('/public/media') ? MJ_API + k : (k.startsWith('http') ? k : MJ_API + '/public/media?key=' + encodeURIComponent(k));
-          }
+          { let k = p.primary_image_url || (p.published_image_urls&&p.published_image_urls[0]) || (p.images&&p.images[0]) || null;
+            if (k) { if (k.startsWith('/api/public/media')) k = k.replace('/api/public/media','/public/media'); img = k.startsWith('/public/media') ? MJ_API+k : (k.startsWith('http') ? k : MJ_API+'/public/media?key='+encodeURIComponent(k)); } }
           const price = p.sale_price ? '$' + Number(p.sale_price).toFixed(2) : (p.cost ? '$' + Number(p.cost).toFixed(2) : '');
           const card = document.createElement('a');
           card.href = 'product.html#' + p.id;
