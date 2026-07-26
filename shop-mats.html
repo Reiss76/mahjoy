@@ -344,6 +344,14 @@
     </div>
   </section>
 
+  <!-- LIVE PRODUCTS FROM PROAX -->
+  <section class="mj-api-section">
+    <p class="mj-api-section-title">✦ Todos los Mats disponibles ✦</p>
+    <div id="mj-api-grid">
+      <div style="grid-column:1/-1;text-align:center;padding:32px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--orchid);font-size:0.85rem;">Cargando…</div>
+    </div>
+  </section>
+
   <!-- FOOTER -->
   <footer class="mj-footer">
     <div class="mj-footer-logo">MAH JOY</div>
@@ -359,6 +367,37 @@
   <script src="js/cart.js"></script>
   <script src="js/vendor-ref.js"></script>
   <script>
+    // Load live Proax products (MAT-* SKUs)
+    const MJ_API = 'https://api-production-b888.up.railway.app';
+    fetch(MJ_API + '/public/shop/mahjoy/products')
+      .then(r => r.json())
+      .then(data => {
+        const products = (data.products || data || []).filter(p => p.sku && p.sku.toUpperCase().startsWith('MAT-'));
+        const grid = document.getElementById('mj-api-grid');
+        if (!products.length) { grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:32px;font-family:Plus Jakarta Sans,sans-serif;color:#C76BA4;">Sin productos disponibles.</div>'; return; }
+        grid.innerHTML = '';
+        products.forEach(p => {
+          const urls = p.published_image_urls;
+          let img = null;
+          if (urls && urls.length) {
+            let k = urls[0];
+            if (k.startsWith('/api/public/media')) k = k.replace('/api/public/media','/public/media');
+            img = k.startsWith('/public/media') ? MJ_API + k : (k.startsWith('http') ? k : MJ_API + '/public/media?key=' + encodeURIComponent(k));
+          }
+          const price = p.sale_price ? '$' + Number(p.sale_price).toFixed(2) : (p.cost ? '$' + Number(p.cost).toFixed(2) : '');
+          const card = document.createElement('a');
+          card.href = 'product.html#' + p.id;
+          card.className = 'mj-mat-card';
+          card.style.textDecoration = 'none';
+          card.innerHTML = img
+            ? `<img src="${img}" alt="${p.name}" class="mj-mat-card-img" onerror="this.style.display='none'">`
+            : `<div class="mj-mat-card-img" style="background:#f0e0ea;display:flex;align-items:center;justify-content:center;"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C76BA4" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg></div>`;
+          card.innerHTML += `<div class="mj-mat-card-info"><div class="mj-mat-card-name">${p.name}</div><div class="mj-mat-card-sub">${price}</div></div>`;
+          grid.appendChild(card);
+        });
+      })
+      .catch(() => { document.getElementById('mj-api-grid').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:32px;">Error cargando productos.</div>'; });
+
     document.addEventListener('DOMContentLoaded', function () {
       var btn = document.querySelector('.w-nav-button');
       var menu = document.querySelector('.nav-menu');
