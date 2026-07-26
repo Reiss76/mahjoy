@@ -662,3 +662,32 @@ html, body {
   z-index: 150;
   cursor: pointer;
 }
+
+/* ── Hamburger nav — override webflow.js conflicts ── */
+body.mj-nav-open .nav-menu {
+  display: flex !important;
+  position: fixed !important;
+  inset: 0 !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  justify-content: center !important;
+  padding: 40px !important;
+  gap: 8px !important;
+  background-color: var(--burgundy, #6B0F2A) !important;
+  z-index: 9999 !important;
+}
+body.mj-nav-open .nav-menu .nav-link,
+body.mj-nav-open .nav-menu .mj-shop-toggle,
+body.mj-nav-open .nav-menu .nav-link-text {
+  color: #FAF6F0 !important;
+}
+body.mj-nav-open .nav-menu .mj-shop-list .mj-shop-link {
+  color: rgba(250,246,240,0.75) !important;
+}
+body.mj-nav-open .overlay-menu {
+  display: block !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9998 !important;
+  background: rgba(107,15,42,0.6) !important;
+}

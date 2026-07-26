@@ -262,20 +262,26 @@ async function loadProduct() {
   document.getElementById('pdp-share-wa').href =
     `https://wa.me/?text=${encodeURIComponent(waText)}`;
 
-  // Related products (same category, exclude current)
-  const related = products
-    .filter(p => p.id !== product.id && guessCategory(p) === cat)
-    .slice(0, 4);
+  // Related products (same category, exclude current) — optional section
   const relatedEl = document.getElementById('pdp-related');
-  if (related.length > 0) {
-    relatedEl.innerHTML = related.map(buildRelatedCard).join('');
-  } else {
-    document.querySelector('.mj-pdp-related').style.display = 'none';
+  if (relatedEl) {
+    const related = products
+      .filter(p => p.id !== product.id && guessCategory(p) === cat)
+      .slice(0, 4);
+    if (related.length > 0) {
+      relatedEl.innerHTML = related.map(buildRelatedCard).join('');
+    } else {
+      const relatedSection = document.querySelector('.mj-pdp-related');
+      if (relatedSection) relatedSection.style.display = 'none';
+    }
   }
 
-  // Back to category link
-  document.getElementById('pdp-back-cat').href = catPage;
-  document.getElementById('pdp-back-cat').textContent = `Ver todos los ${catLabel} →`;
+  // Back to category link — optional
+  const backCatEl = document.getElementById('pdp-back-cat');
+  if (backCatEl) {
+    backCatEl.href = catPage;
+    backCatEl.textContent = `Ver todos los ${catLabel} →`;
+  }
 
   // Show content
   document.getElementById('pdp-loading').style.display = 'none';

@@ -120,4 +120,14 @@
     }).catch(()=>{document.getElementById('mj-prod-grid').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:32px;">Error cargando productos.</div>';});
     document.addEventListener('DOMContentLoaded',function(){var btn=document.querySelector('.w-nav-button'),menu=document.querySelector('.nav-menu'),overlay=document.querySelector('.overlay-menu');if(!btn||!menu)return;function closeNav(){menu.classList.remove('w--nav-menu-open');menu.style.display='none';btn.classList.remove('w--open');document.body.classList.remove('w-nav-open');if(overlay)overlay.style.display='none';}btn.addEventListener('click',function(e){e.stopPropagation();btn.classList.contains('w--open')?closeNav():(menu.classList.add('w--nav-menu-open'),btn.classList.add('w--open'),document.body.classList.add('w-nav-open'),overlay&&(overlay.style.display='block'));});if(overlay)overlay.addEventListener('click',closeNav);document.addEventListener('click',function(e){if(!menu.contains(e.target)&&!btn.contains(e.target))closeNav();});});
   </script>
+  <script>
+    document.addEventListener("DOMContentLoaded",function(){
+      var btn=document.querySelector(".w-nav-button"),menu=document.querySelector(".nav-menu"),overlay=document.querySelector(".overlay-menu");
+      if(!btn||!menu)return;
+      function closeNav(){document.body.classList.remove("mj-nav-open","w-nav-open");btn.classList.remove("w--open");menu.style.display="";}
+      btn.addEventListener("click",function(e){e.stopPropagation();if(document.body.classList.contains("mj-nav-open")){closeNav();}else{document.body.classList.add("mj-nav-open","w-nav-open");btn.classList.add("w--open");}});
+      if(overlay)overlay.addEventListener("click",closeNav);
+      document.addEventListener("click",function(e){if(menu.contains(e.target)||btn.contains(e.target))return;closeNav();});
+    });
+  </script>
 </body></html>
