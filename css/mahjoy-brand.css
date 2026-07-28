@@ -691,3 +691,30 @@ body.mj-nav-open .overlay-menu {
   z-index: 9998 !important;
   background: rgba(107,15,42,0.6) !important;
 }
+
+/* ── Coming Soon badge ── */
+.mj-prod-card{position:relative;}
+.mj-coming-soon-badge{
+  position:absolute;top:10px;left:10px;
+  background:var(--navy,#1A1034);color:#fff;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:.6rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+  padding:4px 10px;border-radius:999px;pointer-events:none;z-index:2;
+}
+.mj-prod-card.mj-coming-soon .mj-prod-card-img,
+.mj-prod-card.mj-coming-soon img{filter:brightness(.85) grayscale(.2);}
+
+/* ── Currency toggle ── */
+.mj-currency-toggle{
+  display:flex;align-items:center;gap:6px;
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:.7rem;font-weight:700;
+  color:rgba(250,246,240,.7);cursor:pointer;padding:4px 0;user-select:none;
+}
+.mj-currency-toggle span.active{color:#fff;}
+.mj-currency-toggle .mj-cur-sep{color:rgba(250,246,240,.3);}
+
+/* ── Nav layout fix: hide empty slogan cell, brand left-aligned ── */
+.cell-slogan { display: none !important; }
+.quick-stack.wf-layout-layout {
+  grid-template-columns: 1fr auto !important;
+}
