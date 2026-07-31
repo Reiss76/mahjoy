@@ -746,9 +746,22 @@ body.mj-nav-open .overlay-menu {
   left: 0 !important;
   right: 0 !important;
   width: 100% !important;
+  min-height: 68px !important;
   z-index: 1000 !important;
+  display: flex !important;
+  align-items: center !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15) !important;
 }
-/* Compensate for fixed nav height so content doesn't hide behind it */
+/* El grid interno también debe llenar el alto del nav */
+.navmenu.w-nav .w-container,
+.navmenu.w-nav > div:first-child {
+  width: 100% !important;
+}
+.navmenu .quick-stack.wf-layout-layout,
+.w-nav .quick-stack.wf-layout-layout {
+  min-height: 68px !important;
+}
+/* Compensar por nav fijo */
 body {
-  padding-top: 72px !important;
+  padding-top: 68px !important;
 }
