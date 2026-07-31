@@ -737,3 +737,11 @@ body.mj-nav-open .overlay-menu {
 .cell-slogan { visibility: hidden !important; }
 .cell-brand  { display: flex !important; justify-content: center !important; align-items: center !important; }
 .cell-menu   { display: flex !important; justify-content: flex-end !important; align-items: center !important; padding-right: 16px !important; }
+
+/* ── Sticky nav bar ── */
+.navmenu.w-nav,
+.nav-bar {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1000 !important;
+}
