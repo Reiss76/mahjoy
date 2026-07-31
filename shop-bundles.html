@@ -41,7 +41,33 @@
     .mj-footer-copy{font-family:'Plus Jakarta Sans',sans-serif;font-size:0.7rem;color:rgba(250,246,240,0.35);}
     @media(max-width:768px){#mj-prod-grid{grid-template-columns:repeat(2,1fr);}}
     @media(max-width:480px){#mj-prod-grid{grid-template-columns:1fr;}}
-  </style>
+  
+    /* ── Bundle cards: landscape images sin cortar ── */
+    #mj-prod-grid .mj-prod-card-img {
+      aspect-ratio: 2 / 1 !important;
+      object-fit: contain !important;
+      background: #f5eaf2 !important;
+    }
+    /* ── Lightbox ── */
+    #mj-lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: rgba(0,0,0,0.88);
+      align-items: center;
+      justify-content: center;
+      cursor: zoom-out;
+    }
+    #mj-lightbox.open { display: flex; }
+    #mj-lightbox img {
+      max-width: 94vw;
+      max-height: 90vh;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.5);
+    }
+</style>
 </head>
 <body>
   <div class="nav-bar" style="background-color:var(--burgundy)">
@@ -113,8 +139,8 @@
     imgs.forEach(function(slug){
       var card=document.createElement('div');
       card.className='mj-prod-card';
-      card.style.cssText='cursor:default;';
-      card.innerHTML='<img src="images/bundles/'+slug+'.jpg" alt="Set completo" class="mj-prod-card-img" loading="lazy">'
+      card.style.cssText='cursor:zoom-in;';
+      card.innerHTML='<img src="images/bundles/'+slug+'.jpg" alt="Set completo" class="mj-prod-card-img" loading="lazy" onclick="event.stopPropagation();document.getElementById(\'mj-lightbox-img\').src=this.src;document.getElementById(\'mj-lightbox\').classList.add(\'open\')" style="cursor:zoom-in">'
         +'<div class="mj-prod-card-body">'
         +'<div class="mj-prod-card-name">Set Completo</div>'
         +'<div class="mj-prod-card-price" style="color:var(--orchid);font-size:.7rem;letter-spacing:.1em;font-weight:700;">PRÓXIMAMENTE</div>'
@@ -165,4 +191,9 @@
       document.addEventListener("click",function(e){if(menu.contains(e.target)||btn.contains(e.target))return;closeNav();});
     });
   </script>
+
+  <!-- Lightbox -->
+  <div id="mj-lightbox" onclick="this.classList.remove('open')">
+    <img id="mj-lightbox-img" src="" alt="">
+  </div>
 </body></html>
