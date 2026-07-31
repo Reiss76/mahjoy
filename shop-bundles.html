@@ -106,10 +106,28 @@
     function imgUrl(p){let k=null;if(p.primary_image_url)k=p.primary_image_url;else if(p.published_image_urls&&p.published_image_urls.length)k=p.published_image_urls[0];else if(p.images&&p.images.length)k=p.images[0];if(!k)return null;if(k.startsWith('/api/public/media'))k=k.replace('/api/public/media','/public/media');return k.startsWith('/public/media')?MJ_API+k:(k.startsWith('http')?k:MJ_API+'/public/media?key='+encodeURIComponent(k));}
     const MJ_API='https://api-production-b888.up.railway.app';
     function imgUrl(img){if(!img)return null;if(img.startsWith('/api/public/media'))img=img.replace('/api/public/media','/public/media');return img.startsWith('/public/media')?MJ_API+img:(img.startsWith('http')?img:MJ_API+'/public/media?key='+encodeURIComponent(img));}
+    // Show static images immediately
+    (function(){
+      var grid=document.getElementById('mj-prod-grid');
+      var imgs=['bundle-a','bundle-b','bundle-c','bundle-d','bundle-e','bundle-f','bundle-g','bundle-h','bundle-i','bundle-j','bundle-k','bundle-l'];
+      grid.innerHTML='';
+      imgs.forEach(function(slug){
+        var card=document.createElement('div');
+        card.className='mj-prod-card';
+        card.style.cssText='cursor:default;';
+        card.innerHTML='<img src="images/bundles/'+slug+'.jpg" alt="Set completo" class="mj-prod-card-img" loading="lazy">'
+          +'<div class="mj-prod-card-body">'
+          +'<div class="mj-prod-card-name">Set Completo</div>'
+          +'<div class="mj-prod-card-price" style="color:var(--orchid);font-size:.7rem;letter-spacing:.1em;font-weight:700;">PRÓXIMAMENTE</div>'
+          +'</div>';
+        grid.appendChild(card);
+      });
+    })();
+    // Try API in background — if bundles exist, upgrade the grid
     fetch(MJ_API+'/public/shop/mahjoy/bundles').then(function(r){if(!r.ok)throw new Error(r.status);return r.json();}).then(function(data){
       var bundles=(data.bundles||data||[]);
+      if(!bundles.length)return;
       var grid=document.getElementById('mj-prod-grid');
-      if(!bundles.length)throw new Error('empty');
       grid.innerHTML='';
       bundles.forEach(function(b){
         var isMXN=localStorage.getItem('mj_currency')!=='USD';
@@ -132,21 +150,7 @@
           +'</div>';
         grid.appendChild(card);
       });
-    }).catch(function(){
-      var grid=document.getElementById('mj-prod-grid');
-      var imgs=['bundle-a','bundle-b','bundle-c','bundle-d','bundle-e','bundle-f','bundle-g','bundle-h','bundle-i','bundle-j','bundle-k','bundle-l'];
-      grid.innerHTML='';
-      imgs.forEach(function(slug){
-        var card=document.createElement('div');
-        card.className='mj-prod-card';
-        card.style.cssText='cursor:default;';
-        card.innerHTML='<img src="images/bundles/'+slug+'.jpg" alt="Set completo" class="mj-prod-card-img">'
-          +'<div class="mj-prod-card-body">'
-          +'<div class="mj-prod-card-name">Set Completo</div>'
-          +'<div class="mj-prod-card-price" style="color:var(--orchid);font-size:.7rem;letter-spacing:.1em;font-weight:700;">PRÓXIMAMENTE</div>'
-          +'</div>';
-        grid.appendChild(card);
-      });
+    }).catch(function(){/* keep static images */});
     });
     document.addEventListener('DOMContentLoaded',function(){var btn=document.querySelector('.w-nav-button'),menu=document.querySelector('.nav-menu'),overlay=document.querySelector('.overlay-menu');if(!btn||!menu)return;function closeNav(){menu.classList.remove('w--nav-menu-open');menu.style.display='none';btn.classList.remove('w--open');document.body.classList.remove('w-nav-open');if(overlay)overlay.style.display='none';}btn.addEventListener('click',function(e){e.stopPropagation();btn.classList.contains('w--open')?closeNav():(menu.classList.add('w--nav-menu-open'),btn.classList.add('w--open'),document.body.classList.add('w-nav-open'),overlay&&(overlay.style.display='block'));});if(overlay)overlay.addEventListener('click',closeNav);document.addEventListener('click',function(e){if(!menu.contains(e.target)&&!btn.contains(e.target))closeNav();});});
   </script>
