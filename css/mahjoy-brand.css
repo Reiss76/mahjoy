@@ -663,33 +663,45 @@ html, body {
   cursor: pointer;
 }
 
-/* ── Hamburger nav — override webflow.js conflicts ── */
+/* ── Hamburger nav — compact right drawer ── */
 body.mj-nav-open .nav-menu {
   display: flex !important;
   position: fixed !important;
-  inset: 0 !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: auto !important;
+  width: 270px !important;
   flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 40px !important;
-  gap: 8px !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  padding: 84px 28px 40px !important;
+  gap: 6px !important;
   background-color: var(--burgundy, #6B0F2A) !important;
   z-index: 9999 !important;
+  box-shadow: -6px 0 32px rgba(0,0,0,0.25) !important;
+  overflow-y: auto !important;
 }
 body.mj-nav-open .nav-menu .nav-link,
 body.mj-nav-open .nav-menu .mj-shop-toggle,
 body.mj-nav-open .nav-menu .nav-link-text {
   color: #FAF6F0 !important;
+  text-align: left !important;
+}
+body.mj-nav-open .nav-menu .mj-shop-list {
+  width: 100% !important;
 }
 body.mj-nav-open .nav-menu .mj-shop-list .mj-shop-link {
-  color: rgba(250,246,240,0.75) !important;
+  color: rgba(250,246,240,0.8) !important;
+  text-align: left !important;
+  white-space: nowrap !important;
 }
 body.mj-nav-open .overlay-menu {
   display: block !important;
   position: fixed !important;
   inset: 0 !important;
   z-index: 9998 !important;
-  background: rgba(107,15,42,0.6) !important;
+  background: rgba(0,0,0,0.35) !important;
 }
 
 /* ── Coming Soon badge ── */
