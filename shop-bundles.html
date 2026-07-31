@@ -106,26 +106,26 @@
     function imgUrl(p){let k=null;if(p.primary_image_url)k=p.primary_image_url;else if(p.published_image_urls&&p.published_image_urls.length)k=p.published_image_urls[0];else if(p.images&&p.images.length)k=p.images[0];if(!k)return null;if(k.startsWith('/api/public/media'))k=k.replace('/api/public/media','/public/media');return k.startsWith('/public/media')?MJ_API+k:(k.startsWith('http')?k:MJ_API+'/public/media?key='+encodeURIComponent(k));}
     const MJ_API='https://api-production-b888.up.railway.app';
     function imgUrl(img){if(!img)return null;if(img.startsWith('/api/public/media'))img=img.replace('/api/public/media','/public/media');return img.startsWith('/public/media')?MJ_API+img:(img.startsWith('http')?img:MJ_API+'/public/media?key='+encodeURIComponent(img));}
-    fetch(MJ_API+'/public/shop/mahjoy/bundles').then(r=>{if(!r.ok)throw new Error(r.status);return r.json();}).then(data=>{
-      const bundles=(data.bundles||data||[]);
-      const grid=document.getElementById('mj-prod-grid');
-      if(!bundles.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:48px;font-family:Plus Jakarta Sans,sans-serif;color:var(--burgundy)">Próximamente — los sets estarán disponibles muy pronto.</div>';return;}
+    fetch(MJ_API+'/public/shop/mahjoy/bundles').then(function(r){if(!r.ok)throw new Error(r.status);return r.json();}).then(function(data){
+      var bundles=(data.bundles||data||[]);
+      var grid=document.getElementById('mj-prod-grid');
+      if(!bundles.length)throw new Error('empty');
       grid.innerHTML='';
       bundles.forEach(function(b){
-        const isMXN=localStorage.getItem('mj_currency')!=='USD';
-        const rawPrice=parseFloat(b.price||0);
-        const price=rawPrice?(isMXN?'$'+rawPrice.toFixed(2)+' MXN':'$'+(rawPrice/18).toFixed(2)+' USD'):'';
-        const img=imgUrl(b.image_url||b.image_key||null);
-        const items=(b.items||b.bundle_items||[]);
-        const itemNames=items.map(function(i){return i.product_name||i.name||'';}).filter(Boolean).join(' · ');
-        const card=document.createElement('a');
+        var isMXN=localStorage.getItem('mj_currency')!=='USD';
+        var rawPrice=parseFloat(b.price||0);
+        var price=rawPrice?(isMXN?'$'+rawPrice.toFixed(2)+' MXN':'$'+(rawPrice/18).toFixed(2)+' USD'):'';
+        var imgSrc=b.image_url||b.image_key||(b.slug?'images/bundles/bundle-'+b.slug+'.jpg':null);
+        var items=(b.items||b.bundle_items||[]);
+        var itemNames=items.map(function(i){return i.product_name||i.name||'';}).filter(Boolean).join(' · ');
+        var card=document.createElement('a');
         card.href='product.html#bundle-'+b.id;
         card.className='mj-prod-card';
-        card.innerHTML=(img?'<img src="'+img+'" alt="'+b.name+'" class="mj-prod-card-img" onerror="this.style.display='none'">'
-          :'<div class="mj-prod-card-img" style="height:200px;display:flex;align-items:center;justify-content:center;background:#f5e8f0;"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C76BA4" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>')
+        card.innerHTML=(imgSrc?'<img src="'+imgSrc+'" alt="'+b.name+'" class="mj-prod-card-img" onerror="this.style.display='none'">'
+          :'<div class="mj-prod-card-img" style="height:200px;display:flex;align-items:center;justify-content:center;background:#f5e8f0;"></div>')
           +'<div class="mj-prod-card-body">'
           +'<div class="mj-prod-card-name" title="'+b.name+'">'+b.name+'</div>'
-          +(itemNames?'<div style="font-family:Plus Jakarta Sans,sans-serif;font-size:.6rem;color:rgba(107,15,42,.5);margin-bottom:6px;line-height:1.4;">'+itemNames+'</div>':'')
+          +(itemNames?'<div style="font-family:Plus Jakarta Sans,sans-serif;font-size:.6rem;color:rgba(107,15,42,.5);margin-bottom:6px;">'+itemNames+'</div>':'')
           +(b.discount_pct?'<div style="font-family:Plus Jakarta Sans,sans-serif;font-size:.65rem;font-weight:700;color:var(--orchid);margin-bottom:4px;">'+b.discount_pct+'% descuento</div>':'')
           +'<div class="mj-prod-card-price">'+price+'</div>'
           +'<span style="display:inline-block;margin-top:10px;background:var(--burgundy);color:#fff;font-family:Plus Jakarta Sans,sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:8px 18px;border-radius:999px;">Ver set</span>'
@@ -133,7 +133,20 @@
         grid.appendChild(card);
       });
     }).catch(function(){
-      document.getElementById('mj-prod-grid').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:48px;font-family:Plus Jakarta Sans,sans-serif;color:var(--burgundy);">Próximamente — los sets estarán disponibles muy pronto. 🎯</div>';
+      var grid=document.getElementById('mj-prod-grid');
+      var imgs=['bundle-a','bundle-b','bundle-c','bundle-d','bundle-e','bundle-f','bundle-g','bundle-h','bundle-i','bundle-j','bundle-k','bundle-l'];
+      grid.innerHTML='';
+      imgs.forEach(function(slug){
+        var card=document.createElement('div');
+        card.className='mj-prod-card';
+        card.style.cssText='cursor:default;';
+        card.innerHTML='<img src="images/bundles/'+slug+'.jpg" alt="Set completo" class="mj-prod-card-img">'
+          +'<div class="mj-prod-card-body">'
+          +'<div class="mj-prod-card-name">Set Completo</div>'
+          +'<div class="mj-prod-card-price" style="color:var(--orchid);font-size:.7rem;letter-spacing:.1em;font-weight:700;">PRÓXIMAMENTE</div>'
+          +'</div>';
+        grid.appendChild(card);
+      });
     });
     document.addEventListener('DOMContentLoaded',function(){var btn=document.querySelector('.w-nav-button'),menu=document.querySelector('.nav-menu'),overlay=document.querySelector('.overlay-menu');if(!btn||!menu)return;function closeNav(){menu.classList.remove('w--nav-menu-open');menu.style.display='none';btn.classList.remove('w--open');document.body.classList.remove('w-nav-open');if(overlay)overlay.style.display='none';}btn.addEventListener('click',function(e){e.stopPropagation();btn.classList.contains('w--open')?closeNav():(menu.classList.add('w--nav-menu-open'),btn.classList.add('w--open'),document.body.classList.add('w-nav-open'),overlay&&(overlay.style.display='block'));});if(overlay)overlay.addEventListener('click',closeNav);document.addEventListener('click',function(e){if(!menu.contains(e.target)&&!btn.contains(e.target))closeNav();});});
   </script>
