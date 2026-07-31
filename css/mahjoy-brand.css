@@ -725,5 +725,15 @@ body.mj-nav-open .overlay-menu {
 .mj-currency-toggle span.active{color:#fff;}
 .mj-currency-toggle .mj-cur-sep{color:rgba(250,246,240,.3);}
 
-/* ── Nav layout fix: oculta slogan pero mantiene espacio (3 columnas intactas) ── */
+/* ── Nav layout: 3 columnas fijas, hamburger siempre en nav bar ── */
+.navmenu .quick-stack.wf-layout-layout,
+.w-nav .quick-stack.wf-layout-layout {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr 1fr !important;
+  align-items: center !important;
+  width: 100% !important;
+  min-height: 60px !important;
+}
 .cell-slogan { visibility: hidden !important; }
+.cell-brand  { display: flex !important; justify-content: center !important; align-items: center !important; }
+.cell-menu   { display: flex !important; justify-content: flex-end !important; align-items: center !important; padding-right: 16px !important; }
