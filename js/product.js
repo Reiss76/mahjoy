@@ -183,8 +183,35 @@ async function loadProduct() {
   document.getElementById('pdp-price').textContent = formatPrice(product.price);
 
   const descEl = document.getElementById('pdp-description');
-  if (product.description) {
-    descEl.textContent = product.description;
+  // Use API description, fallback to local descriptions map
+  const descMap = window.MJ_DESCRIPTIONS || {};
+  const specsMap = window.MJ_SPECS || {};
+  const nameKey = (product.name || '').toLowerCase().trim();
+  const skuUpper = (product.sku || '').toUpperCase();
+  const localDesc = descMap[nameKey];
+
+  // Find specs by SKU prefix
+  let localSpecs = null;
+  if (skuUpper.startsWith('RAKBAG-')) localSpecs = specsMap['RAKBAG'];
+  else if (skuUpper.startsWith('RACK-')) localSpecs = specsMap['RACK'];
+  else if (skuUpper.startsWith('BAG-TILE')) localSpecs = specsMap['BAG-TILE'];
+  else if (skuUpper.startsWith('BAG-')) localSpecs = specsMap['BAG'];
+  else if (localDesc) localSpecs = localDesc;
+
+  const descText = product.description || (localDesc && localDesc.description) || '';
+  const specsArr = (localSpecs && localSpecs.specs) || [];
+
+  if (descText || specsArr.length) {
+    let html = '';
+    if (descText) html += '<p style="margin-bottom:16px;line-height:1.7;">' + descText + '</p>';
+    if (specsArr.length) {
+      html += '<ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;">';
+      specsArr.forEach(function(s) {
+        html += '<li style="display:flex;gap:8px;align-items:flex-start;font-size:.82rem;color:rgba(107,15,42,.7);"><span style="color:var(--orchid);flex-shrink:0;">✦</span>' + s + '</li>';
+      });
+      html += '</ul>';
+    }
+    descEl.innerHTML = html;
     descEl.style.display = 'block';
   } else {
     descEl.style.display = 'none';
