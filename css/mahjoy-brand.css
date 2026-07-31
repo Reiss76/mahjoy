@@ -713,8 +713,5 @@ body.mj-nav-open .overlay-menu {
 .mj-currency-toggle span.active{color:#fff;}
 .mj-currency-toggle .mj-cur-sep{color:rgba(250,246,240,.3);}
 
-/* ── Nav layout fix: hide empty slogan cell, brand left-aligned ── */
-.cell-slogan { display: none !important; }
-.quick-stack.wf-layout-layout {
-  grid-template-columns: 1fr auto !important;
-}
+/* ── Nav layout fix: oculta slogan pero mantiene espacio (3 columnas intactas) ── */
+.cell-slogan { visibility: hidden !important; }
