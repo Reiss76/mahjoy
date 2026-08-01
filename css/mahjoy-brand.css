@@ -691,3 +691,16 @@ body {
   transform: translateY(-50%) !important;
 }
 .dot-menu-button::after { content: none !important; display: none !important; }
+
+/* ── Logo más grande y notorio ── */
+.brand-logo {
+  max-height: 52px !important;
+  height: 52px !important;
+  width: auto !important;
+  max-width: 200px !important;
+  mix-blend-mode: screen !important;
+  display: block !important;
+}
+/* Hide webflow's broken button — we use #mj-ham instead */
+.menu-button-wrapper, .w-nav-button, .dot-menu-button { display: none !important; }
+#mj-ham { display: flex !important; }
