@@ -709,3 +709,6 @@ body {
 /* Hide webflow's broken button — we use #mj-ham instead */
 .menu-button-wrapper, .w-nav-button, .dot-menu-button { display: none !important; }
 #mj-ham { display: flex !important; }
+
+/* Remove Webflow X circle button decorative element */
+.button-wrapper, .circle-button.link { display: none !important; }
