@@ -700,6 +700,11 @@ body {
   max-width: 200px !important;
   mix-blend-mode: screen !important;
   display: block !important;
+  margin-bottom: 6px !important;
+}
+.cell-brand {
+  padding-top: 0 !important;
+  margin-top: -6px !important;
 }
 /* Hide webflow's broken button — we use #mj-ham instead */
 .menu-button-wrapper, .w-nav-button, .dot-menu-button { display: none !important; }
