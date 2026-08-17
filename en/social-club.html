@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-wf-site="69b8b6457fb4b98c000aa3ab" lang="es">
+<html data-wf-site="69b8b6457fb4b98c000aa3ab" lang="es" lang="en">
 <head>
   <link rel="alternate" hreflang="es" href="https://www.playmahjoy.com/social-club.html" />
   <link rel="alternate" hreflang="en" href="https://www.playmahjoy.com/en/social-club.html" />
@@ -7,15 +7,15 @@
   <meta charset="utf-8">
   <title>Social Club — MAH JOY</title>
   <meta content="width=device-width, initial-scale=1" name="viewport">
-  <link href="css/normalize.css" rel="stylesheet">
-  <link href="css/webflow.css" rel="stylesheet">
-  <link href="css/mahjoy.webflow.css" rel="stylesheet">
-  <link href="css/mahjoy-brand.css" rel="stylesheet">
+  <link href="../css/normalize.css" rel="stylesheet">
+  <link href="../css/webflow.css" rel="stylesheet">
+  <link href="../css/mahjoy.webflow.css" rel="stylesheet">
+  <link href="../css/mahjoy-brand.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com" rel="preconnect">
   <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
   <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
   <script>WebFont.load({ google: { families: ["Plus Jakarta Sans:300,400,500,600,700,800"] } });</script>
-  <link href="images/icon-burgundy.svg" rel="shortcut icon" type="image/svg+xml">
+  <link href="../images/icon-burgundy.svg" rel="shortcut icon" type="image/svg+xml">
   <style>
     * { box-sizing: border-box; }
     body { background: #fdf8fb; font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -135,11 +135,11 @@
     <div data-animation="over-right" class="navmenu w-nav" data-easing2="ease" data-easing="ease" data-collapse="all" role="banner" data-no-scroll="1" data-duration="0" data-doc-height="1">
       <div class="w-layout-layout quick-stack wf-layout-layout">
         <div class="w-layout-cell cell-slogan"><div></div></div>
-        <div class="w-layout-cell cell-brand"><a href="index.html" class="brand w-nav-brand"><img src="images/logo-mahjoy-horizontal.png" loading="lazy" alt="MAH JOY" class="brand-logo" ></a></div>
+        <div class="w-layout-cell cell-brand"><a href="index.html" class="brand w-nav-brand"><img src="../images/logo-mahjoy-horizontal.png" loading="lazy" alt="MAH JOY" class="brand-logo" ></a></div>
         <div class="w-layout-cell cell-menu"><div class="menu-button-wrapper"><div class="menu-button w-nav-button"><div class="dot-menu-button"></div></div></div></div>
       </div>
       <div class="nav-menu">
-        <div class="mj-lang-switch" style="display:flex;align-items:center;margin-right:8px;"><a href="/en/social-club.html" class="nav-link w-inline-block" style="font-size:0.75rem;opacity:0.8;"><div class="nav-link-text">EN</div></a></div><a href="cart.html" class="nav-link w-inline-block mj-cart-nav" style="position:relative;">
+        <div class="mj-lang-switch" style="display:flex;align-items:center;margin-right:8px;"><a href="/social-club.html" class="nav-link w-inline-block" style="font-size:0.75rem;opacity:0.8;"><div class="nav-link-text">ES</div></a></div><a href="cart.html" class="nav-link w-inline-block mj-cart-nav" style="position:relative;">
           <div class="nav-link-text" style="display:flex;align-items:center;gap:.4rem;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
             Carrito
@@ -178,28 +178,28 @@
   <div class="sc-stats">
     <div class="sc-stat">
       <div class="sc-stat-num" id="stat-tournaments">—</div>
-      <div class="sc-stat-label">Torneos activos</div>
+      <div class="sc-stat-label">Tournaments activos</div>
     </div>
     <div class="sc-stat">
       <div class="sc-stat-num" id="stat-players">—</div>
-      <div class="sc-stat-label">Jugadores inscritos</div>
+      <div class="sc-stat-label">Players inscritos</div>
     </div>
     <div class="sc-stat">
       <div class="sc-stat-num">4</div>
-      <div class="sc-stat-label">Jugadores por mesa</div>
+      <div class="sc-stat-label">Players por mesa</div>
     </div>
   </div>
 
   <!-- TOURNAMENTS LIST -->
   <div class="sc-section">
     <div class="sc-section-header">
-      <div class="sc-section-title">Torneos abiertos</div>
+      <div class="sc-section-title">Tournaments abiertos</div>
       <button class="sc-btn" onclick="openCreateModal()">+ Crear torneo</button>
     </div>
     <div id="tournaments-container">
       <div class="sc-empty">
         <div class="sc-empty-icon">🀄</div>
-        <h3>Cargando torneos...</h3>
+        <h3>Loading torneos...</h3>
       </div>
     </div>
   </div>
@@ -220,7 +220,7 @@
       </div>
       <div class="sc-how-step">
         <div class="sc-how-step-num">3</div>
-        <h3>Mesas automáticas</h3>
+        <h3>Tables automáticas</h3>
         <p>Por cada 4 jugadores se crea una mesa automáticamente. ¡Solo a jugar!</p>
       </div>
     </div>
@@ -229,7 +229,7 @@
   <!-- CREATE MODAL -->
   <div class="sc-modal-overlay" id="create-modal">
     <div class="sc-modal">
-      <h2>Nuevo torneo</h2>
+      <h2>New torneo</h2>
       <p class="sc-modal-sub">Crea tu torneo de Mahjong Americano</p>
 
       <div class="sc-field">
@@ -248,7 +248,7 @@
       </div>
       <div class="sc-input-row">
         <div class="sc-field">
-          <label class="sc-label">Fecha</label>
+          <label class="sc-label">Date</label>
           <input class="sc-input" id="field-date" placeholder="ej. Sáb 17 mayo, 3pm" maxlength="60">
         </div>
         <div class="sc-field">
@@ -257,7 +257,7 @@
         </div>
       </div>
       <div class="sc-field">
-        <label class="sc-label">Descripción (opcional)</label>
+        <label class="sc-label">Description (opcional)</label>
         <textarea class="sc-input" id="field-desc" placeholder="Detalles del torneo..." rows="2" maxlength="300" style="resize:vertical"></textarea>
       </div>
       <div class="sc-field">
@@ -273,16 +273,16 @@
 
       <div class="sc-modal-actions">
         <button class="sc-btn" onclick="createTournament()">Crear torneo →</button>
-        <button class="sc-btn sc-btn-outline" onclick="closeCreateModal()">Cancelar</button>
+        <button class="sc-btn sc-btn-outline" onclick="closeCreateModal()">Cancel</button>
       </div>
       <div id="create-error" style="color:#c0440a;font-size:.82rem;margin-top:.75rem;display:none;"></div>
     </div>
   </div>
 
-  <script src="js/webflow.js"></script>
-  <script src="js/cart.js"></script>
-  <script src="js/vendor-ref.js"></script>
-  <script src="js/currency.js"></script>
+  <script src="../js/webflow.js"></script>
+  <script src="../js/cart.js"></script>
+  <script src="../js/vendor-ref.js"></script>
+  <script src="../js/currency.js"></script>
   <script>
     const API_BASE = 'https://api-production-b888.up.railway.app';
 
