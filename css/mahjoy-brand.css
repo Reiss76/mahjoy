@@ -761,3 +761,27 @@ body {
     font-size: 16px !important;
   }
 }
+
+/* ─── Checkout Process Steps - Mobile ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  #co-content > div > div:first-child {
+    flex-wrap: wrap;
+    gap: .75rem;
+    padding: 1rem;
+  }
+  #co-content > div > div:first-child > div[style*="width:30px"] {
+    display: none;
+  }
+  #co-content > div > div:first-child > div[style*="display:flex"] {
+    flex: 0 0 45%;
+    padding: .5rem;
+  }
+  #co-content > div > div:first-child span {
+    font-size: .7rem !important;
+  }
+  #co-content > div > div:first-child > div > div:first-child {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: .7rem !important;
+  }
+}
