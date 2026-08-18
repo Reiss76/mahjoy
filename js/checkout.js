@@ -120,20 +120,44 @@ async function loadCheckout() {
     return;
   }
 
-  let data;
+  let product = null;
+  
   try {
-    const res = await fetch('products.json');
-    data = await res.json();
+    // First try to fetch from API directly by ID or SKU
+    if (productId) {
+      const res = await fetch(`${MJ_API_BASE}/public/shop/mahjoy/products/${productId}`);
+      if (res.ok) {
+        product = await res.json();
+      }
+    }
+    
+    // If not found by ID, try by SKU or load all products
+    if (!product) {
+      const res = await fetch(`${MJ_API_BASE}/public/shop/mahjoy/products`);
+      if (res.ok) {
+        const data = await res.json();
+        const products = data.products || data || [];
+        product = productId
+          ? products.find(p => p.id === productId)
+          : products.find(p => p.sku === productSku || p.sku?.toLowerCase() === productSku?.toLowerCase());
+      }
+    }
+    
+    // Fallback to local products.json for offline/cache
+    if (!product) {
+      const res = await fetch('products.json');
+      const data = await res.json();
+      const products = data.products || [];
+      product = productId
+        ? products.find(p => p.id === productId)
+        : products.find(p => p.sku === productSku);
+    }
   } catch (e) {
+    console.error('Error loading product:', e);
     document.getElementById('co-loading').style.display = 'none';
     document.getElementById('co-content').style.display = 'block';
     return;
   }
-
-  const products = data.products || [];
-  const product = productId
-    ? products.find(p => p.id === productId)
-    : products.find(p => p.sku === productSku);
 
   if (!product) {
     document.getElementById('co-loading').style.display = 'none';
