@@ -193,3 +193,77 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`MAH JOY server running on port ${PORT}`);
 });
+
+// ─── Envia.com Shipping API ──────────────────────────────────────────────────
+
+const ENVIA_API_KEY = process.env.ENVIA_API_KEY || '';
+const ENVIA_ORIGIN_CP = process.env.ENVIA_ORIGIN_CP || '64000'; // Default: Monterrey
+const ENVIA_API_URL = 'https://api.envia.com/ship/rate/';
+
+app.post('/api/shipping/quote', async (req, res) => {
+  if (!ENVIA_API_KEY) {
+    return res.status(500).json({ error: 'Shipping not configured' });
+  }
+
+  const { destination, items } = req.body;
+  
+  if (!destination || destination.length !== 5) {
+    return res.status(400).json({ error: 'Invalid postal code' });
+  }
+
+  try {
+    // Calculate package dimensions based on items
+    // Default: medium box for mahjong sets
+    const weight = items?.reduce((sum, i) => sum + (i.weight || 2), 0) || 2;
+    
+    const payload = {
+      origin: {
+        postal_code: ENVIA_ORIGIN_CP,
+        country_code: 'MX'
+      },
+      destination: {
+        postal_code: destination,
+        country_code: 'MX'
+      },
+      packages: [{
+        content: 'Mahjong Set',
+        amount: 1,
+        weight: weight,
+        weight_unit: 'KG',
+        length: 40,
+        width: 30,
+        height: 15,
+        dimension_unit: 'CM'
+      }]
+    };
+
+    const response = await fetch(ENVIA_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${ENVIA_API_KEY}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+    
+    if (data.data && data.data.length > 0) {
+      // Format response
+      const quotes = data.data.map(q => ({
+        id: q.carrier_service_code,
+        carrier: q.carrier,
+        service: q.service,
+        days: q.delivery_days || q.estimated_delivery,
+        price: parseFloat(q.total_price)
+      })).sort((a, b) => a.price - b.price);
+      
+      res.json({ quotes });
+    } else {
+      res.json({ error: 'No shipping options available', raw: data });
+    }
+  } catch (err) {
+    console.error('Envia.com API error:', err);
+    res.status(500).json({ error: 'Shipping calculation failed' });
+  }
+});
