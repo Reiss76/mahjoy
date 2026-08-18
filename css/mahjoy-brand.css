@@ -753,3 +753,11 @@ body {
   transform: translateY(-50%) !important;
   z-index: 50 !important;
 }
+
+/* ─── iOS: Prevent auto-zoom on input focus ───────────────────────────────── */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  select, textarea, input[type="text"], input[type="email"], 
+  input[type="tel"], input[type="number"], input[type="password"] {
+    font-size: 16px !important;
+  }
+}
