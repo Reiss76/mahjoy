@@ -720,3 +720,36 @@ body {
 
 /* Remove Webflow X circle button decorative element */
 .button-wrapper, .circle-button.link { display: none !important; }
+
+/* ── Language Switcher with Globe ── */
+.mj-lang-selector {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #fff !important;
+  position: absolute !important;
+  left: 16px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  z-index: 100 !important;
+}
+.mj-lang-selector a {
+  color: rgba(255,255,255,0.7) !important;
+  text-decoration: none !important;
+  transition: color 0.2s !important;
+}
+.mj-lang-selector a:hover,
+.mj-lang-selector a.active {
+  color: #fff !important;
+}
+.mj-lang-selector .mj-globe {
+  width: 16px !important;
+  height: 16px !important;
+  opacity: 0.8 !important;
+}
+.mj-lang-selector .mj-lang-sep {
+  color: rgba(255,255,255,0.4) !important;
+}
