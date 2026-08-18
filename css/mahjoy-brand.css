@@ -753,3 +753,13 @@ body {
 .mj-lang-selector .mj-lang-sep {
   color: rgba(255,255,255,0.4) !important;
 }
+
+/* ── Fix: Show lang selector in cell-slogan ── */
+.cell-slogan .mj-lang-selector {
+  visibility: visible !important;
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  transform: none !important;
+  padding-left: 12px !important;
+}
