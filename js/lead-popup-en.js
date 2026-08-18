@@ -71,21 +71,21 @@
   const overlay = document.createElement('div');
   overlay.id = 'mj-lead-overlay';
   overlay.innerHTML = `
-    <div id="mj-lead-modal" role="dialog" aria-modal="true" aria-label="Únete a la comunidad Mahjoy">
-      <button id="mj-lead-close" aria-label="Cerrar">✕</button>
+    <div id="mj-lead-modal" role="dialog" aria-modal="true" aria-label="Join the community Mahjoy">
+      <button id="mj-lead-close" aria-label="Close">✕</button>
       <div id="mj-lead-form">
-        <h2><em>Únete a la comunidad</em></h2>
+        <h2><em>Join the community</em></h2>
         <p>News, beginner tips and early access to new sets — direct to your email and WhatsApp.</p>
         <input class="mj-lead-input" id="mj-name" type="text" placeholder="Your name (optional)" autocomplete="name" />
         <input class="mj-lead-input" id="mj-email" type="email" placeholder="Email" autocomplete="email" />
         <input class="mj-lead-input" id="mj-wa" type="tel" placeholder="WhatsApp (optional, e.g. 8112345678)" autocomplete="tel" />
-        <button id="mj-lead-submit">Únete ahora</button>
+        <button id="mj-lead-submit">Join now</button>
         <span class="mj-lead-skip" id="mj-lead-skip">No thanks, maybe later</span>
       </div>
       <div id="mj-lead-success">
         <div style="font-size:48px;margin-bottom:12px">🀄</div>
-        <h2 style="font-size:22px;margin-bottom:8px">¡Bienvenida a la mesa!</h2>
-        <p>Te mantendremos al tanto de todo lo mahjoy.</p>
+        <h2 style="font-size:22px;margin-bottom:8px">Welcome to the table!</h2>
+        <p>We will keep you updated on all things mahjoy.</p>
       </div>
     </div>
   `;
@@ -129,7 +129,7 @@
       setTimeout(dismiss, 2500);
     } catch {
       btn.disabled = false;
-      btn.textContent = 'Únete ahora';
+      btn.textContent = 'Join now';
     }
   });
 
