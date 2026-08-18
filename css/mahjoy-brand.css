@@ -763,3 +763,13 @@ body {
   transform: none !important;
   padding-left: 12px !important;
 }
+
+/* ── Fix: Hide nav-menu by default on mobile ── */
+@media (max-width: 991px) {
+  .nav-menu {
+    display: none !important;
+  }
+  .nav-menu.w--nav-menu-open {
+    display: flex !important;
+  }
+}
