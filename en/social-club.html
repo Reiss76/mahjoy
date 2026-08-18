@@ -170,8 +170,8 @@
     <div class="sc-hero-tiles">🀇🀈🀉🀊🀋🀌🀍🀎🀏🀙🀚🀛🀜🀝🀞🀟🀠🀡🀀🀁🀂🀃🀄🀅🀆🀇🀈🀉🀙🀚🀛🀜🀝🀞🀟🀠🀡</div>
     <div class="sc-hero-eyebrow">MAH JOY · Social Club</div>
     <h1>Organiza tu<br><span>torneo</span></h1>
-    <p>Crea una mesa, invita a tus amigos. El Social Club conecta jugadores y forma mesas de Mahjong Americano automáticamente.</p>
-    <a href="#" class="sc-hero-cta" onclick="openCreateModal();return false;">+ Crear torneo</a>
+    <p>Crea una mesa, invita a tus amigos. El Social Club conecta players y forma tables de Mahjong Americano automáticamente.</p>
+    <a href="#" class="sc-hero-cta" onclick="openCreateModal();return false;">+ Create Tournament</a>
   </div>
 
   <!-- STATS -->
@@ -194,7 +194,7 @@
   <div class="sc-section">
     <div class="sc-section-header">
       <div class="sc-section-title">Tournaments abiertos</div>
-      <button class="sc-btn" onclick="openCreateModal()">+ Crear torneo</button>
+      <button class="sc-btn" onclick="openCreateModal()">+ Create Tournament</button>
     </div>
     <div id="tournaments-container">
       <div class="sc-empty">
@@ -211,7 +211,7 @@
       <div class="sc-how-step">
         <div class="sc-how-step-num">1</div>
         <h3>Crea tu torneo</h3>
-        <p>Dale un nombre, fecha, lugar y cuántos jugadores quieres invitar.</p>
+        <p>Dale un nombre, fecha, lugar y cuántos players quieres invitar.</p>
       </div>
       <div class="sc-how-step">
         <div class="sc-how-step-num">2</div>
@@ -221,7 +221,7 @@
       <div class="sc-how-step">
         <div class="sc-how-step-num">3</div>
         <h3>Tables automáticas</h3>
-        <p>Por cada 4 jugadores se crea una mesa automáticamente. ¡Solo a jugar!</p>
+        <p>Por cada 4 players se crea una mesa automáticamente. ¡Solo a jugar!</p>
       </div>
     </div>
   </div>
@@ -238,7 +238,7 @@
       </div>
       <div class="sc-input-row">
         <div class="sc-field">
-          <label class="sc-label">Tu nombre *</label>
+          <label class="sc-label">Your name *</label>
           <input class="sc-input" id="field-host" placeholder="Organizador" maxlength="60">
         </div>
         <div class="sc-field">
@@ -261,18 +261,18 @@
         <textarea class="sc-input" id="field-desc" placeholder="Detalles del torneo..." rows="2" maxlength="300" style="resize:vertical"></textarea>
       </div>
       <div class="sc-field">
-        <label class="sc-label">Máx. jugadores</label>
+        <label class="sc-label">Máx. players</label>
         <select class="sc-input" id="field-max">
-          <option value="8">8 jugadores (2 mesas)</option>
-          <option value="12">12 jugadores (3 mesas)</option>
-          <option value="16" selected>16 jugadores (4 mesas)</option>
-          <option value="24">24 jugadores (6 mesas)</option>
-          <option value="32">32 jugadores (8 mesas)</option>
+          <option value="8">8 players (2 tables)</option>
+          <option value="12">12 players (3 tables)</option>
+          <option value="16" selected>16 players (4 tables)</option>
+          <option value="24">24 players (6 tables)</option>
+          <option value="32">32 players (8 tables)</option>
         </select>
       </div>
 
       <div class="sc-modal-actions">
-        <button class="sc-btn" onclick="createTournament()">Crear torneo →</button>
+        <button class="sc-btn" onclick="createTournament()">Create Tournament →</button>
         <button class="sc-btn sc-btn-outline" onclick="closeCreateModal()">Cancel</button>
       </div>
       <div id="create-error" style="color:#c0440a;font-size:.82rem;margin-top:.75rem;display:none;"></div>
@@ -332,7 +332,7 @@
             ${t.host_name ? `<div>🎲 <strong>${escHtml(t.host_name)}</strong></div>` : ''}
             ${t.date_text ? `<div>📅 ${escHtml(t.date_text)}</div>` : ''}
             ${t.location ? `<div>📍 ${escHtml(t.location)}</div>` : ''}
-            <div>🪑 ${count} / ${t.max_players} jugadores · ${tables} mesa${tables !== 1 ? 's' : ''}</div>
+            <div>🪑 ${count} / ${t.max_players} players · ${tables} mesa${tables !== 1 ? 's' : ''}</div>
           </div>
           <div class="sc-card-progress">
             <div class="sc-card-progress-bar-wrap">
@@ -363,7 +363,7 @@
       errEl.style.display = 'none';
 
       if (!name) { errEl.textContent = 'El nombre del torneo es requerido'; errEl.style.display='block'; return; }
-      if (!host_name) { errEl.textContent = 'Tu nombre es requerido'; errEl.style.display='block'; return; }
+      if (!host_name) { errEl.textContent = 'Your name es requerido'; errEl.style.display='block'; return; }
 
       const body = {
         name,
@@ -389,12 +389,12 @@
         } else {
           errEl.textContent = data.error || 'Error al crear torneo';
           errEl.style.display = 'block';
-          btn.textContent = 'Crear torneo →'; btn.disabled = false;
+          btn.textContent = 'Create Tournament →'; btn.disabled = false;
         }
       } catch(e) {
         errEl.textContent = 'Error de conexión';
         errEl.style.display = 'block';
-        btn.textContent = 'Crear torneo →'; btn.disabled = false;
+        btn.textContent = 'Create Tournament →'; btn.disabled = false;
       }
     }
 

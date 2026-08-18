@@ -112,7 +112,7 @@
         <div class="mj-cart-summary-total"><span>Total estimado</span><span id="cart-total"></span></div>
       </div>
       <div class="mj-cart-actions">
-        <button onclick="proceedToCheckout()" class="mj-cart-btn-primary">Pagar con tarjeta →</button>
+        <button onclick="proceedToCheckout()" class="mj-cart-btn-primary">Pay with card →</button>
         <button onclick="proceedWhatsApp()" class="mj-cart-btn-secondary">Continue via WhatsApp</button>
         <a href="shop-mats.html" style="text-align:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;color:var(--orchid-mid);text-decoration:none;margin-top:.25rem;">← Continue Shopping</a>
       </div>
@@ -208,11 +208,11 @@
           window.location.href = data.checkoutUrl;
         } else {
           alert('Error al procesar pago. Intenta por WhatsApp.');
-          btn.textContent = 'Pagar con tarjeta →'; btn.disabled = false;
+          btn.textContent = 'Pay with card →'; btn.disabled = false;
         }
       } catch (e) {
         alert('Error de conexión. Intenta por WhatsApp.');
-        btn.textContent = 'Pagar con tarjeta →'; btn.disabled = false;
+        btn.textContent = 'Pay with card →'; btn.disabled = false;
       }
     }
 

@@ -186,7 +186,7 @@
           </div>
           <button class="mj-bundle-cta" id="cta-desktop" disabled>Add to Cart</button>
         </div>
-        <p class="mj-bundle-note" id="note-desktop">Selecciona al menos un producto para continuar</p>
+        <p class="mj-bundle-note" id="note-desktop">Select at least one product to continue</p>
       </div>
 
       <!-- RIGHT: Selectors -->
@@ -255,7 +255,7 @@
           </div>
           <button class="mj-bundle-cta" id="cta-mobile" disabled>Add to Cart</button>
         </div>
-        <p class="mj-bundle-note" id="note-mobile">Selecciona al menos un producto para continuar</p>
+        <p class="mj-bundle-note" id="note-mobile">Select at least one product to continue</p>
       </div>
     </div>
   </section>
@@ -318,7 +318,7 @@
       ['note-desktop','note-mobile'].forEach(id => {
         document.getElementById(id).textContent = hasAny
           ? Object.values(selected).map(p=>p.name).join(' + ')
-          : 'Selecciona al menos un producto para continuar';
+          : 'Select at least one product to continue';
       });
     }
 

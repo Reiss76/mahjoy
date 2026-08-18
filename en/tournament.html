@@ -135,13 +135,13 @@
   </div>
 
   <div class="tp-wrap">
-    <a href="social-club.html" class="tp-back">← Volver a Social Club</a>
+    <a href="social-club.html" class="tp-back">← Back a Social Club</a>
 
     <!-- Tournament header -->
     <div id="tp-header-area">
       <div class="tp-header">
         <div class="tp-eyebrow">MAH JOY · Social Club</div>
-        <div class="tp-title" id="tp-title">Cargando...</div>
+        <div class="tp-title" id="tp-title">Loading...</div>
         <div class="tp-meta" id="tp-meta"></div>
         <div class="tp-progress-wrap"><div class="tp-progress-bar" id="tp-bar" style="width:0%"></div></div>
         <div class="tp-progress-label"><span id="tp-count-label">0 inscritos</span><span id="tp-avail-label"></span></div>
@@ -153,7 +153,7 @@
       <div class="tp-join-title">🀄 Únete al torneo</div>
       <div class="tp-join-row">
         <div>
-          <label class="sc-label">Tu nombre *</label>
+          <label class="sc-label">Your name *</label>
           <input class="sc-input" id="join-name" placeholder="¿Cómo te llaman?">
         </div>
         <div>
@@ -228,7 +228,7 @@
       const area = document.getElementById('tables-area');
       const players = t.players || [];
       if (!players.length) {
-        area.innerHTML = `<div style="text-align:center;padding:2rem;color:#bbb;font-size:.9rem;">Sin jugadores aún — ¡sé el primero!</div>`;
+        area.innerHTML = `<div style="text-align:center;padding:2rem;color:#bbb;font-size:.9rem;">Sin players aún — ¡sé el primero!</div>`;
         return;
       }
 
