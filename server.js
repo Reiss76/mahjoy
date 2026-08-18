@@ -245,13 +245,21 @@ app.post('/api/shipping/quote', async (req, res) => {
       packages: [{
         content: 'Mahjong Set',
         amount: 1,
+        type: 'box',
         weight: weight,
-        length: 40,
-        width: 30,
-        height: 15
+        insurance: 0,
+        declaredValue: 3000,
+        weightUnit: 'KG',
+        lengthUnit: 'CM',
+        dimensions: {
+          length: 40,
+          width: 30,
+          height: 15
+        }
       }],
       shipment: {
-        type: 1 // Standard domestic
+        carrier: 'all',
+        type: 1
       }
     };
 
