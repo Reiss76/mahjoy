@@ -258,7 +258,6 @@ app.post('/api/shipping/quote', async (req, res) => {
         }
       }],
       shipment: {
-        carrier: 'all',
         type: 1
       }
     };
