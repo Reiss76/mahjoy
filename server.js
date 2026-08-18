@@ -258,45 +258,49 @@ app.post('/api/shipping/quote', async (req, res) => {
         }
       }],
       shipment: {
-        carrier: 'fedex',
         type: 1
       }
     };
 
-    const response = await fetch(ENVIA_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${ENVIA_API_KEY}`
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await response.json();
+    // Query multiple carriers in parallel
+    const carriers = ['fedex', 'dhl', 'estafeta', 'paquetexpress'];
     
-    // Debug: log raw response structure
-    console.log('Envia API response:', JSON.stringify(data, null, 2));
-    
-    // Envia returns array directly or in data property
-    const rates = data.data || data || [];
-    
-    if (Array.isArray(rates) && rates.length > 0) {
-      // Format response - handle various Envia response formats
-      const quotes = rates.map(q => ({
-        id: q.carrier_service_code || q.serviceCode || q.service_id,
-        carrier: q.carrier || q.carrierName || 'Unknown',
-        service: q.service || q.serviceName || q.description,
-        days: q.delivery_days || q.deliveryDays || q.estimated_delivery || q.transitDays || '?',
-        price: parseFloat(q.total_price || q.totalPrice || q.amount || q.price || 0)
-      })).filter(q => q.price > 0).sort((a, b) => a.price - b.price);
-      
-      if (quotes.length > 0) {
-        res.json({ quotes });
-      } else {
-        res.json({ error: 'No shipping options available', raw: data });
+    const fetchCarrierQuotes = async (carrier) => {
+      try {
+        const carrierPayload = { ...payload, shipment: { ...payload.shipment, carrier } };
+        const response = await fetch(ENVIA_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${ENVIA_API_KEY}`
+          },
+          body: JSON.stringify(carrierPayload)
+        });
+        const data = await response.json();
+        const rates = data.data || data || [];
+        if (Array.isArray(rates)) {
+          return rates.map(q => ({
+            id: q.carrier_service_code || q.serviceCode || `${carrier}-${q.service}`,
+            carrier: q.carrier || carrier,
+            service: q.service || q.serviceName || 'Standard',
+            days: q.delivery_days || q.deliveryDays || q.estimated_delivery || '2-5',
+            price: parseFloat(q.total_price || q.totalPrice || q.amount || q.price || 0)
+          })).filter(q => q.price > 0);
+        }
+        return [];
+      } catch (e) {
+        console.error(`Error fetching ${carrier}:`, e.message);
+        return [];
       }
+    };
+
+    const allQuotes = await Promise.all(carriers.map(fetchCarrierQuotes));
+    const quotes = allQuotes.flat().sort((a, b) => a.price - b.price);
+    
+    if (quotes.length > 0) {
+      res.json({ quotes });
     } else {
-      res.json({ error: 'No shipping options available', raw: data });
+      res.json({ error: 'No shipping options available' });
     }
   } catch (err) {
     console.error('Envia.com API error:', err);
