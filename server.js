@@ -216,25 +216,43 @@ app.post('/api/shipping/quote', async (req, res) => {
     // Default: medium box for mahjong sets
     const weight = items?.reduce((sum, i) => sum + (i.weight || 2), 0) || 2;
     
+    // Envia.com API requires full address structure
     const payload = {
       origin: {
-        postal_code: ENVIA_ORIGIN_CP,
-        country_code: 'MX'
+        name: 'Mah Joy',
+        company: 'Mah Joy',
+        email: 'info@playmahjoy.com',
+        phone: '5530395891',
+        street: 'Av. Vasconcelos',
+        number: '1000',
+        district: 'Del Valle',
+        city: 'San Pedro Garza García',
+        state: 'NL',
+        country: 'MX',
+        postalCode: ENVIA_ORIGIN_CP
       },
       destination: {
-        postal_code: destination,
-        country_code: 'MX'
+        name: 'Cliente',
+        phone: '5500000000',
+        street: 'Calle',
+        number: '1',
+        district: 'Colonia',
+        city: 'Ciudad',
+        state: 'MX', // Will be determined from CP
+        country: 'MX',
+        postalCode: destination
       },
       packages: [{
         content: 'Mahjong Set',
         amount: 1,
         weight: weight,
-        weight_unit: 'KG',
         length: 40,
         width: 30,
-        height: 15,
-        dimension_unit: 'CM'
-      }]
+        height: 15
+      }],
+      shipment: {
+        type: 1 // Standard domestic
+      }
     };
 
     const response = await fetch(ENVIA_API_URL, {
