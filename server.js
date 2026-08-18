@@ -196,8 +196,8 @@ app.listen(PORT, () => {
 
 // ─── Envia.com Shipping API ──────────────────────────────────────────────────
 
-const ENVIA_API_KEY = process.env.ENVIA_API_KEY || '';
-const ENVIA_ORIGIN_CP = process.env.ENVIA_ORIGIN_CP || '64000'; // Default: Monterrey
+const ENVIA_API_KEY = process.env.ENVIA_API_KEY || 'c541f5b32442e1505448fbdcf85f6cc4ac132a273f148242b8159234fa34432c';
+const ENVIA_ORIGIN_CP = process.env.ENVIA_ORIGIN_CP || '66278'; // Default: Monterrey
 const ENVIA_API_URL = 'https://api.envia.com/ship/rate/';
 
 app.post('/api/shipping/quote', async (req, res) => {
