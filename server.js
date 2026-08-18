@@ -274,17 +274,27 @@ app.post('/api/shipping/quote', async (req, res) => {
 
     const data = await response.json();
     
-    if (data.data && data.data.length > 0) {
-      // Format response
-      const quotes = data.data.map(q => ({
-        id: q.carrier_service_code,
-        carrier: q.carrier,
-        service: q.service,
-        days: q.delivery_days || q.estimated_delivery,
-        price: parseFloat(q.total_price)
-      })).sort((a, b) => a.price - b.price);
+    // Debug: log raw response structure
+    console.log('Envia API response:', JSON.stringify(data, null, 2));
+    
+    // Envia returns array directly or in data property
+    const rates = data.data || data || [];
+    
+    if (Array.isArray(rates) && rates.length > 0) {
+      // Format response - handle various Envia response formats
+      const quotes = rates.map(q => ({
+        id: q.carrier_service_code || q.serviceCode || q.service_id,
+        carrier: q.carrier || q.carrierName || 'Unknown',
+        service: q.service || q.serviceName || q.description,
+        days: q.delivery_days || q.deliveryDays || q.estimated_delivery || q.transitDays || '?',
+        price: parseFloat(q.total_price || q.totalPrice || q.amount || q.price || 0)
+      })).filter(q => q.price > 0).sort((a, b) => a.price - b.price);
       
-      res.json({ quotes });
+      if (quotes.length > 0) {
+        res.json({ quotes });
+      } else {
+        res.json({ error: 'No shipping options available', raw: data });
+      }
     } else {
       res.json({ error: 'No shipping options available', raw: data });
     }
