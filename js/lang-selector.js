@@ -18,13 +18,9 @@
     '<a href="' + esLink + '" style="color:' + (isEnglish ? 'rgba(255,255,255,0.6)' : '#fff') + ';text-decoration:none;">ES</a>' +
     '</div>';
   
-  // Find cell-slogan and inject
-  var slogan = document.querySelector('.cell-slogan');
-  if (slogan && !document.getElementById('mj-lang-sel')) {
-    slogan.innerHTML = html;
-    slogan.style.visibility = 'visible';
-    slogan.style.display = 'flex';
-    slogan.style.alignItems = 'center';
-    slogan.style.paddingLeft = '12px';
+  // Find navmenu and inject as first child
+  var navmenu = document.querySelector('.navmenu');
+  if (navmenu && !document.getElementById('mj-lang-sel')) {
+    navmenu.insertAdjacentHTML('afterbegin', html);
   }
 })();
