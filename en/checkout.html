@@ -197,7 +197,12 @@
           </div>
 
           <div>
-            <label class="mj-co-label">Notas adicionales</label>
+            <label class="mj-co-label">Postal Code *</label>
+            <input class="mj-co-input" type="text" name="cp" id="co-cp" placeholder="10001" maxlength="5" pattern="[0-9]{5}" required style="width:150px;">
+            <div id="co-shipping-quote" style="margin:1rem 0;font-family:Plus Jakarta Sans,sans-serif;font-size:.85rem;color:#666;display:none;"></div>
+          </div>
+          <div style="margin-bottom:1.25rem;">
+            <label class="mj-co-label">Additional Notes</label>
             <textarea class="mj-co-input" name="notes" rows="3" placeholder="Color preferido, variante, instrucciones de entrega..." style="resize:vertical;"></textarea>
           </div>
 
@@ -304,3 +309,116 @@
 <script src="../js/lang-selector.js"></script>
 </body>
 </html>
+
+<!-- Shipping Quote (envia.com) -->
+<script>
+(function(){
+  const cpInput = document.getElementById('co-cp');
+  const quoteDiv = document.getElementById('co-shipping-quote');
+  let selectedShipping = 0;
+  let debounceTimer;
+
+  if (!cpInput) return;
+
+  cpInput.addEventListener('input', function() {
+    clearTimeout(debounceTimer);
+    const cp = this.value.replace(/\D/g, '');
+    
+    if (cp.length === 5) {
+      debounceTimer = setTimeout(() => fetchShippingQuote(cp), 500);
+    } else {
+      quoteDiv.style.display = 'none';
+      selectedShipping = 0;
+      updateTotal();
+    }
+  });
+
+  async function fetchShippingQuote(cp) {
+    quoteDiv.innerHTML = '<div style="color:var(--orchid);"><span style="animation:pulse 1s infinite">✦</span> Getting shipping rates...</div>';
+    quoteDiv.style.display = 'block';
+    
+    try {
+      const res = await fetch('/api/shipping/quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ destination: cp, items: [{ weight: 2 }] })
+      });
+      
+      const data = await res.json();
+      
+      if (data.quotes && data.quotes.length > 0) {
+        renderQuotes(data.quotes);
+      } else {
+        quoteDiv.innerHTML = '<div style="color:#c53030;">No shipping options available for this postal code</div>';
+      }
+    } catch (err) {
+      console.error('Shipping quote error:', err);
+      quoteDiv.innerHTML = '<div style="color:#c53030;">Error getting shipping rates. Please try again.</div>';
+    }
+  }
+
+  function renderQuotes(quotes) {
+    const sorted = quotes.sort((a, b) => a.price - b.price);
+    const currency = window.MJCurrency?.current === 'USD' ? 'USD' : 'MXN';
+    const rate = currency === 'USD' ? 18 : 1;
+    
+    const html = sorted.slice(0, 5).map((q, i) => {
+      const price = currency === 'USD' ? q.price / 18 : q.price;
+      return `
+      <label style="display:flex;align-items:center;gap:.75rem;padding:.75rem;margin:.5rem 0;background:#fff;border:2px solid ${i===0?'var(--orchid)':'#eee'};border-radius:8px;cursor:pointer;transition:border .2s;">
+        <input type="radio" name="shipping_option" value="${q.id}" data-price="${q.price}" ${i===0?'checked':''} style="accent-color:var(--orchid);">
+        <div style="flex:1;">
+          <div style="font-weight:700;color:var(--burgundy);font-size:.85rem;">${q.carrier}</div>
+          <div style="color:#888;font-size:.75rem;">${q.service || ''} · ${q.days || '?'} days</div>
+        </div>
+        <div style="font-weight:700;color:var(--burgundy);">$${price.toFixed(2)} ${currency}</div>
+      </label>
+    `}).join('');
+    
+    quoteDiv.innerHTML = '<div style="font-size:.75rem;color:var(--orchid);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.5rem;">Shipping Options</div>' + html;
+    quoteDiv.style.display = 'block';
+    
+    selectedShipping = sorted[0].price;
+    updateTotal();
+    
+    quoteDiv.querySelectorAll('input[name="shipping_option"]').forEach(radio => {
+      radio.addEventListener('change', function() {
+        selectedShipping = parseFloat(this.dataset.price);
+        updateTotal();
+        quoteDiv.querySelectorAll('label').forEach(l => l.style.borderColor = '#eee');
+        this.closest('label').style.borderColor = 'var(--orchid)';
+      });
+    });
+  }
+
+  function updateTotal() {
+    const subtotalEl = document.getElementById('co-subtotal');
+    const totalEl = document.getElementById('co-total');
+    const shippingEl = document.querySelector('[style*="To be quoted"], [style*="A cotizar"]');
+    
+    if (!subtotalEl || !totalEl) return;
+    
+    const subtotalText = subtotalEl.textContent;
+    const subtotal = parseFloat(subtotalText.replace(/[^0-9.]/g, '')) || 0;
+    
+    const currency = window.MJCurrency?.current === 'USD' ? 'USD' : 'MXN';
+    const shippingDisplay = currency === 'USD' ? selectedShipping / 18 : selectedShipping;
+    
+    if (shippingEl && selectedShipping > 0) {
+      shippingEl.textContent = '$' + shippingDisplay.toFixed(2) + ' ' + currency;
+      shippingEl.style.color = 'var(--burgundy)';
+    }
+    
+    const discountEl = document.getElementById('co-discount-amount');
+    const discount = discountEl ? parseFloat(discountEl.textContent.replace(/[^0-9.]/g, '')) || 0 : 0;
+    
+    const total = subtotal + shippingDisplay - discount;
+    totalEl.textContent = '$' + total.toLocaleString('en-US', {minimumFractionDigits:2}) + ' ' + currency;
+  }
+
+  window.MJShippingUpdateTotal = updateTotal;
+})();
+</script>
+<style>
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+</style>
