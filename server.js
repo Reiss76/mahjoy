@@ -258,6 +258,7 @@ app.post('/api/shipping/quote', async (req, res) => {
         }
       }],
       shipment: {
+        carrier: 'fedex',
         type: 1
       }
     };
