@@ -18,6 +18,51 @@ const CENTUMPAY_ENV        = (process.env.CENTUMPAY_ENV || 'prod').toLowerCase()
 
 app.use(express.json());
 
+// ─── Geo-redirect: USA→English, Mexico→Spanish ───────────────────────────────
+
+// Countries that should see English by default
+const ENGLISH_COUNTRIES = ['US', 'GB', 'AU', 'CA', 'NZ', 'IE'];
+
+// Get country from various headers (Railway/Cloudflare/Vercel)
+function getCountryCode(req) {
+  // Cloudflare
+  if (req.headers['cf-ipcountry']) return req.headers['cf-ipcountry'].toUpperCase();
+  // Vercel
+  if (req.headers['x-vercel-ip-country']) return req.headers['x-vercel-ip-country'].toUpperCase();
+  // Railway (via Cloudflare)
+  if (req.headers['x-country']) return req.headers['x-country'].toUpperCase();
+  // Fallback: check Accept-Language header
+  const lang = req.headers['accept-language'] || '';
+  if (lang.startsWith('en-US') || lang.startsWith('en-GB')) return 'US';
+  if (lang.startsWith('es-MX') || lang.startsWith('es')) return 'MX';
+  return null;
+}
+
+app.use((req, res, next) => {
+  // Only redirect on root Spanish pages (not /en/)
+  if (req.path.startsWith('/en/')) return next();
+  
+  // Skip if already has language preference cookie
+  if (req.headers.cookie && req.headers.cookie.includes('mj_lang=')) return next();
+  
+  // Only redirect HTML pages
+  if (!req.path.endsWith('.html') && req.path !== '/') return next();
+  
+  const country = getCountryCode(req);
+  
+  // If English-speaking country, redirect to /en/
+  if (country && ENGLISH_COUNTRIES.includes(country)) {
+    const enPath = req.path === '/' ? '/en/index.html' : '/en' + req.path;
+    // Set cookie so we don't redirect again if they switch back
+    res.cookie('mj_lang', 'en', { maxAge: 365 * 24 * 60 * 60 * 1000 });
+    return res.redirect(302, enPath);
+  }
+  
+  next();
+});
+
+
+
 // ─── CentumPay helpers ────────────────────────────────────────────────────────
 
 function base32ToBuf(input) {
