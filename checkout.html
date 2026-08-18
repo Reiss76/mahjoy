@@ -399,13 +399,13 @@
     
     // Select first option by default
     selectedShipping = sorted[0].price;
-    updateTotal();
+    syncShippingToCheckout();
     
     // Listen for option changes
     quoteDiv.querySelectorAll('input[name="shipping_option"]').forEach(radio => {
       radio.addEventListener('change', function() {
         selectedShipping = parseFloat(this.dataset.price);
-        updateTotal();
+        syncShippingToCheckout();
         // Update border colors
         quoteDiv.querySelectorAll('label').forEach(l => l.style.borderColor = '#eee');
         this.closest('label').style.borderColor = 'var(--orchid)';
@@ -413,33 +413,20 @@
     });
   }
 
-  function updateTotal() {
-    const subtotalEl = document.getElementById('co-subtotal');
-    const totalEl = document.getElementById('co-total');
-    const shippingEl = document.querySelector('[style*="A cotizar"]');
-    
-    if (!subtotalEl || !totalEl) return;
-    
-    // Parse subtotal
-    const subtotalText = subtotalEl.textContent;
-    const subtotal = parseFloat(subtotalText.replace(/[^0-9.]/g, '')) || 0;
-    
-    // Update shipping display
+  function syncShippingToCheckout() {
+    // Update shipping display in the order summary
+    const shippingEl = document.querySelector('#co-content span[style*="A cotizar"]');
     if (shippingEl && selectedShipping > 0) {
       shippingEl.textContent = '$' + selectedShipping.toFixed(2) + ' MXN';
       shippingEl.style.color = 'var(--burgundy)';
+      shippingEl.style.fontWeight = '600';
     }
     
-    // Update total (subtotal + shipping - discount)
-    const discountEl = document.getElementById('co-discount-amount');
-    const discount = discountEl ? parseFloat(discountEl.textContent.replace(/[^0-9.]/g, '')) || 0 : 0;
-    
-    const total = subtotal + selectedShipping - discount;
-    totalEl.textContent = '$' + total.toLocaleString('en-US', {minimumFractionDigits:2}) + ' MXN';
+    // Sync with checkout.js for total calculation
+    if (window.MJCheckout && window.MJCheckout.setShippingCost) {
+      window.MJCheckout.setShippingCost(selectedShipping);
+    }
   }
-
-  // Expose updateTotal globally for discount code integration
-  window.MJShippingUpdateTotal = updateTotal;
 })();
 </script>
 <style>

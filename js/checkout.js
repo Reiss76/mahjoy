@@ -31,6 +31,7 @@ const CATEGORY_MAP = {
 let currentProduct = null;
 let qty = 1;
 let appliedDiscount = null; // { code, vendorCode, vendorName, pct }
+let selectedShippingCost = 0; // Set by shipping quote script
 
 function getDiscountedTotal() {
   if (!currentProduct) return 0;
@@ -83,10 +84,28 @@ function updateTotals() {
     discRow.style.display = 'none';
   }
 
-  const total = getDiscountedTotal();
+  const productTotal = getDiscountedTotal();
+  const total = productTotal + (selectedShippingCost || 0);
   document.getElementById('co-total').textContent = unit ? formatPrice(total) : 'Consultar';
+  
+  // Update shipping display if selected
+  const shippingDisplayEl = document.querySelector('#co-content [style*="A cotizar"]');
+  if (shippingDisplayEl && selectedShippingCost > 0) {
+    shippingDisplayEl.textContent = formatPrice(selectedShippingCost);
+    shippingDisplayEl.style.color = 'var(--burgundy)';
+  }
+  
   updateWaLink();
 }
+
+// Expose for shipping script integration
+window.MJCheckout = {
+  setShippingCost: function(cost) {
+    selectedShippingCost = cost;
+    updateTotals();
+  },
+  updateTotals: updateTotals
+};
 
 function changeQty(delta) {
   qty = Math.max(1, qty + delta);

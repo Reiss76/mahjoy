@@ -402,44 +402,35 @@
     quoteDiv.style.display = 'block';
     
     selectedShipping = sorted[0].price;
-    updateTotal();
+    syncShippingToCheckout();
     
     quoteDiv.querySelectorAll('input[name="shipping_option"]').forEach(radio => {
       radio.addEventListener('change', function() {
         selectedShipping = parseFloat(this.dataset.price);
-        updateTotal();
+        syncShippingToCheckout();
         quoteDiv.querySelectorAll('label').forEach(l => l.style.borderColor = '#eee');
         this.closest('label').style.borderColor = 'var(--orchid)';
       });
     });
   }
 
-  function updateTotal() {
-    const subtotalEl = document.getElementById('co-subtotal');
-    const totalEl = document.getElementById('co-total');
-    const shippingEl = document.querySelector('[style*="To be quoted"], [style*="A cotizar"]');
-    
-    if (!subtotalEl || !totalEl) return;
-    
-    const subtotalText = subtotalEl.textContent;
-    const subtotal = parseFloat(subtotalText.replace(/[^0-9.]/g, '')) || 0;
-    
+  function syncShippingToCheckout() {
+    // Update shipping display in the order summary
+    const shippingEl = document.querySelector('#co-content span[style*="To be quoted"], #co-content span[style*="A cotizar"]');
     const currency = window.MJCurrency?.current === 'USD' ? 'USD' : 'MXN';
     const shippingDisplay = currency === 'USD' ? selectedShipping / 18 : selectedShipping;
     
     if (shippingEl && selectedShipping > 0) {
       shippingEl.textContent = '$' + shippingDisplay.toFixed(2) + ' ' + currency;
       shippingEl.style.color = 'var(--burgundy)';
+      shippingEl.style.fontWeight = '600';
     }
     
-    const discountEl = document.getElementById('co-discount-amount');
-    const discount = discountEl ? parseFloat(discountEl.textContent.replace(/[^0-9.]/g, '')) || 0 : 0;
-    
-    const total = subtotal + shippingDisplay - discount;
-    totalEl.textContent = '$' + total.toLocaleString('en-US', {minimumFractionDigits:2}) + ' ' + currency;
+    // Sync with checkout.js for total calculation
+    if (window.MJCheckout && window.MJCheckout.setShippingCost) {
+      window.MJCheckout.setShippingCost(selectedShipping);
+    }
   }
-
-  window.MJShippingUpdateTotal = updateTotal;
 })();
 </script>
 <style>
