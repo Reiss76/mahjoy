@@ -141,10 +141,10 @@
     grid.innerHTML='';
     imgs.forEach(function(slug){
       var card=document.createElement('div');
-      card.className='mj-prod-card';
+      card.className='mj-prod-card'+(p.stock===0?' mj-coming-soon':'');
       card.style.cssText='cursor:zoom-in;';
       card.innerHTML='<img src="images/bundles/'+slug+'.jpg" alt="Set completo" class="mj-prod-card-img" loading="lazy" onclick="event.stopPropagation();document.getElementById(\'mj-lightbox-img\').src=this.src;document.getElementById(\'mj-lightbox\').classList.add(\'open\')" style="cursor:zoom-in">'
-        +'<div class="mj-prod-card-body">'
+        +''+'<div class="mj-prod-card-body">'
         +'<div class="mj-prod-card-name">Set Completo</div>'
         +'<div class="mj-prod-card-price" style="color:var(--orchid);font-size:.7rem;letter-spacing:.1em;font-weight:700;">PRÓXIMAMENTE</div>'
         +'</div>';
@@ -168,11 +168,11 @@
       var imgSrc=b.image_url||b.image_key||(b.slug?'images/bundles/bundle-'+b.slug+'.jpg':'');
       var card=document.createElement('a');
       card.href='product.html#bundle-'+b.id;
-      card.className='mj-prod-card';
+      card.className='mj-prod-card'+(p.stock===0?' mj-coming-soon':'');
       var imgHtml=imgSrc?('<img src="'+imgSrc+'" alt="'+b.name+'" class="mj-prod-card-img">')
         :'<div class="mj-prod-card-img" style="height:200px;background:#f5e8f0;"></div>';
       card.innerHTML=imgHtml
-        +'<div class="mj-prod-card-body">'
+        +''+'<div class="mj-prod-card-body">'
         +'<div class="mj-prod-card-name">'+b.name+'</div>'
         +(b.discount_pct?'<div style="font-size:.65rem;font-weight:700;color:var(--orchid);margin-bottom:4px;">'+b.discount_pct+'% descuento</div>':'')
         +'<div class="mj-prod-card-price">'+price+'</div>'
