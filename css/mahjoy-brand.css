@@ -785,3 +785,31 @@ body {
     font-size: .7rem !important;
   }
 }
+
+/* ─── Mobile Nav Menu - Prevent overflow/cut-off ─────────────────────────── */
+.nav-menu.w--nav-menu-open,
+body.mj-nav-open .nav-menu {
+  max-width: 85vw !important;
+  min-width: 270px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+.nav-menu .mj-shop-list {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+  padding-right: 0 !important;
+}
+.nav-menu .mj-shop-link {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+  display: block !important;
+}
+.nav-menu .nav-link,
+.nav-menu .mj-shop-toggle {
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
