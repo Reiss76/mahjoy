@@ -80,12 +80,121 @@
   </div>
 
   <!-- THANK YOU STATE -->
-  <div id="co-thanks" style="display:none;min-height:70vh;align-items:center;justify-content:center;text-align:center;padding:3rem 1.5rem;">
+  <!-- POST-PAYMENT: Shipping Address Form -->
+  <div id="co-thanks" style="display:none;padding:3rem 1.5rem;">
+    <div style="max-width:600px;margin:auto;">
+      <!-- Success Message -->
+      <div style="text-align:center;margin-bottom:2rem;">
+        <div style="font-size:3rem;margin-bottom:1rem;">✅</div>
+        <h2 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.8rem;font-weight:800;color:var(--burgundy);margin-bottom:.5rem;">¡Pago recibido!</h2>
+        <p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1rem;color:#666;">
+          Último paso: confirma tu dirección de envío
+        </p>
+      </div>
+
+      <!-- Shipping Address Form -->
+      <div style="background:#fff;border:2px solid #f0e4ec;border-radius:16px;padding:2rem;">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--orchid);margin-bottom:1.5rem;">Dirección de envío</div>
+        
+        <!-- Use same address button -->
+        <button type="button" id="btn-same-address" onclick="copySameAddress()" style="width:100%;padding:1rem;margin-bottom:1.5rem;background:var(--blush);border:2px solid var(--orchid);border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;font-weight:600;color:var(--orchid-mid);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;">
+          📋 Usar misma dirección que usé en el pago
+        </button>
+        
+        <p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.8rem;color:#999;text-align:center;margin-bottom:1.5rem;">— o ingresa una dirección diferente —</p>
+
+        <form id="shipping-form" style="display:flex;flex-direction:column;gap:1rem;">
+          <div>
+            <label class="mj-co-label">Nombre completo *</label>
+            <input class="mj-co-input" type="text" name="ship_name" id="ship-name" placeholder="Juan Pérez" required>
+          </div>
+          
+          <div>
+            <label class="mj-co-label">Calle y número *</label>
+            <input class="mj-co-input" type="text" name="ship_street" id="ship-street" placeholder="Av. Reforma 123" required>
+          </div>
+          
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div>
+              <label class="mj-co-label">Colonia *</label>
+              <input class="mj-co-input" type="text" name="ship_neighborhood" id="ship-neighborhood" placeholder="Juárez" required>
+            </div>
+            <div>
+              <label class="mj-co-label">Código Postal *</label>
+              <input class="mj-co-input" type="text" name="ship_cp" id="ship-cp" placeholder="06600" maxlength="5" pattern="[0-9]{5}" required>
+            </div>
+          </div>
+          
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div>
+              <label class="mj-co-label">Ciudad *</label>
+              <input class="mj-co-input" type="text" name="ship_city" id="ship-city" placeholder="Ciudad de México" required>
+            </div>
+            <div>
+              <label class="mj-co-label">Estado *</label>
+              <select class="mj-co-input" name="ship_state" id="ship-state" required style="height:48px;">
+                <option value="">Selecciona...</option>
+                <option value="AGS">Aguascalientes</option>
+                <option value="BC">Baja California</option>
+                <option value="BCS">Baja California Sur</option>
+                <option value="CAM">Campeche</option>
+                <option value="CHIS">Chiapas</option>
+                <option value="CHIH">Chihuahua</option>
+                <option value="CDMX">Ciudad de México</option>
+                <option value="COAH">Coahuila</option>
+                <option value="COL">Colima</option>
+                <option value="DGO">Durango</option>
+                <option value="GTO">Guanajuato</option>
+                <option value="GRO">Guerrero</option>
+                <option value="HGO">Hidalgo</option>
+                <option value="JAL">Jalisco</option>
+                <option value="MEX">Estado de México</option>
+                <option value="MICH">Michoacán</option>
+                <option value="MOR">Morelos</option>
+                <option value="NAY">Nayarit</option>
+                <option value="NL">Nuevo León</option>
+                <option value="OAX">Oaxaca</option>
+                <option value="PUE">Puebla</option>
+                <option value="QRO">Querétaro</option>
+                <option value="QROO">Quintana Roo</option>
+                <option value="SLP">San Luis Potosí</option>
+                <option value="SIN">Sinaloa</option>
+                <option value="SON">Sonora</option>
+                <option value="TAB">Tabasco</option>
+                <option value="TAMPS">Tamaulipas</option>
+                <option value="TLAX">Tlaxcala</option>
+                <option value="VER">Veracruz</option>
+                <option value="YUC">Yucatán</option>
+                <option value="ZAC">Zacatecas</option>
+              </select>
+            </div>
+          </div>
+          
+          <div>
+            <label class="mj-co-label">Teléfono de contacto *</label>
+            <input class="mj-co-input" type="tel" name="ship_phone" id="ship-phone" placeholder="+52 55 0000 0000" required>
+          </div>
+          
+          <div>
+            <label class="mj-co-label">Referencias de entrega</label>
+            <textarea class="mj-co-input" name="ship_notes" id="ship-notes" rows="2" placeholder="Entre calles, color de fachada, etc." style="resize:vertical;"></textarea>
+          </div>
+
+          <button type="submit" style="width:100%;padding:1.1rem;background:var(--burgundy);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.04em;border:none;border-radius:999px;cursor:pointer;margin-top:1rem;">
+            Confirmar dirección de envío →
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <!-- FINAL SUCCESS (after shipping address saved) -->
+  <div id="co-complete" style="display:none;min-height:70vh;align-items:center;justify-content:center;text-align:center;padding:3rem 1.5rem;">
     <div style="max-width:480px;margin:auto;">
       <div style="font-size:3rem;margin-bottom:1rem;">🎉</div>
-      <h2 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:2rem;font-weight:800;color:var(--burgundy);margin-bottom:1rem;">¡Pedido enviado!</h2>
+      <h2 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:2rem;font-weight:800;color:var(--burgundy);margin-bottom:1rem;">¡Pedido completo!</h2>
       <p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1rem;color:#666;line-height:1.7;margin-bottom:2rem;">
-        Recibimos tu pedido. Te contactaremos pronto vía WhatsApp o email para confirmar los detalles y coordinar el envío.
+        Tu pedido está listo. Te enviaremos la guía de rastreo por email/WhatsApp cuando despachemos.
       </p>
       <a href="shop.html" style="display:inline-block;background:var(--burgundy);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:.9rem;letter-spacing:.06em;text-transform:uppercase;padding:1rem 2.5rem;border-radius:999px;text-decoration:none;">
         Seguir comprando
@@ -215,13 +324,8 @@
           </div>
 
           <div>
-            <label class="mj-co-label">Estado / Ciudad *</label>
-            <input class="mj-co-input" type="text" name="city" placeholder="Ciudad de México" required>
-          </div>
-
-          <div>
-            <label class="mj-co-label">Código Postal *</label>
-            <input class="mj-co-input" type="text" name="cp" id="co-cp" placeholder="66278" maxlength="5" pattern="[0-9]{5}" required style="width:150px;">
+            <label class="mj-co-label">Código Postal (para cotizar envío) *</label>
+            <input class="mj-co-input" type="text" name="cp" id="co-cp" placeholder="06600" maxlength="5" pattern="[0-9]{5}" required style="width:150px;">
             <div id="co-shipping-quote" style="margin:1rem 0;font-family:Plus Jakarta Sans,sans-serif;font-size:.85rem;color:#666;display:none;"></div>
           </div>
           <div style="margin-bottom:1.25rem;">
@@ -432,3 +536,84 @@
 <style>
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 </style>
+
+<!-- Shipping Form Handler -->
+<script>
+// Copy same address functionality
+function copySameAddress() {
+  const btn = document.getElementById('btn-same-address');
+  btn.innerHTML = '✓ Completado — Ingresa los datos que usaste en el pago';
+  btn.style.background = '#e8f5e9';
+  btn.style.borderColor = '#4caf50';
+  btn.style.color = '#2e7d32';
+  
+  // Pre-fill with stored checkout data
+  const checkoutData = JSON.parse(localStorage.getItem('mj_checkout_data') || '{}');
+  if (checkoutData.name) {
+    document.getElementById('ship-name').value = checkoutData.name + ' ' + (checkoutData.lastname || '');
+  }
+  if (checkoutData.phone) {
+    document.getElementById('ship-phone').value = checkoutData.phone;
+  }
+  if (checkoutData.cp) {
+    document.getElementById('ship-cp').value = checkoutData.cp;
+  }
+  
+  // Focus on street field
+  document.getElementById('ship-street').focus();
+}
+
+// Shipping form submit
+document.getElementById('shipping-form')?.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const form = e.target;
+  const btn = form.querySelector('button[type="submit"]');
+  btn.textContent = 'Guardando...';
+  btn.disabled = true;
+  
+  const shippingData = {
+    name: form.ship_name.value,
+    street: form.ship_street.value,
+    neighborhood: form.ship_neighborhood.value,
+    cp: form.ship_cp.value,
+    city: form.ship_city.value,
+    state: form.ship_state.value,
+    phone: form.ship_phone.value,
+    notes: form.ship_notes.value,
+    timestamp: Date.now()
+  };
+  
+  // Save to localStorage
+  localStorage.setItem('mj_shipping_address', JSON.stringify(shippingData));
+  
+  // Get order ID from URL or localStorage
+  const orderId = new URLSearchParams(window.location.search).get('order') || 
+                  localStorage.getItem('mj_last_order_id');
+  
+  // Send to WhatsApp as backup notification
+  const msg = `📦 *Dirección de envío confirmada*\n\n` +
+    `Pedido: ${orderId || 'N/A'}\n` +
+    `Nombre: ${shippingData.name}\n` +
+    `Dirección: ${shippingData.street}, ${shippingData.neighborhood}\n` +
+    `CP: ${shippingData.cp}, ${shippingData.city}, ${shippingData.state}\n` +
+    `Tel: ${shippingData.phone}\n` +
+    (shippingData.notes ? `Notas: ${shippingData.notes}` : '');
+  
+  // Open WhatsApp in background (optional - can be removed)
+  // window.open(`https://wa.me/525530395891?text=${encodeURIComponent(msg)}`, '_blank');
+  
+  // Show success
+  document.getElementById('co-thanks').style.display = 'none';
+  document.getElementById('co-complete').style.display = 'flex';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// Check if returning from payment
+if (window.location.search.includes('payment=success') || 
+    window.location.search.includes('status=approved')) {
+  document.getElementById('co-loading').style.display = 'none';
+  document.getElementById('co-content').style.display = 'none';
+  document.getElementById('co-thanks').style.display = 'block';
+}
+</script>

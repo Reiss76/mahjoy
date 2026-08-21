@@ -236,7 +236,8 @@ document.addEventListener('DOMContentLoaded', () => {
       name: `${form.name.value} ${form.lastname.value}`.trim(),
       email: form.email.value,
       phone: form.phone.value,
-      city: form.city.value,
+      city: form.city?.value || '',
+      cp: form.cp?.value || '',
       qty: parseInt(form.qty.value) || 1,
       notes: form.notes.value,
       product: currentProduct ? currentProduct.name : '—',
@@ -275,6 +276,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const result = await res.json();
 
       if (result.ok && result.checkoutUrl) {
+        // Save checkout data for shipping form
+        localStorage.setItem('mj_checkout_data', JSON.stringify({
+          name: form.name.value,
+          lastname: form.lastname.value,
+          email: form.email.value,
+          phone: form.phone.value,
+          cp: form.cp?.value || '',
+          orderId: orderId
+        }));
+        localStorage.setItem('mj_last_order_id', orderId);
+        
         // Register vendor sale if applicable
         if (vendorCode && window.MJVendor) {
           const total = cart.reduce((a, i) => a + i.price * i.qty, 0);
