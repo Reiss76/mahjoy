@@ -563,7 +563,7 @@ html, body {
   right: 0 !important;
   bottom: 0 !important;
   left: auto !important;
-  width: 270px !important;
+  width: 300px !important;
   padding: 90px 28px 40px !important;
   gap: 6px !important;
   background-color: var(--burgundy, #6B0F2A) !important;
@@ -733,7 +733,7 @@ body {
     right: 0 !important;
     bottom: 0 !important;
     left: auto !important;
-    width: 270px !important;
+    width: 300px !important;
     background: var(--burgundy, #6B0F2A) !important;
     flex-direction: column !important;
     padding: 90px 28px 40px !important;
@@ -791,7 +791,7 @@ body {
 .nav-menu.w--nav-menu-open,
 body.mj-nav-open .nav-menu {
   max-width: 85vw !important;
-  min-width: 270px !important;
+  min-width: 300px !important;
   overflow-x: hidden !important;
   overflow-y: auto !important;
 }
@@ -839,5 +839,16 @@ body.mj-nav-open .nav-menu {
   .nav-menu .mj-currency-toggle {
     text-align: left !important;
     justify-content: flex-start !important;
+  }
+}
+
+/* ─── Mobile Nav - Wider menu to prevent cutoff ─────────────────────────── */
+@media (max-width: 991px) {
+  .nav-menu.w--nav-menu-open,
+  body.mj-nav-open .nav-menu {
+    width: 300px !important;
+    min-width: 300px !important;
+    max-width: 90vw !important;
+    padding: 80px 24px 40px 24px !important;
   }
 }
