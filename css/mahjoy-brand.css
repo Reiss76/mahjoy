@@ -814,3 +814,30 @@ body.mj-nav-open .nav-menu {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
 }
+
+/* ─── Mobile Nav - Consistent alignment across ALL pages ─────────────────── */
+@media (max-width: 991px) {
+  .nav-menu.w--nav-menu-open,
+  body.mj-nav-open .nav-menu,
+  body.w-nav-open .nav-menu {
+    text-align: left !important;
+  }
+  .nav-menu .nav-link,
+  .nav-menu .w-dropdown-link,
+  .nav-menu .mj-shop-link,
+  .nav-menu .mj-shop-toggle,
+  .nav-menu .mj-shop-dropdown,
+  .nav-menu .mj-shop-list,
+  .nav-menu a {
+    text-align: left !important;
+  }
+  .nav-menu .mj-shop-list {
+    padding-left: 1.5rem !important;
+    padding-right: 0 !important;
+  }
+  /* Currency selector */
+  .nav-menu .mj-currency-toggle {
+    text-align: left !important;
+    justify-content: flex-start !important;
+  }
+}
