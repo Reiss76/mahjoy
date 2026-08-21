@@ -18,6 +18,17 @@
   <script type="text/javascript">WebFont.load({ google: { families: ["Plus Jakarta Sans:300,400,500,600,700,800"] } });</script>
   <link href="images/icon-burgundy.svg" rel="shortcut icon" type="image/svg+xml">
   <link href="images/webclip.png" rel="apple-touch-icon">
+  <style>
+    /* Mobile nav left alignment fix */
+    @media (max-width: 991px) {
+      .nav-menu, .nav-menu * { text-align: left !important; }
+      .nav-menu .nav-link, .nav-menu .mj-shop-toggle, .nav-menu .mj-shop-link { 
+        text-align: left !important; 
+        justify-content: flex-start !important;
+      }
+      .nav-menu .mj-shop-list { padding-left: 1.5rem !important; }
+    }
+  </style>
 </head>
 <body>
 
