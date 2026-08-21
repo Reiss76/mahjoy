@@ -259,12 +259,12 @@ p, li, a, button, input, label, div {
 .nav-menu .mj-shop-dropdown {
   display: block !important;
   width: 100%;
-  text-align: right;
+  text-align: left;
 }
 .nav-menu .mj-shop-toggle {
   display: block !important;
   padding: 10px 0 !important;
-  text-align: right;
+  text-align: left;
   width: 100%;
 }
 .nav-menu .mj-shop-toggle .nav-link-text {
@@ -277,7 +277,8 @@ p, li, a, button, input, label, div {
   border-top: none !important;
   box-shadow: none !important;
   border-radius: 0 !important;
-  text-align: right;
+  text-align: left;
+  padding-left: 1rem;
 }
 .nav-menu .mj-shop-list.mj-open {
   display: block !important;
@@ -285,7 +286,7 @@ p, li, a, button, input, label, div {
 .nav-menu .mj-shop-link {
   font-size: 13px !important;
   padding: 8px 0 !important;
-  text-align: right;
+  text-align: left;
   letter-spacing: 0.12em !important;
 }
 @media (min-width: 768px) {
