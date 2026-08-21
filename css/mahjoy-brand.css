@@ -886,3 +886,36 @@ body.mj-nav-open .nav-menu {
     float: none !important;
   }
 }
+
+/* ─── FORCE ALL NAV ITEMS LEFT - NUCLEAR OPTION ────────────────────────────── */
+@media (max-width: 991px) {
+  .nav-menu.w--nav-menu-open,
+  body.mj-nav-open .nav-menu,
+  body.w-nav-open .nav-menu {
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+  }
+  .nav-menu.w--nav-menu-open > *,
+  body.mj-nav-open .nav-menu > *,
+  .nav-menu .nav-link,
+  .nav-menu .mj-shop-dropdown,
+  .nav-menu .mj-shop-toggle,
+  .nav-menu .mj-shop-list,
+  .nav-menu .mj-shop-link,
+  .nav-menu .w-dropdown-link,
+  .nav-menu .mj-currency-toggle,
+  .nav-menu a,
+  .nav-menu div {
+    align-self: flex-start !important;
+    justify-self: flex-start !important;
+    text-align: left !important;
+    margin-left: 0 !important;
+    margin-right: auto !important;
+  }
+  .nav-menu .nav-link-text,
+  .nav-menu .mj-shop-link {
+    text-align: left !important;
+    width: auto !important;
+  }
+}
