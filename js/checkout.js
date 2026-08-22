@@ -281,7 +281,18 @@ document.addEventListener('DOMContentLoaded', () => {
       const result = await res.json();
 
       if (result.ok && result.checkoutUrl) {
-        // Save checkout data for shipping form
+        // Save complete checkout data including shipping address
+        const shippingData = {
+          name: `${form.name.value} ${form.lastname.value}`.trim(),
+          street: form.street?.value || '',
+          neighborhood: form.neighborhood?.value || '',
+          cp: form.cp?.value || '',
+          city: form.city?.value || '',
+          state: form.state?.value || '',
+          phone: form.phone.value,
+          notes: form.notes?.value || ''
+        };
+        
         localStorage.setItem('mj_checkout_data', JSON.stringify({
           name: form.name.value,
           lastname: form.lastname.value,
@@ -290,6 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
           cp: form.cp?.value || '',
           orderId: orderId
         }));
+        localStorage.setItem('mj_shipping_address', JSON.stringify(shippingData));
         localStorage.setItem('mj_last_order_id', orderId);
         
         // Save cart for order history

@@ -212,26 +212,21 @@
   <div id="co-content" style="display:none;padding:2rem 0 4rem;">
     <div style="max-width:1000px;margin:0 auto;padding:0 1.5rem;">
 
-      <!-- Process Steps -->
+      <!-- Process Steps (simplified) -->
       <div style="display:flex;justify-content:center;gap:0;margin-bottom:2rem;padding:1.25rem;background:linear-gradient(135deg,#fdf8fb 0%,#fff 100%);border-radius:12px;border:1px solid #f0e4ec;">
-        <div style="display:flex;align-items:center;gap:.5rem;padding:0 1rem;">
-          <div style="width:28px;height:28px;background:var(--burgundy);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:.75rem;font-weight:700;">1</div>
-          <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.8rem;color:var(--burgundy);font-weight:600;">Revisa tu pedido</span>
+        <div style="display:flex;align-items:center;gap:.5rem;padding:0 1.5rem;">
+          <div style="width:32px;height:32px;background:var(--burgundy);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;font-weight:700;">1</div>
+          <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:var(--burgundy);font-weight:600;">Datos y envío</span>
         </div>
-        <div style="width:30px;height:2px;background:#e0d4dc;align-self:center;"></div>
-        <div style="display:flex;align-items:center;gap:.5rem;padding:0 1rem;">
-          <div style="width:28px;height:28px;background:var(--orchid);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:.75rem;font-weight:700;">2</div>
-          <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.8rem;color:#666;">Datos de envío</span>
+        <div style="width:40px;height:2px;background:#e0d4dc;align-self:center;"></div>
+        <div style="display:flex;align-items:center;gap:.5rem;padding:0 1.5rem;">
+          <div style="width:32px;height:32px;background:#ddd;color:#888;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;font-weight:700;">2</div>
+          <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:#999;">Pago seguro</span>
         </div>
-        <div style="width:30px;height:2px;background:#e0d4dc;align-self:center;"></div>
-        <div style="display:flex;align-items:center;gap:.5rem;padding:0 1rem;">
-          <div style="width:28px;height:28px;background:#ddd;color:#888;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:.75rem;font-weight:700;">3</div>
-          <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.8rem;color:#999;">Pago seguro</span>
-        </div>
-        <div style="width:30px;height:2px;background:#e0d4dc;align-self:center;"></div>
-        <div style="display:flex;align-items:center;gap:.5rem;padding:0 1rem;">
-          <div style="width:28px;height:28px;background:#ddd;color:#888;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:.75rem;font-weight:700;">4</div>
-          <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.8rem;color:#999;">Recibe en casa</span>
+        <div style="width:40px;height:2px;background:#e0d4dc;align-self:center;"></div>
+        <div style="display:flex;align-items:center;gap:.5rem;padding:0 1.5rem;">
+          <div style="width:32px;height:32px;background:#ddd;color:#888;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;font-weight:700;">✓</div>
+          <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:#999;">¡Listo!</span>
         </div>
       </div>
 
@@ -329,14 +324,77 @@
             <input type="hidden" name="qty" id="co-qty" value="1">
           </div>
 
-          <div>
-            <label class="mj-co-label">Código Postal (para cotizar envío) *</label>
-            <input class="mj-co-input" type="text" name="cp" id="co-cp" placeholder="06600" maxlength="5" pattern="[0-9]{5}" required style="width:150px;">
+          <!-- Shipping Address Section -->
+          <div style="border-top:1px solid #f0e4ec;padding-top:1.5rem;margin-top:1rem;">
+            <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--orchid);margin-bottom:1rem;">📦 Dirección de envío</div>
+            
+            <div>
+              <label class="mj-co-label">Calle y número *</label>
+              <input class="mj-co-input" type="text" name="street" id="co-street" placeholder="Av. Reforma 123" required>
+            </div>
+            
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
+              <div>
+                <label class="mj-co-label">Colonia *</label>
+                <input class="mj-co-input" type="text" name="neighborhood" id="co-neighborhood" placeholder="Juárez" required>
+              </div>
+              <div>
+                <label class="mj-co-label">Código Postal *</label>
+                <input class="mj-co-input" type="text" name="cp" id="co-cp" placeholder="06600" maxlength="5" pattern="[0-9]{5}" required>
+              </div>
+            </div>
+            
             <div id="co-shipping-quote" style="margin:1rem 0;font-family:Plus Jakarta Sans,sans-serif;font-size:.85rem;color:#666;display:none;"></div>
-          </div>
-          <div style="margin-bottom:1.25rem;">
-            <label class="mj-co-label">Notas adicionales</label>
-            <textarea class="mj-co-input" name="notes" rows="3" placeholder="Color preferido, variante, instrucciones de entrega..." style="resize:vertical;"></textarea>
+            
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
+              <div>
+                <label class="mj-co-label">Ciudad *</label>
+                <input class="mj-co-input" type="text" name="city" id="co-city" placeholder="Ciudad de México" required>
+              </div>
+              <div>
+                <label class="mj-co-label">Estado *</label>
+                <select class="mj-co-input" name="state" id="co-state" required style="height:48px;">
+                  <option value="">Selecciona...</option>
+                  <option value="AGS">Aguascalientes</option>
+                  <option value="BC">Baja California</option>
+                  <option value="BCS">Baja California Sur</option>
+                  <option value="CAM">Campeche</option>
+                  <option value="CHIS">Chiapas</option>
+                  <option value="CHIH">Chihuahua</option>
+                  <option value="CDMX">Ciudad de México</option>
+                  <option value="COAH">Coahuila</option>
+                  <option value="COL">Colima</option>
+                  <option value="DGO">Durango</option>
+                  <option value="GTO">Guanajuato</option>
+                  <option value="GRO">Guerrero</option>
+                  <option value="HGO">Hidalgo</option>
+                  <option value="JAL">Jalisco</option>
+                  <option value="MEX">Estado de México</option>
+                  <option value="MICH">Michoacán</option>
+                  <option value="MOR">Morelos</option>
+                  <option value="NAY">Nayarit</option>
+                  <option value="NL">Nuevo León</option>
+                  <option value="OAX">Oaxaca</option>
+                  <option value="PUE">Puebla</option>
+                  <option value="QRO">Querétaro</option>
+                  <option value="QROO">Quintana Roo</option>
+                  <option value="SLP">San Luis Potosí</option>
+                  <option value="SIN">Sinaloa</option>
+                  <option value="SON">Sonora</option>
+                  <option value="TAB">Tabasco</option>
+                  <option value="TAMPS">Tamaulipas</option>
+                  <option value="TLAX">Tlaxcala</option>
+                  <option value="VER">Veracruz</option>
+                  <option value="YUC">Yucatán</option>
+                  <option value="ZAC">Zacatecas</option>
+                </select>
+              </div>
+            </div>
+            
+            <div style="margin-top:1rem;">
+              <label class="mj-co-label">Referencias de entrega</label>
+              <textarea class="mj-co-input" name="notes" id="co-notes" rows="2" placeholder="Entre calles, color de fachada, instrucciones especiales..." style="resize:vertical;"></textarea>
+            </div>
           </div>
 
           <!-- Discount Code -->
@@ -632,12 +690,13 @@ if (window.location.search.includes('payment=success') ||
   
   // Save order to history
   const checkoutData = JSON.parse(localStorage.getItem('mj_checkout_data') || '{}');
+  const shippingData = JSON.parse(localStorage.getItem('mj_shipping_address') || '{}');
   const orderId = new URLSearchParams(window.location.search).get('order') || checkoutData.orderId || `order-${Date.now()}`;
   
   // Get cart items from localStorage if available
   const cartItems = JSON.parse(localStorage.getItem('mj_last_cart') || '[]');
   
-  // Create order record
+  // Create order record with shipping already included
   const order = {
     orderId: orderId,
     timestamp: Date.now(),
@@ -649,7 +708,8 @@ if (window.location.search.includes('payment=success') ||
       lastname: checkoutData.lastname || '',
       email: checkoutData.email || '',
       phone: checkoutData.phone || ''
-    }
+    },
+    shipping: shippingData
   };
   
   // Save to orders history
@@ -661,8 +721,16 @@ if (window.location.search.includes('payment=success') ||
   }
   localStorage.setItem('mj_current_order_id', orderId);
   
+  // Show order ID in success message
+  const orderIdEl = document.getElementById('co-complete-order-id');
+  if (orderIdEl) {
+    orderIdEl.textContent = `Pedido #${orderId}`;
+  }
+  
+  // Skip shipping form - go directly to complete
   document.getElementById('co-loading').style.display = 'none';
   document.getElementById('co-content').style.display = 'none';
-  document.getElementById('co-thanks').style.display = 'block';
+  document.getElementById('co-thanks').style.display = 'none';
+  document.getElementById('co-complete').style.display = 'flex';
 }
 </script>
