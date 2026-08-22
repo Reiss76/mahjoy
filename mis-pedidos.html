@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Mis Pedidos — MAH JOY</title>
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <link href="css/normalize.css" rel="stylesheet">
+  <link href="css/webflow.css" rel="stylesheet">
+  <link href="css/mahjoy.webflow.css" rel="stylesheet">
+  <link href="css/mahjoy-brand.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="images/icon-burgundy.svg" rel="shortcut icon" type="image/svg+xml">
+  <style>
+    .mj-orders-wrap { max-width: 800px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+    .mj-orders-title { font-family: 'Playfair Display', serif; font-size: 2.5rem; color: var(--burgundy); text-align: center; margin-bottom: 2rem; }
+    .mj-order-card { background: #fff; border: 2px solid #f0e4ec; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .mj-order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: .5rem; }
+    .mj-order-id { font-family: 'Plus Jakarta Sans', sans-serif; font-size: .75rem; color: #999; letter-spacing: .08em; text-transform: uppercase; }
+    .mj-order-date { font-family: 'Plus Jakarta Sans', sans-serif; font-size: .85rem; color: #666; }
+    .mj-order-status { display: inline-block; padding: .4rem .8rem; border-radius: 999px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+    .mj-order-status.paid { background: #e8f5e9; color: #2e7d32; }
+    .mj-order-status.pending { background: #fff3e0; color: #ef6c00; }
+    .mj-order-status.shipped { background: #e3f2fd; color: #1565c0; }
+    .mj-order-items { border-top: 1px solid #f0e4ec; padding-top: 1rem; margin-top: 1rem; }
+    .mj-order-item { display: flex; justify-content: space-between; font-family: 'Plus Jakarta Sans', sans-serif; font-size: .9rem; color: #333; padding: .5rem 0; }
+    .mj-order-item-name { flex: 1; }
+    .mj-order-item-qty { color: #999; margin-right: 1rem; }
+    .mj-order-item-price { font-weight: 600; color: var(--burgundy); }
+    .mj-order-total { border-top: 2px solid var(--burgundy); padding-top: 1rem; margin-top: 1rem; display: flex; justify-content: space-between; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--burgundy); }
+    .mj-orders-empty { text-align: center; padding: 4rem 2rem; }
+    .mj-orders-empty-icon { font-size: 4rem; margin-bottom: 1rem; opacity: .3; }
+    .mj-orders-empty-text { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; color: #999; margin-bottom: 2rem; }
+    .mj-orders-cta { display: inline-block; background: var(--burgundy); color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .85rem; letter-spacing: .06em; text-transform: uppercase; padding: 1rem 2rem; border-radius: 999px; text-decoration: none; }
+    .mj-order-shipping { background: var(--blush); padding: 1rem; border-radius: 8px; margin-top: 1rem; font-family: 'Plus Jakarta Sans', sans-serif; font-size: .85rem; color: #666; }
+    .mj-order-shipping strong { color: var(--burgundy); }
+  </style>
+</head>
+<body>
+  <!-- Navigation (simplified) -->
+  <nav style="background:var(--burgundy);padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center;">
+    <a href="index.html" style="color:#fff;text-decoration:none;font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;">MAH JOY</a>
+    <div style="display:flex;gap:1.5rem;">
+      <a href="shop.html" style="color:#fff;text-decoration:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;">Shop</a>
+      <a href="cart.html" style="color:#fff;text-decoration:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;">Carrito</a>
+    </div>
+  </nav>
+
+  <div class="mj-orders-wrap">
+    <h1 class="mj-orders-title">Mis Pedidos</h1>
+    
+    <div id="orders-list">
+      <!-- Orders will be loaded here -->
+    </div>
+  </div>
+
+  <script>
+    function formatDate(ts) {
+      const d = new Date(ts);
+      return d.toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+    
+    function formatPrice(p) {
+      return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(p);
+    }
+    
+    function getStatusLabel(status) {
+      const labels = {
+        'paid': 'Pagado',
+        'pending': 'Pendiente',
+        'shipped': 'Enviado',
+        'delivered': 'Entregado'
+      };
+      return labels[status] || status;
+    }
+    
+    function loadOrders() {
+      const orders = JSON.parse(localStorage.getItem('mj_orders') || '[]');
+      const container = document.getElementById('orders-list');
+      
+      if (!orders.length) {
+        container.innerHTML = `
+          <div class="mj-orders-empty">
+            <div class="mj-orders-empty-icon">📦</div>
+            <p class="mj-orders-empty-text">Aún no tienes pedidos</p>
+            <a href="shop.html" class="mj-orders-cta">Ir a la tienda</a>
+          </div>
+        `;
+        return;
+      }
+      
+      // Sort by date, most recent first
+      orders.sort((a, b) => b.timestamp - a.timestamp);
+      
+      container.innerHTML = orders.map(order => `
+        <div class="mj-order-card">
+          <div class="mj-order-header">
+            <div>
+              <div class="mj-order-id">Pedido #${order.orderId || order.id || '—'}</div>
+              <div class="mj-order-date">${formatDate(order.timestamp)}</div>
+            </div>
+            <span class="mj-order-status ${order.status || 'paid'}">${getStatusLabel(order.status || 'paid')}</span>
+          </div>
+          
+          <div class="mj-order-items">
+            ${(order.items || order.cart || []).map(item => `
+              <div class="mj-order-item">
+                <span class="mj-order-item-name">${item.name}</span>
+                <span class="mj-order-item-qty">x${item.qty}</span>
+                <span class="mj-order-item-price">${formatPrice(item.price * item.qty)}</span>
+              </div>
+            `).join('')}
+          </div>
+          
+          <div class="mj-order-total">
+            <span>Total</span>
+            <span>${formatPrice(order.total)}</span>
+          </div>
+          
+          ${order.shipping ? `
+            <div class="mj-order-shipping">
+              <strong>Envío:</strong> ${order.shipping.name || ''}, ${order.shipping.street || ''}, ${order.shipping.neighborhood || ''}, 
+              CP ${order.shipping.cp || ''}, ${order.shipping.city || ''}, ${order.shipping.state || ''}
+              ${order.shipping.phone ? `<br><strong>Tel:</strong> ${order.shipping.phone}` : ''}
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+    }
+    
+    loadOrders();
+  </script>
+  
+  <script src="js/mobile-nav.js"></script>
+</body>
+</html>

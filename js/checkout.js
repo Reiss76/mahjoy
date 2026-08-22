@@ -292,6 +292,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }));
         localStorage.setItem('mj_last_order_id', orderId);
         
+        // Save cart for order history
+        localStorage.setItem('mj_last_cart', JSON.stringify(cart));
+        
         // Register vendor sale if applicable
         if (vendorCode && window.MJVendor) {
           const total = cart.reduce((a, i) => a + i.price * i.qty, 0);
