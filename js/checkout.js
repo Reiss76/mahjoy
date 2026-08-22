@@ -256,6 +256,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const cart = currentProduct
       ? [{ name: currentProduct.name, price: discountedPrice, qty: data.qty }]
       : [];
+    
+    // Add shipping cost to cart if selected
+    if (selectedShippingCost > 0) {
+      cart.push({ name: 'Envío', price: selectedShippingCost, qty: 1 });
+    }
 
     // Include vendor ref in order ID
     const vendorCode = window.MJVendor?.getCode() || null;
