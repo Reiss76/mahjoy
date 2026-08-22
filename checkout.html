@@ -262,6 +262,17 @@
           </div>
         </div>
 
+        <!-- Quantity selector -->
+        <div style="background:#fff;border-radius:12px;padding:1rem 1.25rem;box-shadow:0 2px 16px rgba(107,15,42,.06);margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;font-weight:600;color:var(--burgundy);">Cantidad</span>
+          <div style="display:flex;align-items:center;gap:.8rem;">
+            <button type="button" onclick="changeQty(-1)" style="width:36px;height:36px;border-radius:50%;border:2px solid var(--burgundy);background:transparent;color:var(--burgundy);font-size:1.1rem;cursor:pointer;font-weight:700;">−</button>
+            <span id="co-qty-display" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.1rem;font-weight:700;color:var(--burgundy);min-width:1.5rem;text-align:center;">1</span>
+            <button type="button" onclick="changeQty(1)" style="width:36px;height:36px;border-radius:50%;border:2px solid var(--burgundy);background:var(--burgundy);color:#fff;font-size:1.1rem;cursor:pointer;font-weight:700;">+</button>
+          </div>
+          <input type="hidden" name="qty" id="co-qty" value="1" form="co-form">
+        </div>
+
         <!-- Order total -->
         <div style="background:#fff;border-radius:12px;padding:1.25rem;box-shadow:0 2px 16px rgba(107,15,42,.06);">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
@@ -312,16 +323,6 @@
           <div>
             <label class="mj-co-label">WhatsApp / Teléfono *</label>
             <input class="mj-co-input" type="tel" name="phone" placeholder="+52 55 0000 0000" required>
-          </div>
-
-          <div>
-            <label class="mj-co-label">Cantidad</label>
-            <div style="display:flex;align-items:center;gap:1rem;">
-              <button type="button" onclick="changeQty(-1)" style="width:40px;height:40px;border-radius:50%;border:2px solid var(--burgundy);background:transparent;color:var(--burgundy);font-size:1.2rem;cursor:pointer;font-weight:700;">−</button>
-              <span id="co-qty-display" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.1rem;font-weight:700;color:var(--burgundy);min-width:2rem;text-align:center;">1</span>
-              <button type="button" onclick="changeQty(1)" style="width:40px;height:40px;border-radius:50%;border:2px solid var(--burgundy);background:var(--burgundy);color:#fff;font-size:1.2rem;cursor:pointer;font-weight:700;">+</button>
-            </div>
-            <input type="hidden" name="qty" id="co-qty" value="1">
           </div>
 
           <!-- Shipping Address Section -->
