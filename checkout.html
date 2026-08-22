@@ -552,15 +552,26 @@
   }
 
   function renderQuotes(quotes) {
-    const sorted = quotes.sort((a, b) => a.price - b.price);
-    const html = sorted.slice(0, 5).map((q, i) => `
-      <label style="display:flex;align-items:center;gap:.75rem;padding:.75rem;margin:.5rem 0;background:#fff;border:2px solid ${i===0?'var(--orchid)':'#eee'};border-radius:8px;cursor:pointer;transition:border .2s;">
-        <input type="radio" name="shipping_option" value="${q.id}" data-price="${q.price}" ${i===0?'checked':''} style="accent-color:var(--orchid);">
+    // Group by carrier, keep only cheapest per carrier
+    const byCarrier = {};
+    quotes.forEach(q => {
+      const key = q.carrier.toUpperCase();
+      if (!byCarrier[key] || q.price < byCarrier[key].price) {
+        byCarrier[key] = q;
+      }
+    });
+    
+    // Sort by price
+    const sorted = Object.values(byCarrier).sort((a, b) => a.price - b.price);
+    
+    const html = sorted.map((q, i) => `
+      <label style="display:flex;align-items:center;gap:.75rem;padding:.9rem 1rem;margin:.5rem 0;background:#fff;border:2px solid ${i===0?'var(--orchid)':'#eee'};border-radius:10px;cursor:pointer;transition:border .2s;">
+        <input type="radio" name="shipping_option" value="${q.id}" data-price="${q.price}" ${i===0?'checked':''} style="accent-color:var(--orchid);width:18px;height:18px;">
         <div style="flex:1;">
-          <div style="font-weight:700;color:var(--burgundy);font-size:.85rem;">${q.carrier}</div>
-          <div style="color:#888;font-size:.75rem;">${q.service || ''} · ${q.days || '?'} días</div>
+          <div style="font-weight:700;color:var(--burgundy);font-size:.9rem;">${q.carrier}</div>
+          <div style="color:#888;font-size:.75rem;">${q.days || '2-5'} días hábiles</div>
         </div>
-        <div style="font-weight:700;color:var(--burgundy);">$${q.price.toFixed(2)}</div>
+        <div style="font-weight:800;color:var(--burgundy);font-size:1.1rem;">$${q.price.toFixed(0)}</div>
       </label>
     `).join('');
     
