@@ -112,6 +112,9 @@ app.post('/api/centumpay/checkout', async (req, res) => {
     const myOrderId = orderId || `mahjoy-${Date.now()}`;
     const site = webSite || `https://${req.headers.host}`;
 
+    // Return URL after successful payment
+    const returnUrl = `${site}/checkout.html?payment=success&order=${encodeURIComponent(myOrderId)}`;
+    
     const payload = {
       group: 'wmx_api',
       method: 'get_token',
@@ -119,11 +122,14 @@ app.post('/api/centumpay/checkout', async (req, res) => {
       api_key: CENTUMPAY_API_KEY,
       data: {
         web_site: site,
+        return_url: returnUrl,
+        success_url: returnUrl,
+        callback_url: returnUrl,
         order_details: { wl_name: 'wl_centumpay', my_id: myOrderId },
         tx_info: {
           cart: {
             description: `Compra MAH JOY (${cart.length} producto${cart.length > 1 ? 's' : ''})`,
-            concept: cart.map(l => ({ item: l.name, cant: Number(l.qty), price: Number(l.price) })),
+            concept: cart.map(l => ({ item: l.name.normalize('NFD').replace(/[\u0300-\u036f]/g, ''), cant: Number(l.qty), price: Number(l.price) })),
             discount: 0,
             subtotal,
             total,

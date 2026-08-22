@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Add shipping cost to cart if selected
     if (selectedShippingCost > 0) {
-      cart.push({ name: 'Envío', price: selectedShippingCost, qty: 1 });
+      cart.push({ name: 'Envio', price: selectedShippingCost, qty: 1 });
     }
 
     // Include vendor ref in order ID
