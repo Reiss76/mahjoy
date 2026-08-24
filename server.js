@@ -198,6 +198,13 @@ app.get('*', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`MAH JOY server running on port ${PORT}`);
+  
+  // Start CentumPay polling after 10 seconds
+  setTimeout(() => {
+    if (typeof startPolling === 'function') {
+      startPolling();
+    }
+  }, 10000);
 });
 
 // ─── Envia.com Shipping API ──────────────────────────────────────────────────
@@ -561,4 +568,151 @@ app.get('/api/orders', (req, res) => {
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     .slice(0, 50);
   res.json({ orders });
+});
+
+// ─── CentumPay Polling (since they don't have webhooks) ──────────────────────
+
+const processedTransactions = new Set();
+const POLL_INTERVAL = 3 * 60 * 1000; // 3 minutes
+
+async function pollCentumPayTransactions() {
+  if (!CENTUMPAY_API_KEY || !CENTUMPAY_API_SECRET || !CENTUMPAY_TOTP_SECRET) {
+    console.log('[poll] CentumPay not configured, skipping');
+    return;
+  }
+
+  try {
+    console.log('[poll] Checking CentumPay for new transactions...');
+    
+    const totp = generateTotp(CENTUMPAY_TOTP_SECRET);
+    const authToken = crypto.createHmac('sha256', CENTUMPAY_API_SECRET)
+      .update(`${CENTUMPAY_API_KEY}${totp}`, 'utf8').digest('hex');
+
+    // Fetch recent transactions from CentumPay API
+    const ecommerceUrl = CENTUMPAY_ENV === 'prod'
+      ? 'https://ecommapi-centumpay.centum.mx/ecommerce'
+      : 'https://test-ecommapi-centumpay.centum.mx/ecommerce';
+
+    const payload = {
+      group: 'wmx_api',
+      method: 'get_transactions',
+      token: authToken,
+      api_key: CENTUMPAY_API_KEY,
+      data: {
+        limit: 20,
+        status: 'approved'
+      }
+    };
+
+    const response = await fetch(ecommerceUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+    
+    if (result?.status?.code !== '0') {
+      console.log('[poll] CentumPay API error or no transactions:', result?.status?.message || 'unknown');
+      return;
+    }
+
+    const transactions = result?.payload || [];
+    console.log(`[poll] Found ${transactions.length} approved transactions`);
+
+    for (const tx of transactions) {
+      const txId = tx.transaction_id || tx.id || tx.reference;
+      const orderId = tx.my_id || tx.order_id || tx.reference;
+      
+      // Skip if already processed
+      if (processedTransactions.has(txId)) {
+        continue;
+      }
+
+      console.log(`[poll] New transaction: ${txId} for order ${orderId}`);
+      processedTransactions.add(txId);
+
+      // Find matching order
+      const order = pendingOrders.get(orderId);
+      
+      if (order && order.status === 'pending_payment') {
+        console.log(`[poll] Processing order ${orderId}...`);
+        
+        order.status = 'paid';
+        order.paidAt = new Date().toISOString();
+        order.transactionId = txId;
+        pendingOrders.set(orderId, order);
+
+        // Create shipment if we have shipping data
+        if (order.shipping && order.carrier) {
+          try {
+            console.log(`[poll] Creating shipment for ${orderId}...`);
+            
+            const shipRes = await fetch(`http://localhost:${PORT}/api/shipping/create`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                orderId: orderId,
+                carrier: order.carrier,
+                destination: {
+                  name: order.customer?.name || order.shipping?.name,
+                  email: order.customer?.email,
+                  phone: order.shipping?.phone || order.customer?.phone,
+                  street: order.shipping?.street,
+                  neighborhood: order.shipping?.neighborhood,
+                  city: order.shipping?.city,
+                  state: order.shipping?.state,
+                  postalCode: order.shipping?.cp || order.shipping?.postalCode
+                }
+              })
+            });
+
+            const shipData = await shipRes.json();
+
+            if (shipData.ok) {
+              console.log(`[poll] ✅ Shipment created! Tracking: ${shipData.trackingNumber}`);
+              order.trackingNumber = shipData.trackingNumber;
+              order.labelUrl = shipData.labelUrl;
+              order.status = 'shipped';
+              pendingOrders.set(orderId, order);
+            } else {
+              console.error(`[poll] ❌ Shipment failed:`, shipData);
+            }
+          } catch (shipErr) {
+            console.error(`[poll] Shipment error:`, shipErr);
+          }
+        } else {
+          console.log(`[poll] Order ${orderId} paid but missing shipping data`);
+        }
+      } else if (order) {
+        console.log(`[poll] Order ${orderId} already processed (status: ${order.status})`);
+      } else {
+        console.log(`[poll] Transaction ${txId} has no matching order (my_id: ${orderId})`);
+      }
+    }
+  } catch (err) {
+    console.error('[poll] Error polling CentumPay:', err);
+  }
+}
+
+// Start polling after server is ready
+let pollInterval;
+function startPolling() {
+  console.log(`[poll] Starting CentumPay polling every ${POLL_INTERVAL / 1000}s`);
+  pollCentumPayTransactions(); // Initial poll
+  pollInterval = setInterval(pollCentumPayTransactions, POLL_INTERVAL);
+}
+
+// Manual trigger endpoint (for testing)
+app.post('/api/poll/trigger', async (req, res) => {
+  await pollCentumPayTransactions();
+  res.json({ ok: true, message: 'Poll triggered' });
+});
+
+// View processed transactions
+app.get('/api/poll/processed', (req, res) => {
+  res.json({ 
+    count: processedTransactions.size,
+    transactions: Array.from(processedTransactions).slice(-50)
+  });
 });
