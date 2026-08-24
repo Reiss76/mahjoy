@@ -325,7 +325,29 @@ const ENVIA_CREATE_URL = 'https://api.envia.com/ship/generate/';
 // In-memory order storage (in production, use a database)
 const pendingOrders = new Map();
 
-// Save order for later shipment creation
+// Proax API config
+const PROAX_API_URL = process.env.PROAX_API_URL || 'https://proax.app';
+const PROAX_NODE_ID = process.env.PROAX_NODE_ID || '31'; // Mahjoy node ID
+const PROAX_API_KEY = process.env.PROAX_API_KEY || 'mj-secret-2024';
+
+// Helper to update order in Proax
+async function updateProaxOrder(orderId, updates) {
+  try {
+    await fetch(`${PROAX_API_URL}/api/inventory/${PROAX_NODE_ID}/web-orders/${orderId}`, {
+      method: 'PATCH',
+      headers: { 
+        'Content-Type': 'application/json',
+        'x-api-key': PROAX_API_KEY
+      },
+      body: JSON.stringify(updates)
+    });
+    console.log(`[proax] Updated order ${orderId}:`, updates);
+  } catch (err) {
+    console.warn(`[proax] Failed to update order ${orderId}:`, err.message);
+  }
+}
+
+// Save order to in-memory AND persist to Proax DB
 app.post('/api/orders/save', async (req, res) => {
   try {
     const { orderId, customer, shipping, items, carrier, shippingCost, total } = req.body;
@@ -334,7 +356,7 @@ app.post('/api/orders/save', async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
     
-    pendingOrders.set(orderId, {
+    const orderData = {
       orderId,
       customer,
       shipping,
@@ -344,7 +366,43 @@ app.post('/api/orders/save', async (req, res) => {
       total,
       status: 'pending_payment',
       createdAt: new Date().toISOString()
-    });
+    };
+    
+    // Save to in-memory (for immediate use)
+    pendingOrders.set(orderId, orderData);
+    
+    // Persist to Proax database
+    try {
+      await fetch(`${PROAX_API_URL}/api/inventory/${PROAX_NODE_ID}/web-orders`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-api-key': PROAX_API_KEY
+        },
+        body: JSON.stringify({
+          order_id: orderId,
+          customer_name: customer?.name || '',
+          customer_lastname: customer?.lastname || '',
+          customer_email: customer?.email || '',
+          customer_phone: customer?.phone || '',
+          shipping_street: shipping?.street || '',
+          shipping_interior: shipping?.interior || '',
+          shipping_neighborhood: shipping?.neighborhood || '',
+          shipping_city: shipping?.city || '',
+          shipping_state: shipping?.state || '',
+          shipping_cp: shipping?.cp || shipping?.postalCode || '',
+          items: items || [],
+          subtotal: (total || 0) - (shippingCost || 0),
+          shipping_cost: shippingCost || 0,
+          total: total || 0,
+          carrier: carrier || '',
+          status: 'pending_payment'
+        })
+      });
+      console.log(`[orders] Persisted order ${orderId} to Proax`);
+    } catch (proaxErr) {
+      console.warn(`[orders] Failed to persist to Proax (non-critical):`, proaxErr.message);
+    }
     
     console.log(`[orders] Saved order ${orderId}`);
     res.json({ ok: true, orderId });
@@ -639,6 +697,13 @@ async function pollCentumPayTransactions() {
         order.paidAt = new Date().toISOString();
         order.transactionId = txId;
         pendingOrders.set(orderId, order);
+        
+        // Update Proax
+        await updateProaxOrder(orderId, {
+          status: 'paid',
+          paid_at: order.paidAt,
+          transaction_id: txId
+        });
 
         // Create shipment if we have shipping data
         if (order.shipping && order.carrier) {
@@ -671,7 +736,16 @@ async function pollCentumPayTransactions() {
               order.trackingNumber = shipData.trackingNumber;
               order.labelUrl = shipData.labelUrl;
               order.status = 'shipped';
+              order.shippedAt = new Date().toISOString();
               pendingOrders.set(orderId, order);
+              
+              // Update Proax
+              await updateProaxOrder(orderId, {
+                status: 'shipped',
+                tracking_number: shipData.trackingNumber,
+                label_url: shipData.labelUrl,
+                shipped_at: order.shippedAt
+              });
               
               // Queue WhatsApp notification
               notifyAdmins(order, shipData.trackingNumber);
