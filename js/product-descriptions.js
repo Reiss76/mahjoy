@@ -85,3 +85,20 @@ window.MJ_SPECS = {
     specs: ['Bolsa para racks', 'Medidas: 60 × 32 cm']
   },
 };
+
+// Individual product descriptions (keyed by lowercase name)
+window.MJ_DESCRIPTIONS = window.MJ_DESCRIPTIONS || {};
+
+// Velvet Tile Bags
+window.MJ_DESCRIPTIONS['green tile bag velvet'] = {
+  description: 'Our Velvet Tile Bags are designed for players who appreciate beautiful accessories. Fits 18" racks + extra sets of pushers. Soft velvet interior protects your tiles.',
+  specs: ['Bolsa de terciopelo premium', 'Fits 18" racks + pushers extra', 'Interior suave que protege las fichas', 'Medidas: 40 × 20 × 6 cm']
+};
+window.MJ_DESCRIPTIONS['pink tile bag velvet'] = {
+  description: 'Our Velvet Tile Bags are designed for players who appreciate beautiful accessories. Fits 18" racks + extra sets of pushers. Soft velvet interior protects your tiles.',
+  specs: ['Bolsa de terciopelo premium', 'Fits 18" racks + pushers extra', 'Interior suave que protege las fichas', 'Medidas: 40 × 20 × 6 cm']
+};
+window.MJ_DESCRIPTIONS['rouge tile bag velvet'] = {
+  description: 'Our Velvet Tile Bags are designed for players who appreciate beautiful accessories. Fits 18" racks + extra sets of pushers. Soft velvet interior protects your tiles.',
+  specs: ['Bolsa de terciopelo premium', 'Fits 18" racks + pushers extra', 'Interior suave que protege las fichas', 'Medidas: 40 × 20 × 6 cm']
+};
