@@ -285,6 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const shippingData = {
           name: `${form.name.value} ${form.lastname.value}`.trim(),
           street: form.street?.value || '',
+          interior: form.interior?.value || '',
           neighborhood: form.neighborhood?.value || '',
           cp: form.cp?.value || '',
           city: form.city?.value || '',

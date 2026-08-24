@@ -739,7 +739,7 @@ async function sendTelegramNotification(order, trackingNumber) {
 📧 *Email:* ${order.customer?.email || 'N/A'}
 📱 *Tel:* ${order.customer?.phone || order.shipping?.phone || 'N/A'}
 📍 *Envío a:* ${order.shipping?.city || ''}, CP ${order.shipping?.cp || ''}
-🏠 *Dirección:* ${order.shipping?.street || ''}, ${order.shipping?.neighborhood || ''}
+🏠 *Dirección:* ${order.shipping?.street || ''}${order.shipping?.interior ? ', ' + order.shipping.interior : ''}, ${order.shipping?.neighborhood || ''}
 🚚 *Paquetería:* ${order.carrier || 'N/A'}
 ${trackingNumber ? `📋 *Tracking:* ${trackingNumber}` : ''}
 
