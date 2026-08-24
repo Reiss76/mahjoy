@@ -313,3 +313,252 @@ app.post('/api/shipping/quote', async (req, res) => {
     res.status(500).json({ error: 'Shipping calculation failed' });
   }
 });
+
+// ─── Envia.com Shipment Creation ─────────────────────────────────────────────
+
+const ENVIA_CREATE_URL = 'https://api.envia.com/ship/generate/';
+
+// In-memory order storage (in production, use a database)
+const pendingOrders = new Map();
+
+// Save order for later shipment creation
+app.post('/api/orders/save', async (req, res) => {
+  try {
+    const { orderId, customer, shipping, items, carrier, shippingCost, total } = req.body;
+    
+    if (!orderId || !shipping || !customer) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    pendingOrders.set(orderId, {
+      orderId,
+      customer,
+      shipping,
+      items,
+      carrier,
+      shippingCost,
+      total,
+      status: 'pending_payment',
+      createdAt: new Date().toISOString()
+    });
+    
+    console.log(`[orders] Saved order ${orderId}`);
+    res.json({ ok: true, orderId });
+  } catch (err) {
+    console.error('[orders] Save error:', err);
+    res.status(500).json({ error: 'Failed to save order' });
+  }
+});
+
+// Create shipment with Envia.com
+app.post('/api/shipping/create', async (req, res) => {
+  try {
+    const { orderId, carrier, destination, packageInfo } = req.body;
+    
+    if (!destination || !destination.postalCode || !destination.name) {
+      return res.status(400).json({ error: 'Missing destination info' });
+    }
+
+    // Map state abbreviations to full names for Envia
+    const stateMap = {
+      'AGS': 'Aguascalientes', 'BC': 'Baja California', 'BCS': 'Baja California Sur',
+      'CAM': 'Campeche', 'CHIS': 'Chiapas', 'CHIH': 'Chihuahua', 'CDMX': 'Ciudad de Mexico',
+      'COAH': 'Coahuila', 'COL': 'Colima', 'DGO': 'Durango', 'GTO': 'Guanajuato',
+      'GRO': 'Guerrero', 'HGO': 'Hidalgo', 'JAL': 'Jalisco', 'MEX': 'Estado de Mexico',
+      'MICH': 'Michoacan', 'MOR': 'Morelos', 'NAY': 'Nayarit', 'NL': 'Nuevo Leon',
+      'OAX': 'Oaxaca', 'PUE': 'Puebla', 'QRO': 'Queretaro', 'QROO': 'Quintana Roo',
+      'SLP': 'San Luis Potosi', 'SIN': 'Sinaloa', 'SON': 'Sonora', 'TAB': 'Tabasco',
+      'TAMPS': 'Tamaulipas', 'TLAX': 'Tlaxcala', 'VER': 'Veracruz', 'YUC': 'Yucatan', 'ZAC': 'Zacatecas'
+    };
+
+    const payload = {
+      origin: {
+        name: 'Mah Joy',
+        company: 'Mah Joy',
+        email: 'info@playmahjoy.com',
+        phone: '5530395891',
+        street: 'Av. Vasconcelos',
+        number: '1000',
+        district: 'Del Valle',
+        city: 'San Pedro Garza Garcia',
+        state: 'NL',
+        country: 'MX',
+        postalCode: ENVIA_ORIGIN_CP
+      },
+      destination: {
+        name: destination.name || 'Cliente',
+        email: destination.email || '',
+        phone: destination.phone || '5500000000',
+        street: destination.street || '',
+        number: destination.number || 'S/N',
+        district: destination.neighborhood || destination.district || '',
+        city: destination.city || '',
+        state: stateMap[destination.state] || destination.state || '',
+        country: 'MX',
+        postalCode: destination.postalCode || destination.cp
+      },
+      packages: [{
+        content: packageInfo?.content || 'Mahjong Set',
+        amount: packageInfo?.amount || 1,
+        type: 'box',
+        weight: packageInfo?.weight || 2,
+        insurance: 0,
+        declaredValue: packageInfo?.declaredValue || 3000,
+        weightUnit: 'KG',
+        lengthUnit: 'CM',
+        dimensions: packageInfo?.dimensions || { length: 40, width: 30, height: 15 }
+      }],
+      shipment: {
+        carrier: carrier || 'estafeta',
+        type: 1
+      },
+      settings: {
+        printFormat: 'PDF',
+        printSize: 'STOCK_4X6'
+      }
+    };
+
+    console.log(`[shipping] Creating shipment for order ${orderId}:`, JSON.stringify(payload, null, 2));
+
+    const response = await fetch(ENVIA_CREATE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${ENVIA_API_KEY}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+    console.log('[shipping] Envia response:', JSON.stringify(data, null, 2));
+
+    if (data.meta === 'generate' && data.data && data.data[0]) {
+      const shipment = data.data[0];
+      const result = {
+        ok: true,
+        orderId,
+        trackingNumber: shipment.trackingNumber || shipment.tracking || shipment.carrier_tracking_number,
+        carrier: shipment.carrier || carrier,
+        labelUrl: shipment.label || shipment.labelUrl || null,
+        estimatedDelivery: shipment.estimated_delivery || null
+      };
+      
+      // Update order status
+      if (pendingOrders.has(orderId)) {
+        const order = pendingOrders.get(orderId);
+        order.status = 'shipped';
+        order.trackingNumber = result.trackingNumber;
+        order.labelUrl = result.labelUrl;
+        order.shippedAt = new Date().toISOString();
+        pendingOrders.set(orderId, order);
+      }
+      
+      console.log(`[shipping] Created shipment:`, result);
+      return res.json(result);
+    } else {
+      console.error('[shipping] Envia error:', data);
+      return res.status(502).json({ 
+        error: 'Shipment creation failed', 
+        details: data.error || data.message || data 
+      });
+    }
+  } catch (err) {
+    console.error('[shipping] Create error:', err);
+    res.status(500).json({ error: 'Shipment creation failed', details: String(err) });
+  }
+});
+
+// ─── CentumPay Webhook ───────────────────────────────────────────────────────
+
+app.post('/api/centumpay/webhook', async (req, res) => {
+  try {
+    console.log('[webhook] CentumPay notification received:', JSON.stringify(req.body, null, 2));
+    
+    const { status, order_id, my_id, amount, reference } = req.body;
+    const orderId = my_id || order_id || reference;
+    
+    // Verify payment was successful
+    if (status === 'approved' || status === 'success' || status === 'completed') {
+      console.log(`[webhook] Payment confirmed for order ${orderId}`);
+      
+      // Get saved order
+      const order = pendingOrders.get(orderId);
+      
+      if (order) {
+        order.status = 'paid';
+        order.paidAt = new Date().toISOString();
+        pendingOrders.set(orderId, order);
+        
+        // Auto-create shipment if we have all the data
+        if (order.shipping && order.carrier) {
+          console.log(`[webhook] Auto-creating shipment for ${orderId}...`);
+          
+          try {
+            // Call our own shipping create endpoint
+            const shipRes = await fetch(`http://localhost:${PORT}/api/shipping/create`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                orderId: orderId,
+                carrier: order.carrier,
+                destination: {
+                  name: order.customer?.name || order.shipping?.name,
+                  email: order.customer?.email,
+                  phone: order.shipping?.phone || order.customer?.phone,
+                  street: order.shipping?.street,
+                  neighborhood: order.shipping?.neighborhood,
+                  city: order.shipping?.city,
+                  state: order.shipping?.state,
+                  postalCode: order.shipping?.cp || order.shipping?.postalCode
+                }
+              })
+            });
+            
+            const shipData = await shipRes.json();
+            
+            if (shipData.ok) {
+              console.log(`[webhook] Shipment created! Tracking: ${shipData.trackingNumber}`);
+              
+              // TODO: Send notification to customer via WhatsApp/Email
+              // For now, just log it
+              console.log(`[webhook] Would notify customer: ${order.customer?.email || order.customer?.phone}`);
+            } else {
+              console.error(`[webhook] Shipment creation failed:`, shipData);
+            }
+          } catch (shipErr) {
+            console.error(`[webhook] Shipment error:`, shipErr);
+          }
+        }
+        
+        return res.json({ ok: true, message: 'Payment processed' });
+      } else {
+        console.log(`[webhook] Order ${orderId} not found in pending orders`);
+        return res.json({ ok: true, message: 'Payment received but order not found' });
+      }
+    } else {
+      console.log(`[webhook] Payment status: ${status} (not confirmed)`);
+      return res.json({ ok: true, message: 'Notification received' });
+    }
+  } catch (err) {
+    console.error('[webhook] Error:', err);
+    res.status(500).json({ error: 'Webhook processing failed' });
+  }
+});
+
+// Get order status
+app.get('/api/orders/:orderId', (req, res) => {
+  const order = pendingOrders.get(req.params.orderId);
+  if (order) {
+    res.json(order);
+  } else {
+    res.status(404).json({ error: 'Order not found' });
+  }
+});
+
+// List recent orders (for admin)
+app.get('/api/orders', (req, res) => {
+  const orders = Array.from(pendingOrders.values())
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 50);
+  res.json({ orders });
+});

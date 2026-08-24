@@ -293,6 +293,35 @@ document.addEventListener('DOMContentLoaded', () => {
           notes: form.notes?.value || ''
         };
         
+        // Get selected carrier from shipping options
+        const selectedShippingOption = document.querySelector('input[name="shipping_option"]:checked');
+        const selectedCarrier = selectedShippingOption?.closest('label')?.querySelector('[style*="font-weight:700"]')?.textContent?.toLowerCase() || 'estafeta';
+        
+        // Save order to server for webhook processing
+        try {
+          await fetch('/api/orders/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              orderId: orderId,
+              customer: {
+                name: form.name.value,
+                lastname: form.lastname.value,
+                email: form.email.value,
+                phone: form.phone.value
+              },
+              shipping: shippingData,
+              items: cart.filter(i => i.name !== 'Envio'),
+              carrier: selectedCarrier,
+              shippingCost: selectedShippingCost,
+              total: cart.reduce((sum, i) => sum + (i.price * i.qty), 0)
+            })
+          });
+          console.log('[checkout] Order saved for webhook processing');
+        } catch (saveErr) {
+          console.warn('[checkout] Could not save order to server:', saveErr);
+        }
+        
         localStorage.setItem('mj_checkout_data', JSON.stringify({
           name: form.name.value,
           lastname: form.lastname.value,
@@ -303,6 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }));
         localStorage.setItem('mj_shipping_address', JSON.stringify(shippingData));
         localStorage.setItem('mj_last_order_id', orderId);
+        localStorage.setItem('mj_selected_carrier', selectedCarrier);
         
         // Save cart for order history
         localStorage.setItem('mj_last_cart', JSON.stringify(cart));
