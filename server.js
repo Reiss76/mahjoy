@@ -191,10 +191,7 @@ app.use(express.static(path.join(__dirname), {
   index: 'index.html',
 }));
 
-// Fallback: serve index.html for any unmatched routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
+// NOTE: Catch-all route moved to END of file (after all API routes)
 
 app.listen(PORT, () => {
   console.log(`MAH JOY server running on port ${PORT}`);
@@ -787,4 +784,14 @@ app.post('/api/notifications/test', (req, res) => {
   };
   queueWhatsAppNotification(testOrder, 'TEST123456');
   res.json({ ok: true, message: 'Test notification queued' });
+});
+
+// ─── Catch-all route (MUST BE LAST) ──────────────────────────────────────────
+// Serves index.html for any unmatched routes (SPA fallback)
+app.get('*', (req, res) => {
+  // Don't catch API routes
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
