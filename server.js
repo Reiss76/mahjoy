@@ -675,8 +675,13 @@ async function pollCentumPayTransactions() {
               order.labelUrl = shipData.labelUrl;
               order.status = 'shipped';
               pendingOrders.set(orderId, order);
+              
+              // Queue WhatsApp notification
+              queueWhatsAppNotification(order, shipData.trackingNumber);
             } else {
               console.error(`[poll] ❌ Shipment failed:`, shipData);
+              // Still notify about the sale, even if shipment failed
+              queueWhatsAppNotification(order, null);
             }
           } catch (shipErr) {
             console.error(`[poll] Shipment error:`, shipErr);
@@ -715,4 +720,71 @@ app.get('/api/poll/processed', (req, res) => {
     count: processedTransactions.size,
     transactions: Array.from(processedTransactions).slice(-50)
   });
+});
+
+// ─── WhatsApp Notifications Queue ────────────────────────────────────────────
+
+const ADMIN_WHATSAPP = ['+525517335714']; // Pro_Alion for testing
+const pendingNotifications = [];
+
+function queueWhatsAppNotification(order, trackingNumber) {
+  const message = `🛒 *¡Nueva venta MAH JOY!*
+
+📦 *Producto:* ${order.items?.map(i => i.name).join(', ') || 'N/A'}
+💰 *Total:* $${order.total?.toFixed(2) || '0'} MXN
+👤 *Cliente:* ${order.customer?.name || ''} ${order.customer?.lastname || ''}
+📧 *Email:* ${order.customer?.email || 'N/A'}
+📱 *Tel:* ${order.customer?.phone || order.shipping?.phone || 'N/A'}
+📍 *Envío a:* ${order.shipping?.city || ''}, CP ${order.shipping?.cp || ''}
+🏠 *Dirección:* ${order.shipping?.street || ''}, ${order.shipping?.neighborhood || ''}
+🚚 *Paquetería:* ${order.carrier || 'N/A'}
+${trackingNumber ? `📋 *Tracking:* ${trackingNumber}` : ''}
+
+✅ Pedido #${order.orderId}`;
+
+  ADMIN_WHATSAPP.forEach(phone => {
+    pendingNotifications.push({
+      id: `notif-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      phone,
+      message,
+      orderId: order.orderId,
+      createdAt: new Date().toISOString(),
+      sent: false
+    });
+  });
+  
+  console.log(`[notify] Queued WhatsApp notification for order ${order.orderId}`);
+}
+
+// Get pending notifications (for OpenClaw to poll and send via wacli)
+app.get('/api/notifications/pending', (req, res) => {
+  const pending = pendingNotifications.filter(n => !n.sent);
+  res.json({ notifications: pending });
+});
+
+// Mark notification as sent
+app.post('/api/notifications/sent', (req, res) => {
+  const { id } = req.body;
+  const notif = pendingNotifications.find(n => n.id === id);
+  if (notif) {
+    notif.sent = true;
+    notif.sentAt = new Date().toISOString();
+    res.json({ ok: true });
+  } else {
+    res.status(404).json({ error: 'Notification not found' });
+  }
+});
+
+// Manual test notification
+app.post('/api/notifications/test', (req, res) => {
+  const testOrder = {
+    orderId: 'test-' + Date.now(),
+    items: [{ name: 'Golden Lotus Mat' }],
+    total: 1374,
+    customer: { name: 'Test', lastname: 'User', email: 'test@test.com', phone: '+525500000000' },
+    shipping: { street: 'Av. Reforma 123', neighborhood: 'Juárez', city: 'CDMX', cp: '06600' },
+    carrier: 'estafeta'
+  };
+  queueWhatsAppNotification(testOrder, 'TEST123456');
+  res.json({ ok: true, message: 'Test notification queued' });
 });
