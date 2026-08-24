@@ -63,18 +63,20 @@ window.MJ_DESCRIPTIONS = {
 // Generic specs by category (SKU prefix)
 window.MJ_SPECS = {
   'RACK': {
+    description: 'Mahjong Racks — Premium Acrylic | 18.11"',
     specs: [
       '4 racks de acrílico premium con pusher magnético',
-      'Medidas: 46 × 7.9 × 3.5 cm',
+      'Medidas: 18.11" (46 cm) de largo',
       'Base antideslizante incluida',
       'Nota: el acrílico puede presentar variaciones menores — parte del carácter del material.',
     ]
   },
   'RAKBAG': {
+    description: 'Mahjong Racks — Premium Acrylic | 18.11"',
     specs: [
       '4 racks de acrílico premium con pusher magnético',
+      'Medidas: 18.11" (46 cm) de largo',
       'Bolsa para racks incluida: 60 × 32 cm',
-      'Medidas rack: 46 × 7.9 × 3.5 cm',
       'Base antideslizante incluida',
     ]
   },
