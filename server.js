@@ -674,11 +674,11 @@ async function pollCentumPayTransactions() {
               pendingOrders.set(orderId, order);
               
               // Queue WhatsApp notification
-              queueWhatsAppNotification(order, shipData.trackingNumber);
+              notifyAdmins(order, shipData.trackingNumber);
             } else {
               console.error(`[poll] ❌ Shipment failed:`, shipData);
               // Still notify about the sale, even if shipment failed
-              queueWhatsAppNotification(order, null);
+              notifyAdmins(order, null);
             }
           } catch (shipErr) {
             console.error(`[poll] Shipment error:`, shipErr);
@@ -719,12 +719,18 @@ app.get('/api/poll/processed', (req, res) => {
   });
 });
 
-// ─── WhatsApp Notifications Queue ────────────────────────────────────────────
+// ─── Telegram Notifications ──────────────────────────────────────────────────
 
-const ADMIN_WHATSAPP = ['+525517335714']; // Pro_Alion for testing
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8827648637:AAHm_XHtfcDhP2F6dk7u83v97p4lpMw8vUA';
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || ''; // Set after creating group
 const pendingNotifications = [];
 
-function queueWhatsAppNotification(order, trackingNumber) {
+async function sendTelegramNotification(order, trackingNumber) {
+  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+    console.log('[telegram] Bot token or chat ID not configured');
+    return false;
+  }
+
   const message = `🛒 *¡Nueva venta MAH JOY!*
 
 📦 *Producto:* ${order.items?.map(i => i.name).join(', ') || 'N/A'}
@@ -739,18 +745,45 @@ ${trackingNumber ? `📋 *Tracking:* ${trackingNumber}` : ''}
 
 ✅ Pedido #${order.orderId}`;
 
-  ADMIN_WHATSAPP.forEach(phone => {
-    pendingNotifications.push({
-      id: `notif-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      phone,
-      message,
-      orderId: order.orderId,
-      createdAt: new Date().toISOString(),
-      sent: false
+  try {
+    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: TELEGRAM_CHAT_ID,
+        text: message,
+        parse_mode: 'Markdown'
+      })
     });
+    
+    const result = await response.json();
+    if (result.ok) {
+      console.log(`[telegram] ✅ Notification sent for order ${order.orderId}`);
+      return true;
+    } else {
+      console.error(`[telegram] ❌ Failed:`, result);
+      return false;
+    }
+  } catch (err) {
+    console.error(`[telegram] Error:`, err);
+    return false;
+  }
+}
+
+async function notifyAdmins(order, trackingNumber) {
+  // Send Telegram notification
+  await sendTelegramNotification(order, trackingNumber);
+  
+  // Also queue for backup/logging
+  pendingNotifications.push({
+    id: `notif-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    orderId: order.orderId,
+    createdAt: new Date().toISOString(),
+    sent: true
   });
   
-  console.log(`[notify] Queued WhatsApp notification for order ${order.orderId}`);
+  console.log(`[notify] Sent notification for order ${order.orderId}`);
 }
 
 // Get pending notifications (for OpenClaw to poll and send via wacli)
@@ -773,7 +806,7 @@ app.post('/api/notifications/sent', (req, res) => {
 });
 
 // Manual test notification
-app.post('/api/notifications/test', (req, res) => {
+app.post('/api/notifications/test', async (req, res) => {
   const testOrder = {
     orderId: 'test-' + Date.now(),
     items: [{ name: 'Golden Lotus Mat' }],
@@ -782,8 +815,28 @@ app.post('/api/notifications/test', (req, res) => {
     shipping: { street: 'Av. Reforma 123', neighborhood: 'Juárez', city: 'CDMX', cp: '06600' },
     carrier: 'estafeta'
   };
-  queueWhatsAppNotification(testOrder, 'TEST123456');
-  res.json({ ok: true, message: 'Test notification queued' });
+  await notifyAdmins(testOrder, 'TEST123456');
+  res.json({ ok: true, message: 'Test notification sent', chatId: TELEGRAM_CHAT_ID });
+});
+
+// Get bot updates to find chat ID
+app.get('/api/telegram/updates', async (req, res) => {
+  try {
+    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates`;
+    const response = await fetch(url);
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+// Show current config
+app.get('/api/telegram/config', (req, res) => {
+  res.json({
+    botConfigured: !!TELEGRAM_BOT_TOKEN,
+    chatId: TELEGRAM_CHAT_ID || 'NOT SET - Add bot to group and check /api/telegram/updates'
+  });
 });
 
 // ─── Catch-all route (MUST BE LAST) ──────────────────────────────────────────
