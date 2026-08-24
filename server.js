@@ -722,7 +722,7 @@ app.get('/api/poll/processed', (req, res) => {
 // ─── Telegram Notifications ──────────────────────────────────────────────────
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8827648637:AAHm_XHtfcDhP2F6dk7u83v97p4lpMw8vUA';
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || ''; // Set after creating group
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '-5458285985'; // Grupo "Envios Mahjoy"
 const pendingNotifications = [];
 
 async function sendTelegramNotification(order, trackingNumber) {
