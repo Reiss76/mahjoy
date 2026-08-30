@@ -1,5 +1,5 @@
 /**
- * Mahjoy — Product descriptions & specs
+ * Mahjoy — Product descriptions & specs (ENGLISH)
  * Keyed by product name (lowercase, trimmed).
  * Used in product.html PDP to show description + specs.
  */
@@ -9,7 +9,7 @@ window.MJ_DESCRIPTIONS = {
     specs: [
       '60 premium acrylic tiles',
       'Tile size: 32 × 22 × 15 mm',
-      '36 Dots, Bams y Craks · 16 Vientos · 12 Dragones · 8 Flores · 20 Jokers · 6 Blanks',
+      '36 Dots, Bams & Craks · 16 Winds · 12 Dragons · 8 Flowers · 20 Jokers · 6 Blanks',
       'Dice set + dice bag',
     ]
   },
@@ -18,7 +18,7 @@ window.MJ_DESCRIPTIONS = {
     specs: [
       '60 premium acrylic tiles',
       'Tile size: 32 × 22 × 15 mm',
-      '36 Dots, Bams y Craks · 16 Vientos · 12 Dragones · 8 Flores · 20 Jokers · 6 Blanks',
+      '36 Dots, Bams & Craks · 16 Winds · 12 Dragons · 8 Flowers · 20 Jokers · 6 Blanks',
       'Dice set + dice bag',
     ]
   },
@@ -27,7 +27,7 @@ window.MJ_DESCRIPTIONS = {
     specs: [
       '60 premium acrylic tiles',
       'Tile size: 32 × 22 × 15 mm',
-      '36 Dots, Bams y Craks · 16 Vientos · 12 Dragones · 8 Flores · 20 Jokers · 6 Blanks',
+      '36 Dots, Bams & Craks · 16 Winds · 12 Dragons · 8 Flowers · 20 Jokers · 6 Blanks',
       'Dice set + dice bag',
     ]
   },
@@ -36,7 +36,7 @@ window.MJ_DESCRIPTIONS = {
     specs: [
       '60 premium acrylic tiles',
       'Tile size: 32 × 22 × 15 mm',
-      '36 Dots, Bams y Craks · 16 Vientos · 12 Dragones · 8 Flores · 20 Jokers · 6 Blanks',
+      '36 Dots, Bams & Craks · 16 Winds · 12 Dragons · 8 Flowers · 20 Jokers · 6 Blanks',
       'Dice set + dice bag',
     ]
   },
@@ -45,7 +45,7 @@ window.MJ_DESCRIPTIONS = {
     specs: [
       '60 premium acrylic tiles',
       'Tile size: 32 × 22 × 15 mm',
-      '36 Dots, Bams y Craks · 16 Vientos · 12 Dragones · 8 Flores · 20 Jokers · 6 Blanks',
+      '36 Dots, Bams & Craks · 16 Winds · 12 Dragons · 8 Flowers · 20 Jokers · 6 Blanks',
       'Dice set + dice bag',
     ]
   },
@@ -54,7 +54,7 @@ window.MJ_DESCRIPTIONS = {
     specs: [
       '60 premium acrylic tiles',
       'Tile size: 32 × 22 × 15 mm',
-      '36 Dots, Bams y Craks · 16 Vientos · 12 Dragones · 8 Flores · 20 Jokers · 6 Blanks',
+      '36 Dots, Bams & Craks · 16 Winds · 12 Dragons · 8 Flowers · 20 Jokers · 6 Blanks',
       'Dice set + dice bag',
     ]
   },
@@ -62,26 +62,92 @@ window.MJ_DESCRIPTIONS = {
 
 // Generic specs by category (SKU prefix)
 window.MJ_SPECS = {
-  'RACK': {
+  'MAT': {
+    description: 'Made to play. Designed to stand out.\n\nOur Mahjoy mats are where function meets design. Created to elevate your game while bringing personality to the table, each print is thoughtfully designed to feel unexpected, stylish, and unmistakably Mahjoy.\n\nSoft, smooth and made for hours of play, they provide the perfect surface for your tiles while adding that finishing touch that turns every Mahjong table into a moment.\n\nBecause the game matters — but so does the table you play it on.',
     specs: [
-      '4 premium acrylic racks with magnetic pusher',
-      'Dimensions: 46 × 7.9 × 3.5 cm',
-      'Non-slip base included',
-      'Note: acrylic may show minor variations — part of the material's character.',
+      'Dimensions: 31.5" x 31.5" (80 × 80 cm)',
+      'Materials: Neoprene with a non-slip rubber backing',
+      'Comes with: 2 adjustable elastic straps to keep your mat neatly rolled up',
+    ]
+  },
+  'TILE': {
+    description: 'MAHJOY TILES\n\nDesigned to make every game feel a little more special.\n\nOur American Mahjong tile sets bring together bold design, playful details, and a modern take on the game we love. Each set is thoughtfully created to feel unique, collectible, and unmistakably Mahjoy.\n\nMade for long game nights, beautiful tables, and tiles you\'ll love playing with as much as looking at.',
+    specs: [
+      'What\'s Included: 160 Acrylic Tiles, Dice/Coin Bag, Beautifully Designed Magnetic Box',
+      'Tile Breakdown: 108 Bams/Cracks/Dots + 16 Winds + 12 Dragons + 8 Flowers + 10 Jokers + 6 Blanks',
+      'Tile Size: 0.87" W × 0.6" D × 1.25" H',
+    ]
+  },
+  'RACK': {
+    description: 'MAHJOY RACKS\n\nCrafted to stand apart.\n\nOur premium Mahjong racks are made with exceptional attention to detail, combining quality materials, a substantial feel, and a beautifully polished finish. Designed to elevate your game while bringing a distinctive touch to the table.\n\nBeautiful, functional, and made to last — the kind of quality you can see and feel.',
+    specs: [
+      'What\'s Included: 4 Acrylic Racks + 4 Acrylic Pushers',
+      'Size: 18.11" L',
     ]
   },
   'RAKBAG': {
+    description: 'MAHJOY VELVET RACK BAG\n\nDesigned to keep your racks beautifully protected and organized.\n\nMade from soft velvet, each bag features individual compartments to keep every rack and pusher securely separated, helping protect them from scratches while storing or carrying your set.',
     specs: [
-      '4 premium acrylic racks with magnetic pusher',
-      'Rack bag included: 60 × 32 cm',
-      'Rack dimensions: 46 × 7.9 × 3.5 cm',
-      'Non-slip base included',
+      'Size: Designed to fit racks up to 18" L',
     ]
   },
   'BAG-TILE': {
     specs: ['Velvet bag for tiles', 'Dimensions: 40 × 20 × 6 cm']
   },
   'BAG': {
-    specs: ['Bag for racks', 'Dimensions: 60 × 32 cm']
+    description: 'MAHJOY BAG\n\nDesigned to carry your entire Mahjong set beautifully and effortlessly.\n\nOur Mahjoy Bag is thoughtfully designed with plenty of room for everything you need, while keeping a sleek, perfectly proportioned silhouette. Its spacious interior allows your mat to fit comfortably while rolled, helping it keep its shape and stay protected on the go.\n\nTwo exterior compartments provide easy access to your card folders, cards, and other game essentials, while an adjustable shoulder strap makes it comfortable and easy to carry wherever the game takes you.\n\nSpacious without feeling oversized, it\'s the perfect way to keep your Mahjong set together and ready to play wherever you go.',
+    specs: [
+      'Size: 31.50" L',
+    ]
   },
+  'SHUF': {
+    description: 'MAHJOY SHUFFLERS\n\nMake every shuffle smoother.\n\nDesigned to make mixing your Mahjong tiles quick and effortless, our shufflers help keep the game moving while protecting your hands and tiles. Functional, lightweight, and beautifully designed, they\'re an easy addition to every Mahjong table.',
+    specs: [
+      'What\'s Included: 2 Mahjong Tile Shufflers',
+      'Rules Printed on All Four Sides',
+    ]
+  },
+  'LINE': {
+    description: 'MAHJOY LINE FINDER\n\nFind your line without losing sight of the rest.\n\nDesigned with a semi-transparent finish, our Line Finder makes it easy to highlight the line you\'re playing while still allowing the surrounding lines on your Mahjong card to remain visible. A simple, practical way to stay focused without covering up the rest of your options.\n\nLightweight, easy to use, and designed to make every hand a little smoother.',
+    specs: [
+      'What\'s Included: 4 Mahjong Line Finders',
+    ]
+  },
+};
+
+// Individual product descriptions (keyed by lowercase name)
+window.MJ_DESCRIPTIONS = window.MJ_DESCRIPTIONS || {};
+
+// Velvet Tile Bags
+window.MJ_DESCRIPTIONS['green tile bag velvet'] = {
+  description: 'Our Velvet Tile Bags are designed for players who appreciate beautiful accessories. Fits 18" racks + extra sets of pushers. Soft velvet interior protects your tiles.',
+  specs: ['Premium velvet bag', 'Fits 18" racks + extra pushers', 'Soft interior protects your tiles', 'Dimensions: 40 × 20 × 6 cm']
+};
+window.MJ_DESCRIPTIONS['pink tile bag velvet'] = {
+  description: 'Our Velvet Tile Bags are designed for players who appreciate beautiful accessories. Fits 18" racks + extra sets of pushers. Soft velvet interior protects your tiles.',
+  specs: ['Premium velvet bag', 'Fits 18" racks + extra pushers', 'Soft interior protects your tiles', 'Dimensions: 40 × 20 × 6 cm']
+};
+window.MJ_DESCRIPTIONS['rouge tile bag velvet'] = {
+  description: 'Our Velvet Tile Bags are designed for players who appreciate beautiful accessories. Fits 18" racks + extra sets of pushers. Soft velvet interior protects your tiles.',
+  specs: ['Premium velvet bag', 'Fits 18" racks + extra pushers', 'Soft interior protects your tiles', 'Dimensions: 40 × 20 × 6 cm']
+};
+
+// Leather Mat (Mat Polo Club)
+window.MJ_DESCRIPTIONS['mat polo club'] = {
+  description: 'Made to play. Designed to stand out.\n\nOur Mahjoy mats are where function meets design. Created to elevate your game while bringing personality to the table, each print is thoughtfully designed to feel unexpected, stylish, and unmistakably Mahjoy.\n\nSoft, smooth and made for hours of play, they provide the perfect surface for your tiles while adding that finishing touch that turns every Mahjong table into a moment.\n\nBecause the game matters — but so does the table you play it on.',
+  specs: [
+    'Dimensions: 31.5" x 31.5" (80 × 80 cm)',
+    'Materials: Premium leather with a non-slip backing',
+    'Comes with: 2 matching leather straps to keep your mat neatly rolled up',
+  ]
+};
+
+// Piel (Leather) Tile Cases
+window.MJ_DESCRIPTIONS['lilac tile bag piel'] = {
+  description: 'MAHJOY TILE CASE\n\nA refined way to protect and store your Mahjong tiles.\n\nCrafted with a structured design, our Tile Case offers an elevated and substantial feel while keeping your tiles beautifully organized and protected. Its sturdy construction helps maintain its shape, while the interior is perfectly sized to hold your complete tile set.\n\nElegant, durable, and designed for both storage and travel.',
+  specs: []
+};
+window.MJ_DESCRIPTIONS['pink tile bag piel'] = {
+  description: 'MAHJOY TILE CASE\n\nA refined way to protect and store your Mahjong tiles.\n\nCrafted with a structured design, our Tile Case offers an elevated and substantial feel while keeping your tiles beautifully organized and protected. Its sturdy construction helps maintain its shape, while the interior is perfectly sized to hold your complete tile set.\n\nElegant, durable, and designed for both storage and travel.',
+  specs: []
 };
