@@ -11,7 +11,7 @@ const MJ_API = MJ_API_BASE + '/public/shop/mahjoy/products';
 const MJ_HIDDEN_SKUS = ['Rack-007', 'RACK-007'];
 
 // Coming Soon products (show with badge, no buy button)
-const MJ_COMING_SOON_SKUS = ['MAT-COWV'];
+const MJ_COMING_SOON_SKUS = ['MAT-COWV', 'Rack-brown'];
 
 // Category matching — SKU-prefix based (precise, no false positives)
 // SKU patterns: TILE-* | MAT-* | RACK-* | RAKBAG-* | RACK-BAG* | BAG-tile* | BAG-lila|pink|blue|rouge|fiucsa | LINE-* | SHUF-*
