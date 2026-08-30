@@ -7,6 +7,9 @@
 const MJ_API_BASE = 'https://api-production-b888.up.railway.app';
 const MJ_API = MJ_API_BASE + '/public/shop/mahjoy/products';
 
+// Hidden products (SKUs to exclude from shop)
+const MJ_HIDDEN_SKUS = ['Rack-007', 'RACK-007'];
+
 // Category matching — SKU-prefix based (precise, no false positives)
 // SKU patterns: TILE-* | MAT-* | RACK-* | RAKBAG-* | RACK-BAG* | BAG-tile* | BAG-lila|pink|blue|rouge|fiucsa | LINE-* | SHUF-*
 function matchCategory(product, category) {
@@ -136,6 +139,9 @@ async function loadShopProducts({ containerId, category = null, categoryLabel = 
         u.startsWith('http') ? u : MJ_API_BASE + u.replace('/api/public/media', '/public/media')
       ),
     }));
+
+    // Filter out hidden products
+    products = products.filter(p => !MJ_HIDDEN_SKUS.includes(p.sku));
 
     // Filter by category if specified — SKU-based matching
     if (category) {
