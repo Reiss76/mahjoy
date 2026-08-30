@@ -170,7 +170,7 @@
             <div>
               <div class="mj-cart-item-name">${item.name}</div>
               ${item.sku ? `<div class="mj-cart-item-sku">${item.sku}</div>` : ''}
-              <div class="mj-cart-item-price">${item.price > 0 ? fmt(item.price) : 'Consultar precio'}</div>
+              <div class="mj-cart-item-price">${item.price > 0 ? fmt(item.price) : 'Contact for price'}</div>
               <div class="mj-cart-qty">
                 <button onclick="changeItemQty(${item.id}, ${item.qty - 1})">−</button>
                 <span>${item.qty}</span>

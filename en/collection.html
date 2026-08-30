@@ -249,7 +249,7 @@
           <div class="mj-prod-card-body">
             <div class="mj-prod-card-name" title="${p.name}">${p.name}</div>
             <div class="mj-prod-card-price">${price}</div>
-            <button class="mj-prod-card-add" onclick="addToCart(${JSON.stringify(p).split('"').join('&quot;')})">+ Agregar</button>
+            <button class="mj-prod-card-add" onclick="addToCart(${JSON.stringify(p).split('"').join('&quot;')})">+ Add</button>
           </div>`;
         card.querySelector('.mj-prod-card-img, .mj-prod-card-img.placeholder') && (card.onclick = function(e){
           if (!e.target.classList.contains('mj-prod-card-add')) {

@@ -57,14 +57,37 @@ const CATEGORY_MAP = {};
 // Check if we're on English version
 const isEnglishShop = window.location.pathname.includes('/en/');
 
+// Translations for shop
+const TS = isEnglishShop ? {
+  viewProduct: 'View Product',
+  comingSoon: 'Coming Soon',
+  lastFew: 'Only',
+  lastFewSuffix: 'left',
+  emptyTitle: 'Coming Soon',
+  emptyText: 'products will be available very soon.',
+  errorTitle: 'Could not load catalog',
+  errorText: 'Please try again later.',
+  contactPrice: 'Contact for price'
+} : {
+  viewProduct: 'Ver producto',
+  comingSoon: 'Coming Soon',
+  lastFew: 'Últimas',
+  lastFewSuffix: '',
+  emptyTitle: 'Próximamente',
+  emptyText: 'productos estarán disponibles muy pronto.',
+  errorTitle: 'No se pudo cargar el catálogo',
+  errorText: 'Intenta de nuevo más tarde.',
+  contactPrice: 'Consultar precio'
+};
+
 function formatPrice(price, priceUsd) {
   if (isEnglishShop && priceUsd) {
     const num = parseFloat(priceUsd);
-    if (!num || num === 0) return 'Contact for price';
+    if (!num || num === 0) return TS.contactPrice;
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
   }
   const num = parseFloat(price);
-  if (!num || num === 0) return 'Consultar precio';
+  if (!num || num === 0) return TS.contactPrice;
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(num);
 }
 
@@ -98,8 +121,8 @@ function buildProductCard(product) {
           ? `<img src="${imgSrc}" alt="${product.name}" class="mj-product-img" loading="lazy"${isComingSoon ? ' style="opacity:0.7;"' : ''}>`
           : `<div class="mj-product-img-placeholder"><span>✦</span></div>`
         }
-        ${isComingSoon ? `<div class="mj-product-badge" style="background:var(--orchid);color:#fff;">Coming Soon</div>` : ''}
-        ${!isComingSoon && product.stock <= 5 && product.stock > 0 ? `<div class="mj-product-badge">Últimas ${product.stock}</div>` : ''}
+        ${isComingSoon ? `<div class="mj-product-badge" style="background:var(--orchid);color:#fff;">${TS.comingSoon}</div>` : ''}
+        ${!isComingSoon && product.stock <= 5 && product.stock > 0 ? `<div class="mj-product-badge">${TS.lastFew} ${product.stock} ${TS.lastFewSuffix}</div>` : ''}
       </div>
       <div class="mj-product-info">
         ${product.sku ? `<div class="mj-product-sku">${product.sku}</div>` : ''}
@@ -108,8 +131,8 @@ function buildProductCard(product) {
         <div class="mj-product-price">${getProductPrice(product)}</div>
       </div>
       ${isComingSoon 
-        ? `<span class="mj-product-cta" style="opacity:0.5;cursor:default;">Coming Soon</span>`
-        : `<a href="javascript:void(0)" onclick="window.location='product.html#${product.id}'" class="mj-product-cta">Ver producto</a>`
+        ? `<span class="mj-product-cta" style="opacity:0.5;cursor:default;">${TS.comingSoon}</span>`
+        : `<a href="javascript:void(0)" onclick="window.location='product.html#${product.id}'" class="mj-product-cta">${TS.viewProduct}</a>`
       }
     </div>
   `;
@@ -119,7 +142,7 @@ function buildEmptyState(categoryLabel) {
   return `
     <div class="mj-empty-state">
       <div class="mj-empty-icon">✦</div>
-      <div class="mj-empty-title">Próximamente</div>
+      <div class="mj-empty-title">${TS.emptyTitle}</div>
       <p class="mj-empty-text">Los productos de <strong>${categoryLabel}</strong> estarán disponibles muy pronto.</p>
     </div>
   `;
@@ -129,7 +152,7 @@ function buildErrorState() {
   return `
     <div class="mj-empty-state">
       <div class="mj-empty-icon">⚠</div>
-      <div class="mj-empty-title">No se pudo cargar el catálogo</div>
+      <div class="mj-empty-title">${TS.errorTitle}</div>
       <p class="mj-empty-text">Intenta de nuevo más tarde.</p>
     </div>
   `;

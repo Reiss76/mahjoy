@@ -59,6 +59,27 @@ function resolveImageUrl(url) {
 // Check if we're on English version
 const isEnglish = window.location.pathname.includes('/en/');
 
+// Translations
+const T = isEnglish ? {
+  inStock: '● In Stock',
+  lowStock: '● Only a few left',
+  outOfStock: '● Out of Stock',
+  buyNow: 'Buy Now →',
+  addToCart: 'Add to Cart',
+  adding: 'Adding...',
+  added: '✓ Added!',
+  contactPrice: 'Contact for price'
+} : {
+  inStock: '● En stock',
+  lowStock: '● Pocas piezas disponibles',
+  outOfStock: '● Agotado',
+  buyNow: 'Comprar ahora →',
+  addToCart: 'Agregar al carrito',
+  adding: 'Agregando...',
+  added: '✓ Agregado!',
+  contactPrice: 'Consultar precio'
+};
+
 function formatPrice(price, priceUsd) {
   if (isEnglish && priceUsd) {
     const num = parseFloat(priceUsd);
@@ -66,7 +87,7 @@ function formatPrice(price, priceUsd) {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
   }
   const num = parseFloat(price);
-  if (!num || num === 0) return 'Consultar precio';
+  if (!num || num === 0) return T.contactPrice;
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(num);
 }
 
@@ -251,11 +272,11 @@ async function loadProduct() {
   // Stock
   const stockEl = document.getElementById('pdp-stock');
   if (product.stock > 5) {
-    stockEl.innerHTML = '<span class="mj-pdp-stock-badge in">● En stock</span>';
+    stockEl.innerHTML = '<span class="mj-pdp-stock-badge in">' + T.inStock + '</span>';
   } else if (product.stock > 0) {
-    stockEl.innerHTML = '<span class="mj-pdp-stock-badge low">● Pocas piezas disponibles</span>';
+    stockEl.innerHTML = '<span class="mj-pdp-stock-badge low">' + T.lowStock + '</span>';
   } else {
-    stockEl.innerHTML = '<span class="mj-pdp-stock-badge out">● Agotado</span>';
+    stockEl.innerHTML = '<span class="mj-pdp-stock-badge out">' + T.outOfStock + '</span>';
     document.getElementById('pdp-order-btn').style.opacity = '0.4';
     document.getElementById('pdp-order-btn').style.pointerEvents = 'none';
   }
@@ -263,7 +284,7 @@ async function loadProduct() {
   // Order button with product info pre-filled in contact URL
   const contactUrl = `checkout.html#${product.id}`;
   document.getElementById('pdp-order-btn').href = contactUrl;
-  document.getElementById('pdp-order-btn').textContent = 'Comprar ahora →';
+  document.getElementById('pdp-order-btn').textContent = T.buyNow;
 
   // ── Agregar al carrito ──────────────────────────────────────────────────
   const ctaWrap = document.querySelector('.mj-pdp-cta-wrap');
@@ -279,7 +300,7 @@ async function loadProduct() {
       'border:2.5px solid var(--burgundy)','cursor:pointer',
       'transition:all .2s','margin-bottom:0',
     ].join(';');
-    addBtn.textContent = 'Agregar al carrito';
+    addBtn.textContent = T.addToCart;
     addBtn.onmouseenter = () => { addBtn.style.background='var(--burgundy)'; addBtn.style.color='#fff'; };
     addBtn.onmouseleave = () => { addBtn.style.background='transparent'; addBtn.style.color='var(--burgundy)'; };
     addBtn.onclick = () => {
@@ -297,11 +318,11 @@ async function loadProduct() {
           el.textContent = total; el.style.display = total > 0 ? 'flex' : 'none';
         });
       } catch(e) { console.error(e); }
-      addBtn.textContent = '✓ Agregado al carrito';
+      addBtn.textContent = T.added;
       addBtn.style.background = 'var(--burgundy)';
       addBtn.style.color = '#fff';
       setTimeout(() => {
-        addBtn.textContent = 'Agregar al carrito';
+        addBtn.textContent = T.addToCart;
         addBtn.style.background = 'transparent';
         addBtn.style.color = 'var(--burgundy)';
       }, 2200);
