@@ -6,8 +6,12 @@
 (function () {
   const API = 'https://api-production-b888.up.railway.app/public/shop/mahjoy/leads';
   const KEY = 'mj_lead_submitted';
+  const KEY_SEEN = 'mj_lead_seen';
 
+  // Don't show if already submitted or if seen and dismissed recently (7 days)
   if (localStorage.getItem(KEY)) return;
+  const seenAt = localStorage.getItem(KEY_SEEN);
+  if (seenAt && Date.now() - parseInt(seenAt) < 7 * 24 * 60 * 60 * 1000) return;
 
   // Inject styles
   const style = document.createElement('style');
@@ -91,6 +95,8 @@
   `;
 
   function dismiss() {
+    // Remember that user saw and dismissed the popup (don't show for 7 days)
+    localStorage.setItem(KEY_SEEN, Date.now().toString());
     overlay.style.opacity = '0';
     overlay.style.transition = 'opacity .25s';
     setTimeout(() => overlay.remove(), 300);
