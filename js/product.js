@@ -56,10 +56,22 @@ function resolveImageUrl(url) {
   return url;
 }
 
-function formatPrice(price) {
+// Check if we're on English version
+const isEnglish = window.location.pathname.includes('/en/');
+
+function formatPrice(price, priceUsd) {
+  if (isEnglish && priceUsd) {
+    const num = parseFloat(priceUsd);
+    if (!num || num === 0) return 'Contact for price';
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+  }
   const num = parseFloat(price);
   if (!num || num === 0) return 'Consultar precio';
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(num);
+}
+
+function getProductPrice(product) {
+  return formatPrice(product.price, product.price_usd);
 }
 
 function guessCategory(product) {
@@ -84,7 +96,7 @@ function buildRelatedCard(product) {
       <div class="mj-product-info">
         ${product.sku ? `<div class="mj-product-sku">${product.sku}</div>` : ''}
         <div class="mj-product-name">${product.name}</div>
-        <div class="mj-product-price">${formatPrice(product.price)}</div>
+        <div class="mj-product-price">${getProductPrice(product)}</div>
       </div>
     </div>`;
 }
@@ -180,7 +192,7 @@ async function loadProduct() {
   // Name, SKU, price, description
   document.getElementById('pdp-name').textContent = product.name;
   document.getElementById('pdp-sku').textContent = product.sku || '';
-  document.getElementById('pdp-price').textContent = formatPrice(product.price);
+  document.getElementById('pdp-price').textContent = getProductPrice(product);
 
   const descEl = document.getElementById('pdp-description');
   // Use API description, fallback to local descriptions map

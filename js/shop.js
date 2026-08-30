@@ -52,8 +52,22 @@ function matchCategory(product, category) {
 // Legacy map kept for reference (not used for filtering)
 const CATEGORY_MAP = {};
 
-function formatPrice(price) {
-  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(price);
+// Check if we're on English version
+const isEnglishShop = window.location.pathname.includes('/en/');
+
+function formatPrice(price, priceUsd) {
+  if (isEnglishShop && priceUsd) {
+    const num = parseFloat(priceUsd);
+    if (!num || num === 0) return 'Contact for price';
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+  }
+  const num = parseFloat(price);
+  if (!num || num === 0) return 'Consultar precio';
+  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(num);
+}
+
+function getProductPrice(product) {
+  return formatPrice(product.price, product.price_usd);
 }
 
 function getProductCategory(product) {
@@ -89,7 +103,7 @@ function buildProductCard(product) {
         ${product.sku ? `<div class="mj-product-sku">${product.sku}</div>` : ''}
         <div class="mj-product-name">${product.name}</div>
         ${product.description ? `<div class="mj-product-desc">${product.description}</div>` : ''}
-        <div class="mj-product-price">${formatPrice(product.price)}</div>
+        <div class="mj-product-price">${getProductPrice(product)}</div>
       </div>
       ${isComingSoon 
         ? `<span class="mj-product-cta" style="opacity:0.5;cursor:default;">Coming Soon</span>`
