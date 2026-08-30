@@ -198,6 +198,8 @@ async function loadProduct() {
   else if (skuUpper.startsWith('RACK-')) localSpecs = specsMap['RACK'];
   else if (skuUpper.startsWith('BAG-TILE')) localSpecs = specsMap['BAG-TILE'];
   else if (skuUpper.startsWith('BAG-')) localSpecs = specsMap['BAG'];
+  else if (skuUpper.startsWith('SHUF-')) localSpecs = specsMap['SHUF'];
+  else if (skuUpper.startsWith('LINE-')) localSpecs = specsMap['LINE'];
   else if (localDesc) localSpecs = localDesc;
 
   const descText = product.description || (localDesc && localDesc.description) || (localSpecs && localSpecs.description) || '';

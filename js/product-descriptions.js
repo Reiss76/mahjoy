@@ -100,6 +100,20 @@ window.MJ_SPECS = {
       'Size: 31.50" L',
     ]
   },
+  'SHUF': {
+    description: 'MAHJOY SHUFFLERS\n\nMake every shuffle smoother.\n\nDesigned to make mixing your Mahjong tiles quick and effortless, our shufflers help keep the game moving while protecting your hands and tiles. Functional, lightweight, and beautifully designed, they\'re an easy addition to every Mahjong table.',
+    specs: [
+      'What\'s Included: 2 Mahjong Tile Shufflers',
+      'Rules Printed on All Four Sides',
+    ]
+  },
+  'LINE': {
+    description: 'MAHJOY LINE FINDER\n\nNever lose your place again.\n\nOur Line Finders make it easy to track your current line on your Mahjong card, helping you stay focused and play with confidence. A simple, functional accessory that every player will appreciate.',
+    specs: [
+      'Durable acrylic design',
+      'Easy to read and use',
+    ]
+  },
 };
 
 // Individual product descriptions (keyed by lowercase name)
