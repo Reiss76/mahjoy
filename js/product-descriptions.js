@@ -112,3 +112,13 @@ window.MJ_DESCRIPTIONS['rouge tile bag velvet'] = {
   description: 'Our Velvet Tile Bags are designed for players who appreciate beautiful accessories. Fits 18" racks + extra sets of pushers. Soft velvet interior protects your tiles.',
   specs: ['Bolsa de terciopelo premium', 'Fits 18" racks + pushers extra', 'Interior suave que protege las fichas', 'Medidas: 40 × 20 × 6 cm']
 };
+
+// Leather Mat (Mat Polo Club)
+window.MJ_DESCRIPTIONS['mat polo club'] = {
+  description: 'Made to play. Designed to stand out.\n\nOur Mahjoy mats are where function meets design. Created to elevate your game while bringing personality to the table, each print is thoughtfully designed to feel unexpected, stylish, and unmistakably Mahjoy.\n\nSoft, smooth and made for hours of play, they provide the perfect surface for your tiles while adding that finishing touch that turns every Mahjong table into a moment.\n\nBecause the game matters — but so does the table you play it on.',
+  specs: [
+    'Dimensions: 31.5" x 31.5" (80 × 80 cm)',
+    'Materials: Premium leather with a non-slip backing',
+    'Comes with: 2 matching leather straps to keep your mat neatly rolled up',
+  ]
+};
