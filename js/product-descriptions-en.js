@@ -145,9 +145,9 @@ window.MJ_DESCRIPTIONS['mat polo club'] = {
 // Piel (Leather) Tile Cases
 window.MJ_DESCRIPTIONS['lilac tile bag piel'] = {
   description: 'MAHJOY TILE CASE\n\nA refined way to protect and store your Mahjong tiles.\n\nCrafted with a structured design, our Tile Case offers an elevated and substantial feel while keeping your tiles beautifully organized and protected. Its sturdy construction helps maintain its shape, while the interior is perfectly sized to hold your complete tile set.\n\nElegant, durable, and designed for both storage and travel.',
-  specs: []
+  specs: ['Size: 10" L × 6" W × 3.50" H (25.4 × 15.24 × 8.9 cm)']
 };
 window.MJ_DESCRIPTIONS['pink tile bag piel'] = {
   description: 'MAHJOY TILE CASE\n\nA refined way to protect and store your Mahjong tiles.\n\nCrafted with a structured design, our Tile Case offers an elevated and substantial feel while keeping your tiles beautifully organized and protected. Its sturdy construction helps maintain its shape, while the interior is perfectly sized to hold your complete tile set.\n\nElegant, durable, and designed for both storage and travel.',
-  specs: []
+  specs: ['Size: 10" L × 6" W × 3.50" H (25.4 × 15.24 × 8.9 cm)']
 };
