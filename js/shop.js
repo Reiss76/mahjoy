@@ -39,11 +39,11 @@ function matchCategory(product, category) {
     case 'line-finder':
       return sku.startsWith('LINE-');
     case 'accessories':
-      return sku.startsWith('ACC-') || sku.startsWith('CARD-') ||
-             (!sku.startsWith('TILE-') && !sku.startsWith('MAT') &&
-              !sku.startsWith('RACK') && !sku.startsWith('RAKBAG') &&
-              !sku.startsWith('BAG-') && !sku.startsWith('SHUF-') &&
-              !sku.startsWith('LINE-'));
+      // Everything EXCEPT tiles, mats, and racks (without bag)
+      const isTile = sku.startsWith('TILE-');
+      const isMat = sku.startsWith('MAT-') || sku.startsWith('MAT');
+      const isRackOnly = (sku.startsWith('RACK-') || sku.startsWith('RACK')) && !sku.includes('BAG');
+      return !isTile && !isMat && !isRackOnly;
     default:
       return false;
   }
