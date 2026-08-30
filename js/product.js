@@ -207,13 +207,27 @@ async function loadProduct() {
 
   if (descText || specsArr.length) {
     let html = '';
-    if (descText) html += '<p style="margin-bottom:16px;line-height:1.7;">' + descText + '</p>';
-    if (specsArr.length) {
-      html += '<ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;">';
-      specsArr.forEach(function(s) {
-        html += '<li style="display:flex;gap:8px;align-items:flex-start;font-size:.82rem;color:rgba(107,15,42,.7);"><span style="color:var(--orchid);flex-shrink:0;">✦</span>' + s + '</li>';
+    if (descText) {
+      // Split by double newlines for paragraphs
+      const paragraphs = descText.split(/\n\n+/);
+      paragraphs.forEach(function(p, i) {
+        p = p.trim();
+        if (!p) return;
+        // First paragraph that looks like a title (all caps or short)
+        if (i === 0 && (p === p.toUpperCase() || p.length < 30)) {
+          html += '<h3 style="font-family:Playfair Display,serif;font-size:1.1rem;font-weight:600;color:var(--burgundy);margin:0 0 16px 0;letter-spacing:0.05em;">' + p + '</h3>';
+        } else {
+          html += '<p style="margin:0 0 14px 0;line-height:1.7;color:#444;">' + p.replace(/\n/g, '<br>') + '</p>';
+        }
       });
-      html += '</ul>';
+    }
+    if (specsArr.length) {
+      html += '<div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(107,15,42,0.1);">';
+      html += '<ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;">';
+      specsArr.forEach(function(s) {
+        html += '<li style="display:flex;gap:10px;align-items:flex-start;font-size:.85rem;color:rgba(107,15,42,.8);line-height:1.5;"><span style="color:var(--orchid);flex-shrink:0;font-size:0.7rem;margin-top:3px;">✦</span>' + s + '</li>';
+      });
+      html += '</ul></div>';
     }
     descEl.innerHTML = html;
     descEl.style.display = 'block';
