@@ -79,21 +79,17 @@ window.MJ_SPECS = {
     ]
   },
   'RACK': {
-    description: 'Mahjong Racks — Premium Acrylic | 18.11"',
+    description: 'MAHJOY RACKS\n\nCrafted to stand apart.\n\nOur premium Mahjong racks are made with exceptional attention to detail, combining quality materials, a substantial feel, and a beautifully polished finish. Designed to elevate your game while bringing a distinctive touch to the table.\n\nBeautiful, functional, and made to last — the kind of quality you can see and feel.',
     specs: [
-      '4 racks de acrílico premium con pusher magnético',
-      'Medidas: 18.11" (46 cm) de largo',
-      'Base antideslizante incluida',
-      'Nota: el acrílico puede presentar variaciones menores — parte del carácter del material.',
+      'What\'s Included: 4 Acrylic Racks + 4 Acrylic Pushers',
+      'Size: 18.11" L',
     ]
   },
   'RAKBAG': {
-    description: 'Mahjong Racks — Premium Acrylic | 18.11"',
+    description: 'MAHJOY RACKS\n\nCrafted to stand apart.\n\nOur premium Mahjong racks are made with exceptional attention to detail, combining quality materials, a substantial feel, and a beautifully polished finish. Designed to elevate your game while bringing a distinctive touch to the table.\n\nBeautiful, functional, and made to last — the kind of quality you can see and feel.',
     specs: [
-      '4 racks de acrílico premium con pusher magnético',
-      'Medidas: 18.11" (46 cm) de largo',
-      'Bolsa para racks incluida: 60 × 32 cm',
-      'Base antideslizante incluida',
+      'What\'s Included: 4 Acrylic Racks + 4 Acrylic Pushers + Rack Bag',
+      'Size: 18.11" L',
     ]
   },
   'BAG-TILE': {
