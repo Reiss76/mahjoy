@@ -124,18 +124,18 @@ window.MJ_SPECS = {
 // Individual product descriptions (keyed by lowercase name)
 window.MJ_DESCRIPTIONS = window.MJ_DESCRIPTIONS || {};
 
-// Velvet Tile Bags
-window.MJ_DESCRIPTIONS['green tile bag velvet'] = {
-  description: 'Our Velvet Tile Bags are designed for players who appreciate beautiful accessories. Fits 18" racks + extra sets of pushers. Soft velvet interior protects your tiles.',
-  specs: ['Premium velvet bag', 'Fits 18" racks + extra pushers', 'Soft interior protects your tiles', 'Dimensions: 40 × 20 × 6 cm']
+// Velvet Tile Bags (keys match API product names)
+window.MJ_DESCRIPTIONS['tile bag velvet green'] = {
+  description: 'MAHJOY TILE BAG\n\nSoft, protective, and perfectly sized.\n\nCrafted from premium velvet, our Tile Bag is designed to keep your tiles safe and beautifully stored. The soft interior helps protect tiles from scratches, while the spacious design makes packing and unpacking effortless.\n\nThoughtfully designed for players who value both style and care.',
+  specs: ['Velvet bag for tiles', 'Dimensions: 40 × 20 × 6 cm']
 };
-window.MJ_DESCRIPTIONS['pink tile bag velvet'] = {
-  description: 'Our Velvet Tile Bags are designed for players who appreciate beautiful accessories. Fits 18" racks + extra sets of pushers. Soft velvet interior protects your tiles.',
-  specs: ['Premium velvet bag', 'Fits 18" racks + extra pushers', 'Soft interior protects your tiles', 'Dimensions: 40 × 20 × 6 cm']
+window.MJ_DESCRIPTIONS['tile bag velvet pink'] = {
+  description: 'MAHJOY TILE BAG\n\nSoft, protective, and perfectly sized.\n\nCrafted from premium velvet, our Tile Bag is designed to keep your tiles safe and beautifully stored. The soft interior helps protect tiles from scratches, while the spacious design makes packing and unpacking effortless.\n\nThoughtfully designed for players who value both style and care.',
+  specs: ['Velvet bag for tiles', 'Dimensions: 40 × 20 × 6 cm']
 };
-window.MJ_DESCRIPTIONS['rouge tile bag velvet'] = {
-  description: 'Our Velvet Tile Bags are designed for players who appreciate beautiful accessories. Fits 18" racks + extra sets of pushers. Soft velvet interior protects your tiles.',
-  specs: ['Premium velvet bag', 'Fits 18" racks + extra pushers', 'Soft interior protects your tiles', 'Dimensions: 40 × 20 × 6 cm']
+window.MJ_DESCRIPTIONS['tile bag velvet rouge'] = {
+  description: 'MAHJOY TILE BAG\n\nSoft, protective, and perfectly sized.\n\nCrafted from premium velvet, our Tile Bag is designed to keep your tiles safe and beautifully stored. The soft interior helps protect tiles from scratches, while the spacious design makes packing and unpacking effortless.\n\nThoughtfully designed for players who value both style and care.',
+  specs: ['Velvet bag for tiles', 'Dimensions: 40 × 20 × 6 cm']
 };
 
 // Leather Mat (Mat Polo Club)
@@ -148,12 +148,12 @@ window.MJ_DESCRIPTIONS['mat polo club'] = {
   ]
 };
 
-// Piel (Leather) Tile Cases
-window.MJ_DESCRIPTIONS['lilac tile bag piel'] = {
+// Tile Cases (keys match API product names: "Lilac Tile Case", "Pink Tile Case")
+window.MJ_DESCRIPTIONS['lilac tile case'] = {
   description: 'MAHJOY TILE CASE\n\nA refined way to protect and store your Mahjong tiles.\n\nCrafted with a structured design, our Tile Case offers an elevated and substantial feel while keeping your tiles beautifully organized and protected. Its sturdy construction helps maintain its shape, while the interior is perfectly sized to hold your complete tile set.\n\nElegant, durable, and designed for both storage and travel.',
   specs: ['Size: 10" L × 6" W × 3.50" H (25.4 × 15.24 × 8.9 cm)']
 };
-window.MJ_DESCRIPTIONS['pink tile bag piel'] = {
+window.MJ_DESCRIPTIONS['pink tile case'] = {
   description: 'MAHJOY TILE CASE\n\nA refined way to protect and store your Mahjong tiles.\n\nCrafted with a structured design, our Tile Case offers an elevated and substantial feel while keeping your tiles beautifully organized and protected. Its sturdy construction helps maintain its shape, while the interior is perfectly sized to hold your complete tile set.\n\nElegant, durable, and designed for both storage and travel.',
   specs: ['Size: 10" L × 6" W × 3.50" H (25.4 × 15.24 × 8.9 cm)']
 };
