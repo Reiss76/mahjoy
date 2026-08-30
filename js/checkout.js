@@ -7,6 +7,20 @@ const MJ_API_BASE = 'https://api-production-b888.up.railway.app';
 const MJ_WA_NUMBER = '525530395891'; 
 const MJ_CENTUMPAY_ENDPOINT = '/api/centumpay/checkout';
 
+// Language detection
+const isEnCheckout = window.location.pathname.includes('/en/');
+const TC = isEnCheckout ? {
+  processing: 'Processing payment...',
+  sendOrder: 'Send Order →',
+  error: 'Error processing payment',
+  success: 'Order placed!'
+} : {
+  processing: 'Procesando pago...',
+  sendOrder: 'Enviar pedido →',
+  error: 'Error al procesar pago',
+  success: '¡Pedido realizado!'
+};
+
 const CATEGORY_LABELS = {
   'tiles':'Tiles','mats':'Mats','racks':'Racks','mahjoy-bags':'Mahjoy Bags',
   'tile-bags':'Tile Bags','rack-bags':'Rack Bags','accessories':'Accessories',
@@ -244,7 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
       sku: currentProduct ? currentProduct.sku : '—',
     };
 
-    btn.textContent = 'Procesando pago...';
+    btn.textContent = TC.processing;
     btn.disabled = true;
     btn.style.opacity = '0.7';
 
@@ -364,7 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('CentumPay error:', err);
       const msg = `🀄 Pedido MAH JOY: ${data.product} x${data.qty}\nCliente: ${data.name} | ${data.phone}`;
       window.open(`https://wa.me/${MJ_WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
-      btn.textContent = 'Enviar pedido →';
+      btn.textContent = TC.sendOrder;
       btn.disabled = false;
       btn.style.opacity = '1';
     }

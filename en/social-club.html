@@ -210,7 +210,7 @@
       <div class="sc-how-step">
         <div class="sc-how-step-num">1</div>
         <h3>Crea tu torneo</h3>
-        <p>Dale un nombre, fecha, lugar y cuántos players quieres invitar.</p>
+        <p>Give it a name, date, location and how many players you want to invite.</p>
       </div>
       <div class="sc-how-step">
         <div class="sc-how-step-num">2</div>
@@ -338,7 +338,7 @@
               <div class="sc-card-progress-bar" style="width:${pct}%"></div>
             </div>
             <div class="sc-card-progress-label">
-              <span>${count} inscritos</span><span>${t.max_players - count} lugares disponibles</span>
+              <span>${count} signed up</span><span>${t.max_players - count} spots available</span>
             </div>
           </div>
         </a>`;
@@ -361,7 +361,7 @@
       const errEl = document.getElementById('create-error');
       errEl.style.display = 'none';
 
-      if (!name) { errEl.textContent = 'El nombre del torneo es requerido'; errEl.style.display='block'; return; }
+      if (!name) { errEl.textContent = 'Tournament name is required'; errEl.style.display='block'; return; }
       if (!host_name) { errEl.textContent = 'Your name es requerido'; errEl.style.display='block'; return; }
 
       const body = {

@@ -4,6 +4,8 @@
  */
 
 const MJ_CART_KEY = 'mj_cart';
+const isEnCart = window.location.pathname.includes('/en/');
+const cartLabel = isEnCart ? 'Cart' : 'Carrito';
 
 // ─── Cart data ────────────────────────────────────────────────────────────────
 
@@ -113,7 +115,7 @@ function injectCartIcon() {
           <line x1="3" y1="6" x2="21" y2="6"/>
           <path d="M16 10a4 4 0 01-8 0"/>
         </svg>
-        Carrito
+        ${cartLabel}
       </div>
       <span class="mj-cart-badge" style="
         display:none;position:absolute;top:-4px;right:-8px;

@@ -96,7 +96,7 @@
       <div class="mj-cart-empty-icon">🛍️</div>
       <h2>Your cart is empty</h2>
       <p>Agrega productos desde el shop para comenzar</p>
-      <a href="shop-mats.html" class="mj-cart-btn-primary" style="display:inline-block;width:auto;">Ver Mats →</a>
+      <a href="shop-mats.html" class="mj-cart-btn-primary" style="display:inline-block;width:auto;">Shop Mats →</a>
     </div>
 
     <!-- Cart items -->
@@ -107,7 +107,7 @@
       <div class="mj-cart-summary">
         <div class="mj-cart-summary-row"><span>Subtotal</span><span id="cart-subtotal"></span></div>
         <div class="mj-cart-summary-row"><span>Shipping</span><span style="color:var(--orchid-mid);font-weight:600;">A cotizar</span></div>
-        <div class="mj-cart-summary-total"><span>Total estimado</span><span id="cart-total"></span></div>
+        <div class="mj-cart-summary-total"><span>Estimated Total</span><span id="cart-total"></span></div>
       </div>
       <div class="mj-cart-actions">
         <button onclick="proceedToCheckout()" class="mj-cart-btn-primary">Pay with card →</button>
@@ -218,7 +218,7 @@
       const cart = window.MJCart.getCart();
       const lines = cart.map(i => `• ${i.name} x${i.qty}${i.price > 0 ? ' = ' + fmt(i.price * i.qty) : ''}`);
       const total = window.MJCart.cartTotal();
-      const msg = `Hola MAH JOY! 🀄\n\nQuiero ordenar:\n${lines.join('\n')}\n\n${total > 0 ? 'Total aprox: ' + fmt(total) : ''}`;
+      const msg = `Hi MAH JOY! 🀄\n\nI'd like to order:\n${lines.join('\n')}\n\n${total > 0 ? 'Approx total: ' + fmt(total) : ''}`;
       window.open(`https://wa.me/${MJ_WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
     }
 

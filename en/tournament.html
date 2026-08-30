@@ -212,7 +212,7 @@
       const pct = Math.min(100, Math.round(count / t.max_players * 100));
       document.getElementById('tp-bar').style.width = pct + '%';
       document.getElementById('tp-count-label').textContent = `${count} inscritos`;
-      document.getElementById('tp-avail-label').textContent = `${t.max_players - count} lugares disponibles`;
+      document.getElementById('tp-avail-label').textContent = `${t.max_players - count} spots available`;
 
       if (t.status !== 'open') {
         const jb = document.getElementById('join-box');
@@ -258,7 +258,7 @@
           } else {
             html += `<div class="tp-seat">
               <div class="tp-seat-icon">·</div>
-              <div class="tp-seat-empty">Lugar disponible</div>
+              <div class="tp-seat-empty">Available spot</div>
             </div>`;
           }
         }
@@ -278,7 +278,7 @@
       const successEl = document.getElementById('join-success');
       errEl.style.display = 'none'; successEl.style.display = 'none';
 
-      if (!name) { errEl.textContent = 'Escribe tu nombre'; errEl.style.display='block'; return; }
+      if (!name) { errEl.textContent = 'Enter your name'; errEl.style.display='block'; return; }
 
       const btn = document.getElementById('join-btn');
       btn.textContent = 'Registrando...'; btn.disabled = true;
