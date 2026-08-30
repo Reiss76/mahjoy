@@ -237,7 +237,8 @@ async function loadProduct() {
   else if (localDesc) localSpecs = localDesc;
 
   const descText = product.description || (localDesc && localDesc.description) || (localSpecs && localSpecs.description) || '';
-  const specsArr = (localSpecs && localSpecs.specs) || [];
+  // Prefer specs from name-based description (localDesc) over SKU-based (localSpecs)
+  const specsArr = (localDesc && localDesc.specs) || (localSpecs && localSpecs.specs) || [];
 
   if (descText || specsArr.length) {
     let html = '';
