@@ -70,6 +70,14 @@ window.MJ_SPECS = {
       'Comes with: 2 adjustable elastic straps to keep your mat neatly rolled up',
     ]
   },
+  'TILE': {
+    description: 'MAHJOY TILES\n\nDesigned to make every game feel a little more special.\n\nOur American Mahjong tile sets bring together bold design, playful details, and a modern take on the game we love. Each set is thoughtfully created to feel unique, collectible, and unmistakably Mahjoy.\n\nMade for long game nights, beautiful tables, and tiles you\'ll love playing with as much as looking at.',
+    specs: [
+      'What\'s Included: 160 Acrylic Tiles, Dice/Coin Bag, Beautifully Designed Magnetic Box',
+      'Tile Breakdown: 108 Bams/Cracks/Dots + 16 Winds + 12 Dragons + 8 Flowers + 10 Jokers + 6 Blanks',
+      'Tile Size: 0.87" W × 0.6" D × 1.25" H',
+    ]
+  },
   'RACK': {
     description: 'Mahjong Racks — Premium Acrylic | 18.11"',
     specs: [

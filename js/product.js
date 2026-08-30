@@ -193,6 +193,7 @@ async function loadProduct() {
   // Find specs by SKU prefix
   let localSpecs = null;
   if (skuUpper.startsWith('MAT-')) localSpecs = specsMap['MAT'];
+  else if (skuUpper.startsWith('TILE-')) localSpecs = specsMap['TILE'];
   else if (skuUpper.startsWith('RAKBAG-')) localSpecs = specsMap['RAKBAG'];
   else if (skuUpper.startsWith('RACK-')) localSpecs = specsMap['RACK'];
   else if (skuUpper.startsWith('BAG-TILE')) localSpecs = specsMap['BAG-TILE'];
