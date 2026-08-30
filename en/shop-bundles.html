@@ -131,54 +131,59 @@
   <script>
   var MJ_API='https://api-production-b888.up.railway.app';
 
-  // Show static bundle images immediately
-  (function(){
-    var grid=document.getElementById('mj-prod-grid');
-    if(!grid)return;
-    var imgs=['bundle-a','bundle-b','bundle-c','bundle-d','bundle-e','bundle-f','bundle-g','bundle-h','bundle-i','bundle-j','bundle-k','bundle-l'];
-    grid.innerHTML='';
-    imgs.forEach(function(slug){
-      var card=document.createElement('div');
-      card.className='mj-prod-card';
-      card.style.cssText='cursor:zoom-in;';
-      card.innerHTML='<img src="../images/bundles/'+slug+'.jpg" alt="Set completo" class="mj-prod-card-img" loading="lazy" onclick="event.stopPropagation();document.getElementById(\'mj-lightbox-img\').src=this.src;document.getElementById(\'mj-lightbox\').classList.add(\'open\')" style="cursor:zoom-in">'
-        +'<div class="mj-prod-card-body">'
-        +'<div class="mj-prod-card-name">Set Completo</div>'
-        +'<div class="mj-prod-card-price" style="color:var(--orchid);font-size:.7rem;letter-spacing:.1em;font-weight:700;">COMING SOON</div>'
-        +'</div>';
-      grid.appendChild(card);
-    });
-  })();
+  // Format price in USD
+  function fmtPrice(price) {
+    var num = parseFloat(price || 0);
+    if (!num) return 'Contact for price';
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+  }
 
-  // Try API — if bundles configured, upgrade grid
+  // Load bundles from API
   fetch(MJ_API+'/public/shop/mahjoy/bundles').then(function(r){
     if(!r.ok)throw new Error(r.status);
     return r.json();
   }).then(function(data){
-    var bundles=(data.bundles||data||[]);
-    if(!bundles.length)return;
-    var grid=document.getElementById('mj-prod-grid');
-    var isMXN=localStorage.getItem('mj_currency')!=='USD';
-    grid.innerHTML='';
+    var bundles = data.bundles || data || [];
+    var grid = document.getElementById('mj-prod-grid');
+    if(!bundles.length){
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px;font-family:Plus Jakarta Sans,sans-serif;color:var(--orchid);">✦ Coming Soon ✦</div>';
+      return;
+    }
+    grid.innerHTML = '';
     bundles.forEach(function(b){
-      var rawPrice=parseFloat(b.price||0);
-      var price=rawPrice?(isMXN?'$'+rawPrice.toFixed(2)+' MXN':'$'+(rawPrice/18).toFixed(2)+' USD'):'';
-      var imgSrc=b.image_url||b.image_key||(b.slug?'images/bundles/bundle-'+b.slug+'.jpg':'');
-      var card=document.createElement('a');
-      card.href='product.html#bundle-'+b.id;
-      card.className='mj-prod-card';
-      var imgHtml=imgSrc?('<img src="'+imgSrc+'" alt="'+b.name+'" class="mj-prod-card-img">')
-        :'<div class="mj-prod-card-img" style="height:200px;background:#f5e8f0;"></div>';
-      card.innerHTML=imgHtml
-        +'<div class="mj-prod-card-body">'
-        +'<div class="mj-prod-card-name">'+b.name+'</div>'
-        +(b.discount_pct?'<div style="font-size:.65rem;font-weight:700;color:var(--orchid);margin-bottom:4px;">'+b.discount_pct+'% descuento</div>':'')
-        +'<div class="mj-prod-card-price">'+price+'</div>'
-        +'<span style="display:inline-block;margin-top:10px;background:var(--burgundy);color:#fff;font-family:Plus Jakarta Sans,sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:8px 18px;border-radius:999px;">View Set</span>'
-        +'</div>';
+      var imgSrc = b.image || '';
+      if (imgSrc && !imgSrc.startsWith('http')) {
+        imgSrc = imgSrc.startsWith('/') ? '..' + imgSrc : '../' + imgSrc;
+      }
+      var card = document.createElement('a');
+      card.href = 'bundle-detail.html?id=' + b.id;
+      card.className = 'mj-prod-card';
+      var imgHtml = imgSrc 
+        ? '<img src="' + imgSrc + '" alt="' + b.name + '" class="mj-prod-card-img" loading="lazy">'
+        : '<div class="mj-prod-card-img" style="background:linear-gradient(135deg,#f5e8f0,#e8d4e0);display:flex;align-items:center;justify-content:center;font-family:Playfair Display,serif;font-size:1.5rem;color:var(--burgundy);">✦</div>';
+      
+      // Calculate savings if products have individual prices
+      var originalTotal = 0;
+      if (b.products && b.products.length) {
+        b.products.forEach(function(p) { originalTotal += parseFloat(p.price_usd || 0) * (p.quantity || 1); });
+      }
+      var bundlePrice = parseFloat(b.price_usd || 0);
+      var savings = originalTotal > bundlePrice ? originalTotal - bundlePrice : 0;
+      
+      card.innerHTML = imgHtml
+        + '<div class="mj-prod-card-body">'
+        + '<div class="mj-prod-card-name">' + b.name + '</div>'
+        + (b.products ? '<div style="font-size:.6rem;color:#888;margin-bottom:4px;">' + b.products.length + ' products included</div>' : '')
+        + (savings > 0 ? '<div style="font-size:.65rem;font-weight:700;color:#16a34a;margin-bottom:4px;">Save ' + fmtPrice(savings) + '</div>' : '')
+        + '<div class="mj-prod-card-price">' + fmtPrice(b.price_usd) + '</div>'
+        + '<span style="display:inline-block;margin-top:10px;background:var(--burgundy);color:#fff;font-family:Plus Jakarta Sans,sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:8px 18px;border-radius:999px;">View Set</span>'
+        + '</div>';
       grid.appendChild(card);
     });
-  }).catch(function(){/* static images already shown */});
+  }).catch(function(err){
+    console.error('Error loading bundles:', err);
+    document.getElementById('mj-prod-grid').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px;font-family:Plus Jakarta Sans,sans-serif;color:var(--orchid);">Error loading bundles. Please try again.</div>';
+  });
 
       document.addEventListener('DOMContentLoaded',function(){var btn=document.querySelector('.w-nav-button'),menu=document.querySelector('.nav-menu'),overlay=document.querySelector('.overlay-menu');if(!btn||!menu)return;function closeNav(){menu.classList.remove('w--nav-menu-open');menu.style.display='none';btn.classList.remove('w--open');document.body.classList.remove('w-nav-open');if(overlay)overlay.style.display='none';}btn.addEventListener('click',function(e){e.stopPropagation();btn.classList.contains('w--open')?closeNav():(menu.classList.add('w--nav-menu-open'),btn.classList.add('w--open'),document.body.classList.add('w-nav-open'),overlay&&(overlay.style.display='block'));});if(overlay)overlay.addEventListener('click',closeNav);document.addEventListener('click',function(e){if(!menu.contains(e.target)&&!btn.contains(e.target))closeNav();});});
   </script>
