@@ -86,10 +86,9 @@ window.MJ_SPECS = {
     ]
   },
   'RAKBAG': {
-    description: 'MAHJOY RACKS\n\nCrafted to stand apart.\n\nOur premium Mahjong racks are made with exceptional attention to detail, combining quality materials, a substantial feel, and a beautifully polished finish. Designed to elevate your game while bringing a distinctive touch to the table.\n\nBeautiful, functional, and made to last — the kind of quality you can see and feel.',
+    description: 'MAHJOY VELVET RACK BAG\n\nDesigned to keep your racks beautifully protected and organized.\n\nMade from soft velvet, each bag features individual compartments to keep every rack and pusher securely separated, helping protect them from scratches while storing or carrying your set.',
     specs: [
-      'What\'s Included: 4 Acrylic Racks + 4 Acrylic Pushers + Rack Bag',
-      'Size: 18.11" L',
+      'Size: Designed to fit racks up to 18" L',
     ]
   },
   'BAG-TILE': {
