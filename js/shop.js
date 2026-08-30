@@ -38,6 +38,8 @@ function matchCategory(product, category) {
       return sku.startsWith('SHUF-');
     case 'line-finder':
       return sku.startsWith('LINE-');
+    case 'card-holders':
+      return sku.startsWith('FOLIO-') || name.includes('card holder');
     case 'accessories':
       // Everything EXCEPT tiles, mats, and racks (without bag)
       const isTile = sku.startsWith('TILE-');
