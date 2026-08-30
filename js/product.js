@@ -212,6 +212,7 @@ async function loadProduct() {
   else if (skuUpper.startsWith('BAG-')) localSpecs = specsMap['BAG'];
   else if (skuUpper.startsWith('SHUF-')) localSpecs = specsMap['SHUF'];
   else if (skuUpper.startsWith('LINE-')) localSpecs = specsMap['LINE'];
+  else if (skuUpper.startsWith('FOLIO-')) localSpecs = specsMap['FOLIO'];
   else if (localDesc) localSpecs = localDesc;
 
   const descText = product.description || (localDesc && localDesc.description) || (localSpecs && localSpecs.description) || '';

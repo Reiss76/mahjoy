@@ -113,6 +113,12 @@ window.MJ_SPECS = {
       'What\'s Included: 4 Mahjong Line Finders',
     ]
   },
+  'FOLIO': {
+    description: 'MAHJOY CARD HOLDER\n\nDesigned to keep your Mahjong cards perfectly stored and protected.\n\nThoughtfully sized to fit your Mahjong cards comfortably, our Card Holder helps keep them protected from bending, creasing, and everyday wear. A simple and elegant way to keep your cards in perfect condition, game after game.',
+    specs: [
+      'Size: 7.95" W × 5.83" H (20.2 × 14.8 cm)',
+    ]
+  },
 };
 
 // Individual product descriptions (keyed by lowercase name)
