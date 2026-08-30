@@ -192,13 +192,14 @@ async function loadProduct() {
 
   // Find specs by SKU prefix
   let localSpecs = null;
-  if (skuUpper.startsWith('RAKBAG-')) localSpecs = specsMap['RAKBAG'];
+  if (skuUpper.startsWith('MAT-')) localSpecs = specsMap['MAT'];
+  else if (skuUpper.startsWith('RAKBAG-')) localSpecs = specsMap['RAKBAG'];
   else if (skuUpper.startsWith('RACK-')) localSpecs = specsMap['RACK'];
   else if (skuUpper.startsWith('BAG-TILE')) localSpecs = specsMap['BAG-TILE'];
   else if (skuUpper.startsWith('BAG-')) localSpecs = specsMap['BAG'];
   else if (localDesc) localSpecs = localDesc;
 
-  const descText = product.description || (localDesc && localDesc.description) || '';
+  const descText = product.description || (localDesc && localDesc.description) || (localSpecs && localSpecs.description) || '';
   const specsArr = (localSpecs && localSpecs.specs) || [];
 
   if (descText || specsArr.length) {

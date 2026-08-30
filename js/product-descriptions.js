@@ -62,6 +62,14 @@ window.MJ_DESCRIPTIONS = {
 
 // Generic specs by category (SKU prefix)
 window.MJ_SPECS = {
+  'MAT': {
+    description: 'Made to play. Designed to stand out.\n\nOur Mahjoy mats are where function meets design. Created to elevate your game while bringing personality to the table, each print is thoughtfully designed to feel unexpected, stylish, and unmistakably Mahjoy.\n\nSoft, smooth and made for hours of play, they provide the perfect surface for your tiles while adding that finishing touch that turns every Mahjong table into a moment.\n\nBecause the game matters — but so does the table you play it on.',
+    specs: [
+      'Dimensions: 31.5" x 31.5" (80 × 80 cm)',
+      'Materials: Neoprene with a non-slip rubber backing',
+      'Comes with: 2 adjustable elastic straps to keep your mat neatly rolled up',
+    ]
+  },
   'RACK': {
     description: 'Mahjong Racks — Premium Acrylic | 18.11"',
     specs: [
