@@ -10,6 +10,9 @@ const MJ_API = MJ_API_BASE + '/public/shop/mahjoy/products';
 // Hidden products (SKUs to exclude from shop)
 const MJ_HIDDEN_SKUS = ['Rack-007', 'RACK-007'];
 
+// Coming Soon products (show with badge, no buy button)
+const MJ_COMING_SOON_SKUS = ['MAT-COWV'];
+
 // Category matching — SKU-prefix based (precise, no false positives)
 // SKU patterns: TILE-* | MAT-* | RACK-* | RAKBAG-* | RACK-BAG* | BAG-tile* | BAG-lila|pink|blue|rouge|fiucsa | LINE-* | SHUF-*
 function matchCategory(product, category) {
@@ -70,14 +73,17 @@ function buildProductCard(product) {
           : product.primary_image_url)
     : null;
 
+  const isComingSoon = MJ_COMING_SOON_SKUS.includes(product.sku);
+
   return `
-    <div class="mj-product-card" onclick="window.location='product.html#'+product.id" style="cursor:pointer;">
+    <div class="mj-product-card" ${!isComingSoon ? `onclick="window.location='product.html#${product.id}'" style="cursor:pointer;"` : 'style="cursor:default;"'}>
       <div class="mj-product-img-wrap">
         ${imgSrc
-          ? `<img src="${imgSrc}" alt="${product.name}" class="mj-product-img" loading="lazy">`
+          ? `<img src="${imgSrc}" alt="${product.name}" class="mj-product-img" loading="lazy"${isComingSoon ? ' style="opacity:0.7;"' : ''}>`
           : `<div class="mj-product-img-placeholder"><span>✦</span></div>`
         }
-        ${product.stock <= 5 && product.stock > 0 ? `<div class="mj-product-badge">Últimas ${product.stock}</div>` : ''}
+        ${isComingSoon ? `<div class="mj-product-badge" style="background:var(--orchid);color:#fff;">Coming Soon</div>` : ''}
+        ${!isComingSoon && product.stock <= 5 && product.stock > 0 ? `<div class="mj-product-badge">Últimas ${product.stock}</div>` : ''}
       </div>
       <div class="mj-product-info">
         ${product.sku ? `<div class="mj-product-sku">${product.sku}</div>` : ''}
@@ -85,7 +91,10 @@ function buildProductCard(product) {
         ${product.description ? `<div class="mj-product-desc">${product.description}</div>` : ''}
         <div class="mj-product-price">${formatPrice(product.price)}</div>
       </div>
-      <a href="javascript:void(0)" onclick="window.location='product.html#${product.id}'" class="mj-product-cta">Ver producto</a>
+      ${isComingSoon 
+        ? `<span class="mj-product-cta" style="opacity:0.5;cursor:default;">Coming Soon</span>`
+        : `<a href="javascript:void(0)" onclick="window.location='product.html#${product.id}'" class="mj-product-cta">Ver producto</a>`
+      }
     </div>
   `;
 }
