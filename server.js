@@ -183,6 +183,7 @@ app.options('/api/centumpay/checkout', (_req, res) => {
 app.get('/cart', (req, res) => res.sendFile(path.join(__dirname, 'cart.html')));
 app.get('/product', (req, res) => res.sendFile(path.join(__dirname, 'product.html')));
 app.get('/checkout', (req, res) => res.sendFile(path.join(__dirname, 'checkout.html')));
+app.get('/collab', (req, res) => res.sendFile(path.join(__dirname, 'collab', 'index.html')));
 
 // ─── Static files ─────────────────────────────────────────────────────────────
 
