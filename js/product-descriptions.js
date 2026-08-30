@@ -108,11 +108,8 @@ window.MJ_SPECS = {
     ]
   },
   'LINE': {
-    description: 'MAHJOY LINE FINDER\n\nNever lose your place again.\n\nOur Line Finders make it easy to track your current line on your Mahjong card, helping you stay focused and play with confidence. A simple, functional accessory that every player will appreciate.',
-    specs: [
-      'Durable acrylic design',
-      'Easy to read and use',
-    ]
+    description: 'MAHJOY LINE FINDER\n\nFind your line without losing sight of the rest.\n\nDesigned with a semi-transparent finish, our Line Finder makes it easy to highlight the line you\'re playing while still allowing the surrounding lines on your Mahjong card to remain visible. A simple, practical way to stay focused without covering up the rest of your options.\n\nLightweight, easy to use, and designed to make every hand a little smoother.',
+    specs: []
   },
 };
 
