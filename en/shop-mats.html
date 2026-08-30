@@ -116,7 +116,7 @@
         const rawPrice=parseFloat(p.price||p.sale_price||p.cost||0);
         const isMXN=localStorage.getItem('mj_currency')!=='USD';
         const price=rawPrice?(isMXN?'$'+rawPrice.toFixed(2)+' MXN':'$'+(rawPrice/18).toFixed(2)+' USD'):'';
-        const COMING_SOON=['MAT-snow2','MAT-snow1','MAT-Merry'];
+        const COMING_SOON=['MAT-snow2','MAT-snow1','MAT-Merry','MAT-COWV'];
         const isCS=COMING_SOON.includes(p.sku);
         const card=document.createElement('a');
         card.href=isCS?'#':'product.html#'+p.id;
