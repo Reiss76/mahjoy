@@ -5,7 +5,7 @@
  */
 window.MJ_DESCRIPTIONS = {
   'sensu mahjong set': {
-    description: 'Graceful, playful, and thoughtfully designed, the Sensu Mahjong Set brings a fresh feminine perspective to the timeless game of mahjong. Crafted from premium acrylic, each tile features a crisp ivory face adorned with delicate, precision-engraved artwork inspired by elegant Asian motifs. Soft florals, charming lucky cats, graceful cranes, lanterns, bamboo, and hand fans come together in a vibrant palette of pinks, teals, and lilacs, creating a design that feels both sophisticated and joyful. The bold pink tile backs add a modern finishing touch, making the set as beautiful to display as it is to play.',
+    description: 'Elegante, juguetón y cuidadosamente diseñado, el Set Sensu Mahjong aporta una fresca perspectiva femenina al atemporal juego del mahjong. Elaborado en acrílico premium, cada ficha presenta una cara marfil nítida adornada con delicado arte de precisión grabado inspirado en elegantes motivos asiáticos. Suaves florales, encantadores gatos de la suerte, grullas elegantes, faroles, bambú y abanicos se unen en una vibrante paleta de rosas, verdeazulados y lilas, creando un diseño que se siente tanto sofisticado como alegre. Los llamativos reversos rosa añaden un toque moderno final, haciendo el set tan hermoso de exhibir como de jugar.',
     specs: [
       '60 fichas de acrílico premium',
       'Medida de ficha: 32 × 22 × 15 mm',
@@ -14,7 +14,7 @@ window.MJ_DESCRIPTIONS = {
     ]
   },
   'dynasty mahjong set': {
-    description: 'A fresh interpretation of a timeless classic, the Dynasty Mahjong Set was thoughtfully designed to blend traditional mahjong artistry with elevated, modern aesthetics. Each premium acrylic tile features a clean ivory face adorned with vibrant, precision-engraved artwork, creating a striking contrast that is both elegant and easy to read. The reverse showcases a luxurious marbled acrylic design, inspired by the organic movement of natural stone.',
+    description: 'Una interpretación fresca de un clásico atemporal, el Set Dynasty Mahjong fue cuidadosamente diseñado para fusionar el arte tradicional del mahjong con estéticas modernas y elevadas. Cada ficha de acrílico premium presenta una cara marfil limpia adornada con arte vibrante grabado con precisión, creando un contraste impactante que es tanto elegante como fácil de leer. El reverso muestra un lujoso diseño de acrílico marmoleado, inspirado en el movimiento orgánico de la piedra natural.',
     specs: [
       '60 fichas de acrílico premium',
       'Medida de ficha: 32 × 22 × 15 mm',
@@ -23,7 +23,7 @@ window.MJ_DESCRIPTIONS = {
     ]
   },
   'imperial mahjong set': {
-    description: 'Elegant, timeless, and inspired by the artistry of traditional Asian design, the Imperial Mahjong Set brings a refined perspective to classic mahjong. Crafted from premium acrylic, each tile features intricate ornamental motifs, soft pastel hues, and thoughtfully illustrated details that create a graceful, sophisticated aesthetic. A palette of blush pinks, lavender, sage, and warm ivory lends an airy elegance to every suit, while the marbled pearlescent pink tile backs add depth, dimension, and a beautifully distinctive finish.',
+    description: 'Elegante, atemporal e inspirado en el arte del diseño asiático tradicional, el Set Imperial Mahjong aporta una perspectiva refinada al mahjong clásico. Elaborado en acrílico premium, cada ficha presenta intrincados motivos ornamentales, suaves tonos pastel y detalles cuidadosamente ilustrados que crean una estética elegante y sofisticada. Una paleta de rosas rubor, lavanda, salvia y marfil cálido otorga una elegancia ligera a cada palo, mientras los reversos perlados marmoleados rosa añaden profundidad, dimensión y un acabado bellamente distintivo.',
     specs: [
       '60 fichas de acrílico premium',
       'Medida de ficha: 32 × 22 × 15 mm',
@@ -32,7 +32,7 @@ window.MJ_DESCRIPTIONS = {
     ]
   },
   'mythos mahjong set': {
-    description: 'Bright, timeless, and inspired by the beauty of the Mediterranean, the Mythos Mahjong Set captures the charm of sun-drenched Greek landscapes through a fresh interpretation of classic mahjong. Each tile features thoughtfully illustrated details inspired by Greek culture — from vibrant lemons and elegant amphoras to whitewashed villages, flourishing greenery, and intricate ornamental motifs. A palette of crisp cobalt blue, fresh greens, warm yellows, and soft ivory evokes the effortless elegance of the Aegean, while the deep blue tile backs provide a bold, classic finish.',
+    description: 'Brillante, atemporal e inspirado en la belleza del Mediterráneo, el Set Mythos Mahjong captura el encanto de los paisajes griegos bañados por el sol a través de una interpretación fresca del mahjong clásico. Cada ficha presenta detalles cuidadosamente ilustrados inspirados en la cultura griega — desde vibrantes limones y elegantes ánforas hasta pueblos encalados, vegetación floreciente y motivos ornamentales intrincados. Una paleta de azul cobalto nítido, verdes frescos, amarillos cálidos y marfil suave evoca la elegancia sin esfuerzo del Egeo, mientras los reversos azul profundo proporcionan un acabado clásico y audaz.',
     specs: [
       '60 fichas de acrílico premium',
       'Medida de ficha: 32 × 22 × 15 mm',
@@ -41,7 +41,7 @@ window.MJ_DESCRIPTIONS = {
     ]
   },
   'heritage mahjong set': {
-    description: 'Rich, timeless, and inspired by the enduring artistry of Chinese tradition, the Heritage Mahjong Set honors the cultural roots of mahjong through a refined, contemporary design. Each tile features thoughtfully illustrated motifs inspired by traditional Chinese iconography — from elegant lanterns and auspicious clouds to dragons, bamboo, and ornamental patterns. A palette of deep crimson, jade green, sapphire blue, warm gold, and soft ivory creates a sense of richness and balance, while the deep red tile backs provide a classic, sophisticated finish.',
+    description: 'Rico, atemporal e inspirado en el perdurable arte de la tradición china, el Set Heritage Mahjong honra las raíces culturales del mahjong a través de un diseño refinado y contemporáneo. Cada ficha presenta motivos cuidadosamente ilustrados inspirados en la iconografía tradicional china — desde elegantes faroles y nubes auspiciosas hasta dragones, bambú y patrones ornamentales. Una paleta de carmesí profundo, verde jade, azul zafiro, dorado cálido y marfil suave crea una sensación de riqueza y equilibrio, mientras los reversos rojo profundo proporcionan un acabado clásico y sofisticado.',
     specs: [
       '60 fichas de acrílico premium',
       'Medida de ficha: 32 × 22 × 15 mm',
@@ -50,7 +50,7 @@ window.MJ_DESCRIPTIONS = {
     ]
   },
   'kaleido mahjong set': {
-    description: 'Bold, modern, and unmistakably unique, the Kaleido Mahjong Set reimagines classic mahjong through the lens of contemporary design. Each tile features clean geometric artwork, vibrant color blocking, and minimalist details that create a fresh, architectural aesthetic. A palette of rich purples, blues, greens, corals, and golds brings energy and balance to every suit, while the striking lavender tile backs complete the set with a sleek, modern finish.',
+    description: 'Audaz, moderno e inconfundiblemente único, el Set Kaleido Mahjong reimagina el mahjong clásico a través del lente del diseño contemporáneo. Cada ficha presenta arte geométrico limpio, bloques de color vibrantes y detalles minimalistas que crean una estética fresca y arquitectónica. Una paleta de púrpuras ricos, azules, verdes, corales y dorados aporta energía y equilibrio a cada palo, mientras los llamativos reversos lavanda completan el set con un acabado elegante y moderno.',
     specs: [
       '60 fichas de acrílico premium',
       'Medida de ficha: 32 × 22 × 15 mm',
@@ -63,60 +63,60 @@ window.MJ_DESCRIPTIONS = {
 // Generic specs by category (SKU prefix)
 window.MJ_SPECS = {
   'MAT': {
-    description: 'Made to play. Designed to stand out.\n\nOur Mahjoy mats are where function meets design. Created to elevate your game while bringing personality to the table, each print is thoughtfully designed to feel unexpected, stylish, and unmistakably Mahjoy.\n\nSoft, smooth and made for hours of play, they provide the perfect surface for your tiles while adding that finishing touch that turns every Mahjong table into a moment.\n\nBecause the game matters — but so does the table you play it on.',
+    description: 'Hechos para jugar. Diseñados para destacar.\n\nNuestros mats Mahjoy son donde la función se encuentra con el diseño. Creados para elevar tu juego mientras aportan personalidad a la mesa, cada estampado está cuidadosamente diseñado para sentirse inesperado, estiloso e inconfundiblemente Mahjoy.\n\nSuaves, lisos y hechos para horas de juego, proporcionan la superficie perfecta para tus fichas mientras añaden ese toque final que convierte cada mesa de Mahjong en un momento especial.\n\nPorque el juego importa — pero también la mesa donde lo juegas.',
     specs: [
-      'Dimensions: 31.5" x 31.5" (80 × 80 cm)',
-      'Materials: Neoprene with a non-slip rubber backing',
-      'Comes with: 2 adjustable elastic straps to keep your mat neatly rolled up',
+      'Dimensiones: 31.5" x 31.5" (80 × 80 cm)',
+      'Materiales: Neopreno con respaldo de goma antideslizante',
+      'Incluye: 2 correas elásticas ajustables para mantener tu mat enrollado',
     ]
   },
   'TILE': {
-    description: 'MAHJOY TILES\n\nDesigned to make every game feel a little more special.\n\nOur American Mahjong tile sets bring together bold design, playful details, and a modern take on the game we love. Each set is thoughtfully created to feel unique, collectible, and unmistakably Mahjoy.\n\nMade for long game nights, beautiful tables, and tiles you\'ll love playing with as much as looking at.',
+    description: 'MAHJOY TILES\n\nDiseñados para hacer cada partida un poco más especial.\n\nNuestros sets de fichas de Mahjong Americano combinan diseño audaz, detalles únicos y un toque moderno al juego que amamos. Cada set está cuidadosamente creado para sentirse único, coleccionable e inconfundiblemente Mahjoy.\n\nHechos para largas noches de juego, mesas hermosas, y fichas que amarás tanto jugar como admirar.',
     specs: [
-      'What\'s Included: 160 Acrylic Tiles, Dice/Coin Bag, Beautifully Designed Magnetic Box',
-      'Tile Breakdown: 108 Bams/Cracks/Dots + 16 Winds + 12 Dragons + 8 Flowers + 10 Jokers + 6 Blanks',
-      'Tile Size: 0.87" W × 0.6" D × 1.25" H',
+      'Incluye: 160 Fichas de Acrílico, Bolsa para Dados/Moneda, Caja Magnética con Diseño',
+      'Desglose: 108 Bams/Cracks/Dots + 16 Vientos + 12 Dragones + 8 Flores + 10 Jokers + 6 Blanks',
+      'Medida de Ficha: 0.87" W × 0.6" D × 1.25" H',
     ]
   },
   'RACK': {
-    description: 'MAHJOY RACKS\n\nCrafted to stand apart.\n\nOur premium Mahjong racks are made with exceptional attention to detail, combining quality materials, a substantial feel, and a beautifully polished finish. Designed to elevate your game while bringing a distinctive touch to the table.\n\nBeautiful, functional, and made to last — the kind of quality you can see and feel.',
+    description: 'MAHJOY RACKS\n\nCrafted to stand apart.\n\nNuestros racks premium de Mahjong están hechos con excepcional atención al detalle, combinando materiales de calidad, un peso sustancial y un acabado bellamente pulido. Diseñados para elevar tu juego mientras aportan un toque distintivo a la mesa.\n\nHermosos, funcionales y hechos para durar — la clase de calidad que puedes ver y sentir.',
     specs: [
-      'What\'s Included: 4 Acrylic Racks + 4 Acrylic Pushers',
-      'Size: 18.11" L',
+      'Incluye: 4 Racks de Acrílico + 4 Pushers de Acrílico',
+      'Medida: 18.11" L (46 cm)',
     ]
   },
   'RAKBAG': {
-    description: 'MAHJOY VELVET RACK BAG\n\nDesigned to keep your racks beautifully protected and organized.\n\nMade from soft velvet, each bag features individual compartments to keep every rack and pusher securely separated, helping protect them from scratches while storing or carrying your set.',
+    description: 'MAHJOY VELVET RACK BAG\n\nDiseñada para mantener tus racks hermosamente protegidos y organizados.\n\nHecha de suave terciopelo, cada bolsa cuenta con compartimentos individuales para mantener cada rack y pusher separados de forma segura, protegiéndolos de rayones mientras guardas o transportas tu set.',
     specs: [
-      'Size: Designed to fit racks up to 18" L',
+      'Medida: Diseñada para racks de hasta 18" L (46 cm)',
     ]
   },
   'BAG-TILE': {
     specs: ['Bolsa de terciopelo para fichas', 'Medidas: 40 × 20 × 6 cm']
   },
   'BAG': {
-    description: 'MAHJOY BAG\n\nDesigned to carry your entire Mahjong set beautifully and effortlessly.\n\nOur Mahjoy Bag is thoughtfully designed with plenty of room for everything you need, while keeping a sleek, perfectly proportioned silhouette. Its spacious interior allows your mat to fit comfortably while rolled, helping it keep its shape and stay protected on the go.\n\nTwo exterior compartments provide easy access to your card folders, cards, and other game essentials, while an adjustable shoulder strap makes it comfortable and easy to carry wherever the game takes you.\n\nSpacious without feeling oversized, it\'s the perfect way to keep your Mahjong set together and ready to play wherever you go.',
+    description: 'MAHJOY BAG\n\nDiseñada para llevar tu set completo de Mahjong de forma hermosa y sin esfuerzo.\n\nNuestra Mahjoy Bag está cuidadosamente diseñada con amplio espacio para todo lo que necesitas, manteniendo una silueta elegante y perfectamente proporcionada. Su espacioso interior permite que tu mat quepa cómodamente enrollado, ayudándolo a mantener su forma y protección en movimiento.\n\nDos compartimentos exteriores proporcionan fácil acceso a tus card holders, tarjetas y otros esenciales del juego, mientras que una correa ajustable para el hombro hace que sea cómoda y fácil de llevar a donde te lleve el juego.\n\nEspaciosa sin sentirse grande, es la manera perfecta de mantener tu set de Mahjong junto y listo para jugar donde vayas.',
     specs: [
-      'Size: 31.50" L (80 cm)',
+      'Medida: 31.50" L (80 cm)',
     ]
   },
   'SHUF': {
-    description: 'MAHJOY SHUFFLERS\n\nMake every shuffle smoother.\n\nDesigned to make mixing your Mahjong tiles quick and effortless, our shufflers help keep the game moving while protecting your hands and tiles. Functional, lightweight, and beautifully designed, they\'re an easy addition to every Mahjong table.',
+    description: 'MAHJOY SHUFFLERS\n\nHaz cada mezcla más suave.\n\nDiseñados para hacer la mezcla de tus fichas de Mahjong rápida y sin esfuerzo, nuestros shufflers ayudan a mantener el juego en movimiento mientras protegen tus manos y fichas. Funcionales, ligeros y bellamente diseñados, son una adición fácil a cualquier mesa de Mahjong.',
     specs: [
-      'What\'s Included: 2 Mahjong Tile Shufflers',
-      'Rules Printed on All Four Sides',
+      'Incluye: 2 Shufflers para fichas de Mahjong',
+      'Reglas impresas en los cuatro lados',
     ]
   },
   'LINE': {
-    description: 'MAHJOY LINE FINDER\n\nFind your line without losing sight of the rest.\n\nDesigned with a semi-transparent finish, our Line Finder makes it easy to highlight the line you\'re playing while still allowing the surrounding lines on your Mahjong card to remain visible. A simple, practical way to stay focused without covering up the rest of your options.\n\nLightweight, easy to use, and designed to make every hand a little smoother.',
+    description: 'MAHJOY LINE FINDER\n\nEncuentra tu línea sin perder de vista el resto.\n\nDiseñado con un acabado semi-transparente, nuestro Line Finder facilita resaltar la línea que estás jugando mientras permite que las líneas circundantes en tu tarjeta de Mahjong permanezcan visibles. Una forma simple y práctica de mantenerte enfocado sin cubrir el resto de tus opciones.\n\nLigero, fácil de usar, y diseñado para hacer cada mano un poco más fluida.',
     specs: [
-      'What\'s Included: 4 Mahjong Line Finders',
+      'Incluye: 4 Line Finders para Mahjong',
     ]
   },
   'FOLIO': {
-    description: 'MAHJOY CARD HOLDER\n\nDesigned to keep your Mahjong cards perfectly stored and protected.\n\nThoughtfully sized to fit your Mahjong cards comfortably, our Card Holder helps keep them protected from bending, creasing, and everyday wear. A simple and elegant way to keep your cards in perfect condition, game after game.',
+    description: 'MAHJOY CARD HOLDER\n\nDiseñado para mantener tus tarjetas de Mahjong perfectamente guardadas y protegidas.\n\nCuidadosamente dimensionado para que tus tarjetas de Mahjong quepan cómodamente, nuestro Card Holder ayuda a mantenerlas protegidas de dobleces, pliegues y el desgaste diario. Una forma simple y elegante de mantener tus tarjetas en perfectas condiciones, partida tras partida.',
     specs: [
-      'Size: 7.95" W × 5.83" H (20.2 × 14.8 cm)',
+      'Medida: 7.95" W × 5.83" H (20.2 × 14.8 cm)',
     ]
   },
 };
@@ -126,34 +126,34 @@ window.MJ_DESCRIPTIONS = window.MJ_DESCRIPTIONS || {};
 
 // Velvet Tile Bags (keys match API product names)
 window.MJ_DESCRIPTIONS['tile bag velvet green'] = {
-  description: 'MAHJOY TILE BAG\n\nSoft, protective, and perfectly sized.\n\nCrafted from premium velvet, our Tile Bag is designed to keep your tiles safe and beautifully stored. The soft interior helps protect tiles from scratches, while the spacious design makes packing and unpacking effortless.\n\nThoughtfully designed for players who value both style and care.',
-  specs: ['Velvet bag for tiles', 'Dimensions: 40 × 20 × 6 cm']
+  description: 'MAHJOY TILE BAG\n\nSuave, protectora y del tamaño perfecto.\n\nElaborada en terciopelo premium, nuestra Tile Bag está diseñada para mantener tus fichas seguras y bellamente guardadas. El interior suave ayuda a proteger las fichas de rayones, mientras el espacioso diseño hace que empacar y desempacar sea sin esfuerzo.\n\nCuidadosamente diseñada para jugadoras que valoran tanto el estilo como el cuidado.',
+  specs: ['Bolsa de terciopelo para fichas', 'Dimensiones: 40 × 20 × 6 cm']
 };
 window.MJ_DESCRIPTIONS['tile bag velvet pink'] = {
-  description: 'MAHJOY TILE BAG\n\nSoft, protective, and perfectly sized.\n\nCrafted from premium velvet, our Tile Bag is designed to keep your tiles safe and beautifully stored. The soft interior helps protect tiles from scratches, while the spacious design makes packing and unpacking effortless.\n\nThoughtfully designed for players who value both style and care.',
-  specs: ['Velvet bag for tiles', 'Dimensions: 40 × 20 × 6 cm']
+  description: 'MAHJOY TILE BAG\n\nSuave, protectora y del tamaño perfecto.\n\nElaborada en terciopelo premium, nuestra Tile Bag está diseñada para mantener tus fichas seguras y bellamente guardadas. El interior suave ayuda a proteger las fichas de rayones, mientras el espacioso diseño hace que empacar y desempacar sea sin esfuerzo.\n\nCuidadosamente diseñada para jugadoras que valoran tanto el estilo como el cuidado.',
+  specs: ['Bolsa de terciopelo para fichas', 'Dimensiones: 40 × 20 × 6 cm']
 };
 window.MJ_DESCRIPTIONS['tile bag velvet rouge'] = {
-  description: 'MAHJOY TILE BAG\n\nSoft, protective, and perfectly sized.\n\nCrafted from premium velvet, our Tile Bag is designed to keep your tiles safe and beautifully stored. The soft interior helps protect tiles from scratches, while the spacious design makes packing and unpacking effortless.\n\nThoughtfully designed for players who value both style and care.',
-  specs: ['Velvet bag for tiles', 'Dimensions: 40 × 20 × 6 cm']
+  description: 'MAHJOY TILE BAG\n\nSuave, protectora y del tamaño perfecto.\n\nElaborada en terciopelo premium, nuestra Tile Bag está diseñada para mantener tus fichas seguras y bellamente guardadas. El interior suave ayuda a proteger las fichas de rayones, mientras el espacioso diseño hace que empacar y desempacar sea sin esfuerzo.\n\nCuidadosamente diseñada para jugadoras que valoran tanto el estilo como el cuidado.',
+  specs: ['Bolsa de terciopelo para fichas', 'Dimensiones: 40 × 20 × 6 cm']
 };
 
 // Leather Mat (Mat Polo Club)
 window.MJ_DESCRIPTIONS['mat polo club'] = {
-  description: 'Made to play. Designed to stand out.\n\nOur Mahjoy mats are where function meets design. Created to elevate your game while bringing personality to the table, each print is thoughtfully designed to feel unexpected, stylish, and unmistakably Mahjoy.\n\nSoft, smooth and made for hours of play, they provide the perfect surface for your tiles while adding that finishing touch that turns every Mahjong table into a moment.\n\nBecause the game matters — but so does the table you play it on.',
+  description: 'Hecho para jugar. Diseñado para destacar.\n\nNuestros mats Mahjoy son donde la función se encuentra con el diseño. Creados para elevar tu juego mientras aportan personalidad a la mesa, cada estampado está cuidadosamente diseñado para sentirse inesperado, estiloso e inconfundiblemente Mahjoy.\n\nSuaves, lisos y hechos para horas de juego, proporcionan la superficie perfecta para tus fichas mientras añaden ese toque final que convierte cada mesa de Mahjong en un momento especial.\n\nPorque el juego importa — pero también la mesa donde lo juegas.',
   specs: [
-    'Dimensions: 31.5" x 31.5" (80 × 80 cm)',
-    'Materials: Premium leather with a non-slip backing',
-    'Comes with: 2 matching leather straps to keep your mat neatly rolled up',
+    'Dimensiones: 31.5" x 31.5" (80 × 80 cm)',
+    'Materiales: Piel premium con respaldo antideslizante',
+    'Incluye: 2 correas de piel a juego para mantener tu mat enrollado',
   ]
 };
 
 // Tile Cases (keys match API product names: "Lilac Tile Case", "Pink Tile Case")
 window.MJ_DESCRIPTIONS['lilac tile case'] = {
-  description: 'MAHJOY TILE CASE\n\nA refined way to protect and store your Mahjong tiles.\n\nCrafted with a structured design, our Tile Case offers an elevated and substantial feel while keeping your tiles beautifully organized and protected. Its sturdy construction helps maintain its shape, while the interior is perfectly sized to hold your complete tile set.\n\nElegant, durable, and designed for both storage and travel.',
-  specs: ['Size: 10" L × 6" W × 3.50" H (25.4 × 15.24 × 8.9 cm)']
+  description: 'MAHJOY TILE CASE\n\nUna forma refinada de proteger y guardar tus fichas de Mahjong.\n\nElaborado con un diseño estructurado, nuestro Tile Case ofrece una sensación elevada y sustancial mientras mantiene tus fichas bellamente organizadas y protegidas. Su construcción robusta ayuda a mantener su forma, mientras el interior está perfectamente dimensionado para contener tu set completo de fichas.\n\nElegante, duradero y diseñado tanto para almacenamiento como para viaje.',
+  specs: ['Medida: 10" L × 6" W × 3.50" H (25.4 × 15.24 × 8.9 cm)']
 };
 window.MJ_DESCRIPTIONS['pink tile case'] = {
-  description: 'MAHJOY TILE CASE\n\nA refined way to protect and store your Mahjong tiles.\n\nCrafted with a structured design, our Tile Case offers an elevated and substantial feel while keeping your tiles beautifully organized and protected. Its sturdy construction helps maintain its shape, while the interior is perfectly sized to hold your complete tile set.\n\nElegant, durable, and designed for both storage and travel.',
-  specs: ['Size: 10" L × 6" W × 3.50" H (25.4 × 15.24 × 8.9 cm)']
+  description: 'MAHJOY TILE CASE\n\nUna forma refinada de proteger y guardar tus fichas de Mahjong.\n\nElaborado con un diseño estructurado, nuestro Tile Case ofrece una sensación elevada y sustancial mientras mantiene tus fichas bellamente organizadas y protegidas. Su construcción robusta ayuda a mantener su forma, mientras el interior está perfectamente dimensionado para contener tu set completo de fichas.\n\nElegante, duradero y diseñado tanto para almacenamiento como para viaje.',
+  specs: ['Medida: 10" L × 6" W × 3.50" H (25.4 × 15.24 × 8.9 cm)']
 };
