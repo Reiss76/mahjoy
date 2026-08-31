@@ -27,20 +27,43 @@
   <link href="../images/icon-burgundy.svg" rel="shortcut icon" type="image/svg+xml">
   <link href="../images/webclip.png" rel="apple-touch-icon">
   <style>
-    /* Center send button */
+    /* Contact form - desktop friendly */
+    .section { min-height: auto !important; }
+    .container.internal { padding: 40px 20px !important; }
+    .grid-contact { 
+      display: block !important; 
+      max-width: 600px; 
+      margin: 0 auto;
+    }
     .form {
       display: flex;
       flex-direction: column;
       align-items: center;
     }
-    .form .field-label,
+    .form .field-label {
+      width: 100%;
+      max-width: 500px;
+      font-size: 14px !important;
+      margin-bottom: 8px;
+    }
     .form .text-field {
       width: 100%;
-      max-width: 400px;
+      max-width: 500px;
+      font-size: 16px !important;
+      padding: 16px 0 !important;
+      margin-bottom: 24px !important;
     }
     .circle-send-button {
       margin: 20px auto 0 auto !important;
       display: block !important;
+    }
+    .heading-regular {
+      font-size: clamp(1.5rem, 4vw, 2.5rem) !important;
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .footer-content-flex {
+      opacity: 1 !important;
     }
   </style>
 </head>
