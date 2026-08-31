@@ -4,7 +4,9 @@
  */
 (function() {
   document.addEventListener('DOMContentLoaded', function() {
-    var btn = document.querySelector('.w-nav-button, .menu-button');
+    // Try multiple selectors for the hamburger button
+    var btn = document.getElementById('mj-ham') || 
+              document.querySelector('.w-nav-button, .menu-button, .cell-menu button');
     var menu = document.querySelector('.nav-menu');
     var overlay = document.querySelector('.overlay-menu');
     
@@ -12,6 +14,11 @@
       console.warn('Mobile nav: button or menu not found');
       return;
     }
+    
+    // Remove any existing click listeners by cloning
+    var newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+    btn = newBtn;
     
     function openNav() {
       menu.classList.add('w--nav-menu-open');
