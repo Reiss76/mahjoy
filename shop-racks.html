@@ -117,16 +117,16 @@
       const grid=document.getElementById('mj-prod-grid');
       if(!prods.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:32px;">Sin productos disponibles.</div>';return;}
       grid.innerHTML='';
-      const COMING_SOON=['Rack-brown'];
+      const PRESALE=['Rack-brown','RACK-COSMIC'];
       prods.forEach(p=>{
         const img=imgUrl(p);
         const price=(window.MJCurrency||{format:p=>p.price?'$'+Number(p.price).toFixed(2)+' MXN':''}).format(p.price||p.sale_price||p.cost||0);
-        const isCS=COMING_SOON.includes(p.sku);
-        const card=document.createElement('a');card.href=isCS?'#':'product.html#'+p.id;card.className='mj-prod-card'+(p.stock===0?' mj-coming-soon':'')+(isCS?' mj-coming-soon':'');
-        card.innerHTML=(isCS?'<span class="mj-coming-soon-badge">Coming Soon</span>':'')
+        const isPS=PRESALE.includes(p.sku);
+        const card=document.createElement('a');card.href='product.html#'+p.id;card.className='mj-prod-card'+(p.stock===0?' mj-coming-soon':'')+(isPS?' mj-presale':'');
+        card.innerHTML=(isPS?'<span class="mj-coming-soon-badge" style="background:var(--orchid);">Pre sale · Ships Oct 10</span>':'')
           +(img?'<img src="'+img+'" alt="'+p.name+'" class="mj-prod-card-img" onerror="this.style.display=\'none\'">'
           :'<div class="mj-prod-card-img" style="height:200px;display:flex;align-items:center;justify-content:center;"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C76BA4" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg></div>')
-          +''+'<div class="mj-prod-card-body"><div class="mj-prod-card-name" title="'+p.name+'">'+p.name+'</div><div class="mj-prod-card-price">'+price+'</div>'+(isCS?'':'<span style="display:inline-block;margin-top:10px;background:var(--burgundy);color:#fff;font-family:Plus Jakarta Sans,sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:8px 18px;border-radius:999px;">Ver producto</span>')+'</div>';
+          +''+'<div class="mj-prod-card-body"><div class="mj-prod-card-name" title="'+p.name+'">'+p.name+'</div><div class="mj-prod-card-price">'+price+'</div><span style="display:inline-block;margin-top:10px;background:var(--burgundy);color:#fff;font-family:Plus Jakarta Sans,sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:8px 18px;border-radius:999px;">Ver producto</span></div>';
         grid.appendChild(card);
       });
     }).catch(err=>{console.error('Mahjoy API Error:',err);document.getElementById('mj-prod-grid').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:32px;">Error cargando productos. <br><small style="color:#999;">'+err.message+'</small></div>';});
