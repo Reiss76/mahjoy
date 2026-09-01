@@ -119,10 +119,11 @@
         const price=rawPrice?(isMXN?'$'+rawPrice.toFixed(2)+' MXN':'$'+(rawPrice/18).toFixed(2)+' USD'):'';
         const COMING_SOON=['MAT-snow2','MAT-snow1','MAT-Merry','MAT-COWV'];
         const isCS=COMING_SOON.includes(p.sku);
+        const isPS=!isCS;
         const card=document.createElement('a');
         card.href=isCS?'#':'product.html#'+p.id;
-        card.className='mj-prod-card'+(p.stock===0?' mj-coming-soon':'')+(isCS?' mj-coming-soon':'');
-        card.innerHTML=(isCS?'<span class="mj-coming-soon-badge">Coming Soon</span>':'')
+        card.className='mj-prod-card'+(p.stock===0?' mj-coming-soon':'')+(isCS?' mj-coming-soon':'')+(isPS?' mj-presale':'');
+        card.innerHTML=(isCS?'<span class="mj-coming-soon-badge">Coming Soon</span>':(isPS?'<span class="mj-coming-soon-badge" style="background:var(--orchid);">Pre sale · Ships Oct 10</span>':''))
           +(img?'<img src="'+img+'" alt="'+p.name+'" class="mj-prod-card-img" onerror="this.style.display=\'none\'">'
           :'<div class="mj-prod-card-img" style="height:200px;display:flex;align-items:center;justify-content:center;"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C76BA4" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg></div>')
           +''+'<div class="mj-prod-card-body"><div class="mj-prod-card-name" title="'+p.name+'">'+p.name+'</div><div class="mj-prod-card-price">'+price+'</div>'
