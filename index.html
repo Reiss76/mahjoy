@@ -382,21 +382,21 @@
         <a href="shop-mats.html" class="mj-cat-img-wrap" style="display:block;">
           <img src="images/home-mats.jpg" alt="Mahjoy Mats" loading="lazy">
         </a>
-        <a href="shop-mats.html" class="mj-cat-link">Desde $1,200 MXN</a>
+        <a href="shop-mats.html" class="mj-cat-link" id="price-mats">Desde $1,200 MXN</a>
       </div>
       <div class="mj-cat-item">
         <div class="mj-cat-label">Tiles</div>
         <a href="shop-tiles.html" class="mj-cat-img-wrap" style="display:block;">
           <img src="images/home-tiles.jpg" alt="Mahjoy Tiles" loading="lazy">
         </a>
-        <a href="shop-tiles.html" class="mj-cat-link">Desde $6,500 MXN</a>
+        <a href="shop-tiles.html" class="mj-cat-link" id="price-tiles">Desde $6,000 MXN</a>
       </div>
       <div class="mj-cat-item">
         <div class="mj-cat-label">Racks</div>
         <a href="shop-racks.html" class="mj-cat-img-wrap" style="display:block;">
           <img src="images/home-racks.jpg" alt="Mahjoy Racks" loading="lazy">
         </a>
-        <a href="shop-racks.html" class="mj-cat-link">Desde $800 MXN</a>
+        <a href="shop-racks.html" class="mj-cat-link" id="price-racks">Desde $2,400 MXN</a>
       </div>
       <div class="mj-cat-item">
         <div class="mj-cat-label">Accessories</div>
@@ -406,6 +406,24 @@
         <a href="shop-accessories.html" class="mj-cat-link">Bags, Shufflers & More</a>
       </div>
     </div>
+    <script>
+    (function(){
+      const API='https://api-production-b888.up.railway.app';
+      const cats={mats:'MAT-',tiles:'TILE-',racks:'RACK-'};
+      fetch(API+'/public/shop/mahjoy/products').then(r=>r.json()).then(data=>{
+        const prods=data.products||[];
+        Object.keys(cats).forEach(cat=>{
+          const prefix=cats[cat];
+          const items=prods.filter(p=>p.sku&&p.sku.toUpperCase().startsWith(prefix)&&!p.sku.toUpperCase().includes('BAG')&&p.price);
+          if(items.length){
+            const min=Math.min(...items.map(p=>parseFloat(p.price)));
+            const el=document.getElementById('price-'+cat);
+            if(el)el.textContent='Desde $'+min.toLocaleString('es-MX')+' MXN';
+          }
+        });
+      }).catch(()=>{});
+    })();
+    </script>
   </section>
 
   <!-- ── TAGLINE ── -->

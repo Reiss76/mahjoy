@@ -381,7 +381,7 @@
 
   function renderQuotes(quotes) {
     const sorted = quotes.sort((a, b) => a.price - b.price);
-    const currency = window.MJCurrency?.current === 'USD' ? 'USD' : 'MXN';
+    const currency = 'USD';
     const rate = currency === 'USD' ? 18 : 1;
     
     const html = sorted.slice(0, 5).map((q, i) => {
@@ -416,7 +416,7 @@
   function syncShippingToCheckout() {
     // Update shipping display in the order summary
     const shippingEl = document.querySelector('#co-content span[style*="To be quoted"], #co-content span[style*="A cotizar"]');
-    const currency = window.MJCurrency?.current === 'USD' ? 'USD' : 'MXN';
+    const currency = 'USD';
     const shippingDisplay = currency === 'USD' ? selectedShipping / 18 : selectedShipping;
     
     if (shippingEl && selectedShipping > 0) {
