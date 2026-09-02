@@ -235,5 +235,5 @@
   </script>
 <script src="../js/lang-selector.js"></script>
 <script src="../js/mobile-nav.js"></script>
-</body>
+<script>(function(){function updateCartBadge(){var count=window.MJCart?window.MJCart.cartCount():0;var badge=document.getElementById("header-cart-badge");var menuBadges=document.querySelectorAll(".mj-cart-badge");if(badge){badge.textContent=count;badge.style.display=count>0?"block":"none";}menuBadges.forEach(function(b){b.textContent=count;b.style.display=count>0?"flex":"none";});}document.addEventListener("DOMContentLoaded",updateCartBadge);window.updateCartBadge=updateCartBadge;})();</script></body>
 </html>

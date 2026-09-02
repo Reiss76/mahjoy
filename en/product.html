@@ -31,7 +31,7 @@
         <div id="w-node-b7ea1e81-b6ed-70e6-99b8-777710e3e2b0-49cc2eb5" class="w-layout-cell cell-brand">
           <a href="index.html" class="brand w-nav-brand"><img src="../images/logo-mahjoy-horizontal.png" loading="lazy" alt="MAH JOY" class="brand-logo" ></a>
         </div>
-        <div id="w-node-_33a7caf5-22ac-5875-67dd-ca1238830888-49cc2eb5" class="w-layout-cell cell-menu">
+        <div id="w-node-_33a7caf5-22ac-5875-67dd-ca1238830888-49cc2eb5" class="w-layout-cell cell-menu" style="display:flex;align-items:center;justify-content:flex-end;gap:12px;"><a href="cart.html" id="header-cart" style="position:relative;display:flex;align-items:center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FAF6F0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span id="header-cart-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--orchid);color:#fff;font-family:Plus Jakarta Sans,sans-serif;font-size:.55rem;font-weight:800;min-width:16px;height:16px;border-radius:50%;text-align:center;line-height:16px;">0</span></a>
           <div class="menu-button-wrapper">
             <div class="menu-button w-nav-button">
               <div class="dot-menu-button"></div>
@@ -249,5 +249,5 @@
   </script>
 <script src="../js/lang-selector.js"></script>
 <script src="../js/mobile-nav.js"></script>
-</body>
+<script>(function(){function updateCartBadge(){var count=window.MJCart?window.MJCart.cartCount():0;var badge=document.getElementById("header-cart-badge");var menuBadges=document.querySelectorAll(".mj-cart-badge");if(badge){badge.textContent=count;badge.style.display=count>0?"block":"none";}menuBadges.forEach(function(b){b.textContent=count;b.style.display=count>0?"flex":"none";});}document.addEventListener("DOMContentLoaded",updateCartBadge);window.updateCartBadge=updateCartBadge;})();</script></body>
 </html>
