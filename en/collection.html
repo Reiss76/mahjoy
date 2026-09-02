@@ -120,7 +120,12 @@
   <div class="nav-bar" style="background-color:var(--burgundy)">
     <div data-animation="over-right" class="navmenu w-nav" data-easing2="ease" data-easing="ease" data-collapse="all" role="banner" data-no-scroll="1" data-duration="0" data-doc-height="1">
       <div class="w-layout-layout quick-stack wf-layout-layout">
-        <div class="w-layout-cell cell-slogan"><div></div></div>
+        <div class="w-layout-cell cell-slogan">
+          <a href="cart.html" id="header-cart" style="position:relative;display:flex;align-items:center;padding:8px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FAF6F0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+            <span id="header-cart-badge" style="display:none;position:absolute;top:0;right:0;background:var(--orchid);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:.6rem;font-weight:800;min-width:16px;height:16px;border-radius:50%;text-align:center;line-height:16px;">0</span>
+          </a>
+        </div>
         <div class="w-layout-cell cell-brand"><a href="index.html" class="brand w-nav-brand"><img src="../images/logo-mahjoy-horizontal.png" alt="MAH JOY" class="brand-logo" ></a></div>
         <div class="w-layout-cell cell-menu"><div class="menu-button-wrapper"><div class="menu-button w-nav-button"><div class="dot-menu-button"></div></div></div></div>
       </div>
@@ -262,9 +267,34 @@
 
     function addToCart(p) {
       if (window.MJCart) {
-        window.MJCart.add({ id: p.id, name: p.name, price: p.sale_price || p.cost || 0, image: imgUrl(p) });
+        const item = { 
+          id: p.id, 
+          sku: p.sku,
+          name: p.name, 
+          price: parseFloat(p.price_usd || p.price || 0), 
+          image: imgUrl(p) 
+        };
+        window.MJCart.addToCart(item);
+        updateCartBadge();
       }
     }
+    
+    function updateCartBadge() {
+      const count = window.MJCart ? window.MJCart.cartCount() : 0;
+      const badge = document.getElementById('header-cart-badge');
+      const menuBadges = document.querySelectorAll('.mj-cart-badge');
+      if (badge) {
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'block' : 'none';
+      }
+      menuBadges.forEach(b => {
+        b.textContent = count;
+        b.style.display = count > 0 ? 'flex' : 'none';
+      });
+    }
+    
+    // Update badge on page load
+    document.addEventListener('DOMContentLoaded', updateCartBadge);
 
     document.querySelectorAll('.mj-filter-pill').forEach(btn => {
       btn.addEventListener('click', function() {
