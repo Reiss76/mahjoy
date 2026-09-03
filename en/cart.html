@@ -254,5 +254,28 @@
   </script>
 <script src="../js/lang-selector.js"></script>
 <script src="../js/mobile-nav.js"></script>
-<script>(function(){function updateCartBadge(){var count=window.MJCart?window.MJCart.cartCount():0;var badge=document.getElementById("header-cart-badge");var menuBadges=document.querySelectorAll(".mj-cart-badge");if(badge){badge.textContent=count;badge.style.display=count>0?"block":"none";}menuBadges.forEach(function(b){b.textContent=count;b.style.display=count>0?"flex":"none";});}document.addEventListener("DOMContentLoaded",updateCartBadge);window.updateCartBadge=updateCartBadge;})();</script><script src="../js/geo-banner.js"></script></body>
+<script>(function(){function updateCartBadge(){var count=window.MJCart?window.MJCart.cartCount():0;var badge=document.getElementById("header-cart-badge");var menuBadges=document.querySelectorAll(".mj-cart-badge");if(badge){badge.textContent=count;badge.style.display=count>0?"block":"none";}menuBadges.forEach(function(b){b.textContent=count;b.style.display=count>0?"flex":"none";});}document.addEventListener("DOMContentLoaded",updateCartBadge);window.updateCartBadge=updateCartBadge;})();</script><script src="../js/geo-banner.js"></script>
+<script>
+// Show warning for non-Mexico visitors on cart
+(function(){
+  fetch('https://ipapi.co/json/')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var country = data.country_code || data.country;
+      if(country !== 'MX'){
+        // Disable checkout button and show message
+        var checkoutBtn = document.querySelector('a[href="checkout.html"]');
+        if(checkoutBtn){
+          checkoutBtn.style.cssText = 'pointer-events:none;opacity:0.5;cursor:not-allowed;' + checkoutBtn.style.cssText;
+          var warning = document.createElement('div');
+          warning.style.cssText = 'background:linear-gradient(135deg,#6B0F2A,#9B3E7A);color:#fff;padding:1rem 1.5rem;border-radius:12px;margin-top:1rem;font-family:Plus Jakarta Sans,sans-serif;font-size:.9rem;line-height:1.5;text-align:center;';
+          warning.innerHTML = '🌎 <strong>International shipping coming soon!</strong><br>We currently only ship within Mexico. Stay tuned!';
+          checkoutBtn.parentNode.insertBefore(warning, checkoutBtn.nextSibling);
+        }
+      }
+    })
+    .catch(function(){});
+})();
+</script>
+</body>
 </html>

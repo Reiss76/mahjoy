@@ -329,7 +329,37 @@
   </script>
 <script src="../js/lang-selector.js"></script>
 <script src="../js/mobile-nav.js"></script>
-<script>(function(){function updateCartBadge(){var count=window.MJCart?window.MJCart.cartCount():0;var badge=document.getElementById("header-cart-badge");var menuBadges=document.querySelectorAll(".mj-cart-badge");if(badge){badge.textContent=count;badge.style.display=count>0?"block":"none";}menuBadges.forEach(function(b){b.textContent=count;b.style.display=count>0?"flex":"none";});}document.addEventListener("DOMContentLoaded",updateCartBadge);window.updateCartBadge=updateCartBadge;})();</script><script src="../js/geo-banner.js"></script></body>
+<script>(function(){function updateCartBadge(){var count=window.MJCart?window.MJCart.cartCount():0;var badge=document.getElementById("header-cart-badge");var menuBadges=document.querySelectorAll(".mj-cart-badge");if(badge){badge.textContent=count;badge.style.display=count>0?"block":"none";}menuBadges.forEach(function(b){b.textContent=count;b.style.display=count>0?"flex":"none";});}document.addEventListener("DOMContentLoaded",updateCartBadge);window.updateCartBadge=updateCartBadge;})();</script><script src="../js/geo-banner.js"></script>
+<script>
+// Block checkout for non-Mexico visitors
+(function(){
+  fetch('https://ipapi.co/json/')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var country = data.country_code || data.country;
+      if(country !== 'MX'){
+        // Block checkout - show overlay
+        var overlay = document.createElement('div');
+        overlay.id = 'geo-checkout-block';
+        overlay.innerHTML = '<div style="max-width:500px;text-align:center;padding:2rem;">' +
+          '<div style="font-size:4rem;margin-bottom:1.5rem;">🌎</div>' +
+          '<h2 style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.8rem;font-weight:800;color:var(--burgundy);margin-bottom:1rem;">Coming Soon to Your Country!</h2>' +
+          '<p style="font-family:Plus Jakarta Sans,sans-serif;font-size:1rem;color:#666;line-height:1.7;margin-bottom:2rem;">We\'re working hard to bring Mahjoy to your doorstep. Currently, we only ship within Mexico. Stay tuned for international shipping!</p>' +
+          '<a href="index.html" style="display:inline-block;background:var(--burgundy);color:#fff;font-family:Plus Jakarta Sans,sans-serif;font-weight:700;font-size:.9rem;letter-spacing:.06em;text-transform:uppercase;padding:1rem 2.5rem;border-radius:999px;text-decoration:none;">Back to Home</a>' +
+          '</div>';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(253,248,251,0.98);z-index:99999;display:flex;align-items:center;justify-content:center;';
+        document.body.appendChild(overlay);
+        // Hide checkout content
+        var content = document.getElementById('co-content');
+        var loading = document.getElementById('co-loading');
+        if(content) content.style.display = 'none';
+        if(loading) loading.style.display = 'none';
+      }
+    })
+    .catch(function(){});
+})();
+</script>
+</body>
 </html>
 
 <!-- Shipping Quote (envia.com) -->
