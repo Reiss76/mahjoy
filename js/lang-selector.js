@@ -19,9 +19,9 @@
   
   var html = '<div id="mj-lang-sel" style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#fff;font-family:Plus Jakarta Sans,sans-serif;">' +
     globe +
-    '<a href="' + enLink + '" onclick="document.cookie=\'mj_lang=en;path=/;max-age=31536000\'" style="color:' + (isEnglish ? '#fff' : 'rgba(255,255,255,0.6)') + ';text-decoration:none;">EN</a>' +
+    '<a href="' + enLink + '" onclick="localStorage.setItem(\'mj_lang_manual\',\'1\');document.cookie=\'mj_lang=en;path=/;max-age=31536000\'" style="color:' + (isEnglish ? '#fff' : 'rgba(255,255,255,0.6)') + ';text-decoration:none;">EN</a>' +
     '<span style="color:rgba(255,255,255,0.4);">|</span>' +
-    '<a href="' + esLink + '" onclick="document.cookie=\'mj_lang=es;path=/;max-age=31536000\'" style="color:' + (isEnglish ? 'rgba(255,255,255,0.6)' : '#fff') + ';text-decoration:none;">ES</a>' +
+    '<a href="' + esLink + '" onclick="localStorage.setItem(\'mj_lang_manual\',\'1\');document.cookie=\'mj_lang=es;path=/;max-age=31536000\'" style="color:' + (isEnglish ? 'rgba(255,255,255,0.6)' : '#fff') + ';text-decoration:none;">ES</a>' +
     '</div>';
   
   // Find navmenu and inject as first child
