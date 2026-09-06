@@ -115,8 +115,10 @@
         const img=imgUrl(p);
         const price=p.price_usd?'$'+Number(p.price_usd).toFixed(2)+' USD':'';
         const COMING_SOON=['MAT-snow2','MAT-snow1','MAT-Merry','MAT-COWV'];
+        const IN_STOCK=['MAT-PIEL'];
         const isCS=COMING_SOON.includes(p.sku);
-        const isPS=!isCS;
+        const isInStock=IN_STOCK.includes(p.sku);
+        const isPS=!isCS&&!isInStock;
         const card=document.createElement('a');
         card.href=isCS?'#':'product.html#'+p.id;
         card.className='mj-prod-card'+(isCS?' mj-coming-soon':'')+(isPS?' mj-presale':'');
