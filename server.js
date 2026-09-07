@@ -955,6 +955,55 @@ app.get('/api/poll/processed', (req, res) => {
   });
 });
 
+// Debug: Get raw CentumPay transactions
+app.get('/api/poll/debug', async (req, res) => {
+  try {
+    const totp = generateTotp(CENTUMPAY_TOTP_SECRET);
+    const authToken = crypto.createHmac('sha256', CENTUMPAY_API_SECRET)
+      .update(`${CENTUMPAY_API_KEY}${totp}`, 'utf8').digest('hex');
+
+    const ecommerceUrl = CENTUMPAY_ENV === 'prod'
+      ? 'https://ecommapi-centumpay.centum.mx/ecommerce'
+      : 'https://test-ecommapi-centumpay.centum.mx/ecommerce';
+
+    const payload = {
+      group: 'wmx_api',
+      method: 'get_transactions',
+      token: authToken,
+      api_key: CENTUMPAY_API_KEY,
+      data: { limit: 20 }
+    };
+
+    const response = await fetch(ecommerceUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+    res.json({
+      env: CENTUMPAY_ENV,
+      url: ecommerceUrl,
+      response: result,
+      pendingOrders: Array.from(pendingOrders.keys())
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// View pending orders
+app.get('/api/orders/pending', (req, res) => {
+  const orders = Array.from(pendingOrders.entries()).map(([id, order]) => ({
+    orderId: id,
+    status: order.status,
+    createdAt: order.createdAt,
+    customer: order.customer?.email,
+    total: order.total
+  }));
+  res.json({ count: orders.length, orders });
+});
+
 // ─── Telegram Notifications ──────────────────────────────────────────────────
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8827648637:AAHm_XHtfcDhP2F6dk7u83v97p4lpMw8vUA';
