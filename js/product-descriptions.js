@@ -85,6 +85,13 @@ window.MJ_SPECS = {
       'Medida: 18.11" L (46 cm)',
     ]
   },
+  'rack blanco': {
+    description: 'WHITE RACKS\n\nUn diseño limpio y clásico que combina con todo.\n\nEstos racks blancos aportan una apariencia fresca y discreta a tu mesa de mahjong, haciéndolos una opción versátil para cualquier noche de juego.',
+    specs: [
+      'Incluye: 4 Racks blancos de acrílico + 4 Pushers',
+      'Medida: 18" (45.72 cm)',
+    ]
+  },
   'RAKBAG': {
     description: 'MAHJOY VELVET RACK BAG\n\nDiseñada para mantener tus racks hermosamente protegidos y organizados.\n\nHecha de suave terciopelo, cada bolsa cuenta con compartimentos individuales para mantener cada rack y pusher separados de forma segura, protegiéndolos de rayones mientras guardas o transportas tu set.',
     specs: [
