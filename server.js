@@ -406,6 +406,10 @@ app.post('/api/orders/save', async (req, res) => {
     }
     
     console.log(`[orders] Saved order ${orderId}`);
+    
+    // Send order confirmation email
+    sendOrderReceivedEmail(orderData);
+    
     res.json({ ok: true, orderId });
   } catch (err) {
     console.error('[orders] Save error:', err);
@@ -460,7 +464,123 @@ app.get('/api/orders/by-email', async (req, res) => {
   }
 });
 
-// Send order confirmation email
+// Send "order received" email when checkout is submitted
+async function sendOrderReceivedEmail(order) {
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  if (!RESEND_API_KEY) {
+    console.log('[email] Resend API key not configured, skipping email');
+    return false;
+  }
+
+  const email = order.customer?.email;
+  if (!email) {
+    console.log('[email] No customer email, skipping');
+    return false;
+  }
+
+  const itemsList = (order.items || [])
+    .map(i => `<tr><td style="padding:8px 0;border-bottom:1px solid #f0e4ec;">${i.name}</td><td style="padding:8px 0;border-bottom:1px solid #f0e4ec;text-align:center;">x${i.qty || 1}</td><td style="padding:8px 0;border-bottom:1px solid #f0e4ec;text-align:right;color:#6B0F2A;font-weight:600;">$${(i.price || 0).toFixed(2)} MXN</td></tr>`)
+    .join('');
+
+  const html = `
+    <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #fdf8fb;">
+      <div style="text-align: center; margin-bottom: 30px;">
+        <img src="https://www.playmahjoy.com/images/logo-mahjoy-horizontal.png" alt="MAH JOY" style="height: 40px;">
+      </div>
+      
+      <div style="background: #fff; border-radius: 16px; padding: 30px; box-shadow: 0 2px 10px rgba(107,15,42,0.08);">
+        <h1 style="color: #6B0F2A; font-size: 24px; margin: 0 0 10px 0; text-align: center;">¡Recibimos tu pedido!</h1>
+        <p style="color: #999; font-size: 14px; text-align: center; margin: 0 0 25px 0;">Pedido #${order.orderId}</p>
+        
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          Hola <strong>${order.customer?.name || ''}</strong>,
+        </p>
+        
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          Hemos recibido tu pedido y está pendiente de pago. Una vez confirmado el pago, comenzaremos a preparar tu envío.
+        </p>
+        
+        <div style="background: #fdf8fb; border-radius: 12px; padding: 20px; margin: 25px 0;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+            <thead>
+              <tr style="color: #999; text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">
+                <th style="text-align: left; padding-bottom: 10px;">Producto</th>
+                <th style="text-align: center; padding-bottom: 10px;">Cant.</th>
+                <th style="text-align: right; padding-bottom: 10px;">Precio</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsList}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2" style="padding-top: 15px; font-weight: bold; color: #6B0F2A;">Total</td>
+                <td style="padding-top: 15px; text-align: right; font-weight: bold; color: #6B0F2A; font-size: 18px;">$${(order.total || 0).toFixed(2)} MXN</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        
+        <div style="background: #fff8e1; border-radius: 8px; padding: 15px; margin: 20px 0;">
+          <p style="margin: 0; color: #f57c00; font-size: 14px;">
+            ⏳ <strong>Pendiente de pago</strong> — Si ya realizaste el pago, lo confirmaremos pronto.
+          </p>
+        </div>
+        
+        <div style="margin-top: 25px;">
+          <p style="color: #666; font-size: 14px; line-height: 1.6; margin: 0;">
+            <strong>Envío a:</strong><br>
+            ${order.shipping?.street || ''}${order.shipping?.interior ? ', ' + order.shipping.interior : ''}<br>
+            ${order.shipping?.neighborhood || ''}<br>
+            ${order.shipping?.city || ''}, ${order.shipping?.state || ''} ${order.shipping?.cp || ''}
+          </p>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+          <a href="https://www.playmahjoy.com/mis-pedidos.html" 
+             style="display: inline-block; background: #6B0F2A; color: #fff; text-decoration: none; padding: 14px 30px; border-radius: 30px; font-weight: 600; font-size: 14px;">
+            Ver mis pedidos
+          </a>
+        </div>
+      </div>
+      
+      <p style="color: #999; font-size: 12px; text-align: center; margin-top: 30px;">
+        ¿Preguntas? Contáctanos en info@playmahjoy.com<br>
+        <a href="https://www.playmahjoy.com" style="color: #C76BA4;">www.playmahjoy.com</a>
+      </p>
+    </div>
+  `;
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: 'MAH JOY <pedidos@playmahjoy.com>',
+        to: email,
+        subject: `📦 Recibimos tu pedido #${order.orderId}`,
+        html: html
+      })
+    });
+
+    const result = await response.json();
+    if (response.ok) {
+      console.log(`[email] ✅ Order received email sent to ${email}`);
+      return true;
+    } else {
+      console.error(`[email] ❌ Failed:`, result);
+      return false;
+    }
+  } catch (err) {
+    console.error('[email] Error:', err);
+    return false;
+  }
+}
+
+// Send payment confirmed email (when we detect payment)
 async function sendOrderConfirmationEmail(order) {
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
   if (!RESEND_API_KEY) {
