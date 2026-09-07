@@ -413,6 +413,163 @@ app.post('/api/orders/save', async (req, res) => {
   }
 });
 
+// Get orders by email (for "Mis Pedidos" page)
+app.get('/api/orders/by-email', async (req, res) => {
+  try {
+    const email = req.query.email?.toLowerCase().trim();
+    if (!email) {
+      return res.status(400).json({ error: 'Email required' });
+    }
+
+    // Fetch orders from Proax
+    const proaxRes = await fetch(`${PROAX_API_URL}/api/inventory/${PROAX_NODE_ID}/web-orders?email=${encodeURIComponent(email)}`, {
+      headers: { 'Authorization': `Bearer ${PROAX_API_KEY}` }
+    });
+    
+    if (proaxRes.ok) {
+      const data = await proaxRes.json();
+      const orders = (data.orders || data || []).map(o => ({
+        orderId: o.order_id || o.orderId,
+        status: o.status,
+        total: o.total,
+        items: o.items || [],
+        createdAt: o.created_at || o.createdAt,
+        trackingNumber: o.tracking_number || o.trackingNumber,
+        shipping: o.shipping
+      }));
+      return res.json({ orders });
+    }
+    
+    // Fallback to in-memory orders
+    const orders = Array.from(pendingOrders.values())
+      .filter(o => o.customer?.email?.toLowerCase() === email)
+      .map(o => ({
+        orderId: o.orderId,
+        status: o.status,
+        total: o.total,
+        items: o.items || [],
+        createdAt: o.createdAt,
+        trackingNumber: o.trackingNumber,
+        shipping: o.shipping
+      }));
+    
+    res.json({ orders });
+  } catch (err) {
+    console.error('[orders] Fetch by email error:', err);
+    res.status(500).json({ error: 'Failed to fetch orders', orders: [] });
+  }
+});
+
+// Send order confirmation email
+async function sendOrderConfirmationEmail(order) {
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  if (!RESEND_API_KEY) {
+    console.log('[email] Resend API key not configured, skipping email');
+    return false;
+  }
+
+  const email = order.customer?.email;
+  if (!email) {
+    console.log('[email] No customer email, skipping');
+    return false;
+  }
+
+  const itemsList = (order.items || [])
+    .map(i => `• ${i.name} x${i.qty || 1} - $${i.price?.toFixed(2) || '0'} MXN`)
+    .join('\n');
+
+  const html = `
+    <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="color: #6B0F2A; font-size: 28px; margin: 0;">¡Gracias por tu compra!</h1>
+      </div>
+      
+      <p style="color: #333; font-size: 16px; line-height: 1.6;">
+        Hola <strong>${order.customer?.name || ''}</strong>,
+      </p>
+      
+      <p style="color: #333; font-size: 16px; line-height: 1.6;">
+        Tu pedido ha sido confirmado y estamos preparándolo para envío.
+      </p>
+      
+      <div style="background: #FDF8FB; border-radius: 12px; padding: 20px; margin: 20px 0;">
+        <p style="margin: 0 0 10px 0; font-size: 14px; color: #999; text-transform: uppercase; letter-spacing: 1px;">
+          Pedido #${order.orderId}
+        </p>
+        <div style="border-top: 1px solid #f0e4ec; padding-top: 15px; margin-top: 10px;">
+          ${(order.items || []).map(i => `
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0e4ec;">
+              <span style="color: #333;">${i.name} x${i.qty || 1}</span>
+              <span style="color: #6B0F2A; font-weight: 600;">$${i.price?.toFixed(2) || '0'} MXN</span>
+            </div>
+          `).join('')}
+          <div style="display: flex; justify-content: space-between; padding: 15px 0 0 0; font-size: 18px; font-weight: bold;">
+            <span style="color: #6B0F2A;">Total</span>
+            <span style="color: #6B0F2A;">$${order.total?.toFixed(2) || '0'} MXN</span>
+          </div>
+        </div>
+      </div>
+      
+      ${order.trackingNumber ? `
+        <div style="background: #E8F5E9; border-radius: 12px; padding: 20px; margin: 20px 0;">
+          <p style="margin: 0; color: #2E7D32; font-weight: 600;">
+            📦 Número de rastreo: <strong>${order.trackingNumber}</strong>
+          </p>
+        </div>
+      ` : ''}
+      
+      <div style="margin-top: 30px;">
+        <p style="color: #333; font-size: 14px; line-height: 1.6;">
+          <strong>Dirección de envío:</strong><br>
+          ${order.shipping?.street || ''}${order.shipping?.interior ? ', ' + order.shipping.interior : ''}<br>
+          ${order.shipping?.neighborhood || ''}<br>
+          ${order.shipping?.city || ''}, ${order.shipping?.state || ''} ${order.shipping?.cp || ''}
+        </p>
+      </div>
+      
+      <div style="text-align: center; margin-top: 30px;">
+        <a href="https://www.playmahjoy.com/mis-pedidos.html" 
+           style="display: inline-block; background: #6B0F2A; color: #fff; text-decoration: none; padding: 14px 30px; border-radius: 30px; font-weight: 600; font-size: 14px;">
+          Ver mis pedidos
+        </a>
+      </div>
+      
+      <p style="color: #999; font-size: 12px; text-align: center; margin-top: 40px;">
+        ¿Preguntas? Contáctanos en info@playmahjoy.com o por WhatsApp<br>
+        <a href="https://www.playmahjoy.com" style="color: #C76BA4;">www.playmahjoy.com</a>
+      </p>
+    </div>
+  `;
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: 'MAH JOY <pedidos@playmahjoy.com>',
+        to: email,
+        subject: `✨ ¡Pedido confirmado! #${order.orderId}`,
+        html: html
+      })
+    });
+
+    const result = await response.json();
+    if (response.ok) {
+      console.log(`[email] ✅ Confirmation sent to ${email}`);
+      return true;
+    } else {
+      console.error(`[email] ❌ Failed:`, result);
+      return false;
+    }
+  } catch (err) {
+    console.error('[email] Error:', err);
+    return false;
+  }
+}
+
 // Create shipment with Envia.com
 app.post('/api/shipping/create', async (req, res) => {
   try {
@@ -750,10 +907,14 @@ async function pollCentumPayTransactions() {
               
               // Queue WhatsApp notification
               notifyAdmins(order, shipData.trackingNumber);
+              // Send confirmation email to customer
+              sendOrderConfirmationEmail(order);
             } else {
               console.error(`[poll] ❌ Shipment failed:`, shipData);
               // Still notify about the sale, even if shipment failed
               notifyAdmins(order, null);
+              // Send confirmation email anyway
+              sendOrderConfirmationEmail(order);
             }
           } catch (shipErr) {
             console.error(`[poll] Shipment error:`, shipErr);

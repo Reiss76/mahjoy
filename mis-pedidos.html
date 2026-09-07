@@ -48,6 +48,20 @@
   <div class="mj-orders-wrap">
     <h1 class="mj-orders-title">Mis Pedidos</h1>
     
+    <!-- Email lookup form -->
+    <div id="email-lookup" style="background:#fff;border:2px solid #f0e4ec;border-radius:16px;padding:1.5rem;margin-bottom:2rem;">
+      <p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;color:#666;margin-bottom:1rem;">
+        Ingresa tu email para ver todos tus pedidos:
+      </p>
+      <form id="lookup-form" style="display:flex;gap:.75rem;flex-wrap:wrap;">
+        <input type="email" id="lookup-email" placeholder="tu@email.com" required
+          style="flex:1;min-width:200px;padding:.8rem 1rem;border:2px solid #f0e4ec;border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;">
+        <button type="submit" style="background:var(--burgundy);color:#fff;border:none;padding:.8rem 1.5rem;border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;">
+          Buscar
+        </button>
+      </form>
+    </div>
+    
     <div id="orders-list">
       <!-- Orders will be loaded here -->
     </div>
@@ -73,15 +87,14 @@
       return labels[status] || status;
     }
     
-    function loadOrders() {
-      const orders = JSON.parse(localStorage.getItem('mj_orders') || '[]');
+    function renderOrders(orders) {
       const container = document.getElementById('orders-list');
       
       if (!orders.length) {
         container.innerHTML = `
           <div class="mj-orders-empty">
             <div class="mj-orders-empty-icon">📦</div>
-            <p class="mj-orders-empty-text">Aún no tienes pedidos</p>
+            <p class="mj-orders-empty-text">No encontramos pedidos</p>
             <a href="shop.html" class="mj-orders-cta">Ir a la tienda</a>
           </div>
         `;
@@ -89,37 +102,45 @@
       }
       
       // Sort by date, most recent first
-      orders.sort((a, b) => b.timestamp - a.timestamp);
+      orders.sort((a, b) => (b.timestamp || new Date(b.createdAt).getTime()) - (a.timestamp || new Date(a.createdAt).getTime()));
       
       container.innerHTML = orders.map(order => `
         <div class="mj-order-card">
           <div class="mj-order-header">
             <div>
               <div class="mj-order-id">Pedido #${order.orderId || order.id || '—'}</div>
-              <div class="mj-order-date">${formatDate(order.timestamp)}</div>
+              <div class="mj-order-date">${formatDate(order.timestamp || order.createdAt)}</div>
             </div>
             <span class="mj-order-status ${order.status || 'paid'}">${getStatusLabel(order.status || 'paid')}</span>
           </div>
+          
+          ${order.trackingNumber ? `
+            <div style="background:#e8f5e9;padding:.75rem 1rem;border-radius:8px;margin-bottom:1rem;">
+              <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:#2e7d32;">
+                📦 <strong>Tracking:</strong> ${order.trackingNumber}
+              </span>
+            </div>
+          ` : ''}
           
           <div class="mj-order-items">
             ${(order.items || order.cart || []).map(item => `
               <div class="mj-order-item">
                 <span class="mj-order-item-name">${item.name}</span>
-                <span class="mj-order-item-qty">x${item.qty}</span>
-                <span class="mj-order-item-price">${formatPrice(item.price * item.qty)}</span>
+                <span class="mj-order-item-qty">x${item.qty || 1}</span>
+                <span class="mj-order-item-price">${formatPrice((item.price || 0) * (item.qty || 1))}</span>
               </div>
             `).join('')}
           </div>
           
           <div class="mj-order-total">
             <span>Total</span>
-            <span>${formatPrice(order.total)}</span>
+            <span>${formatPrice(order.total || 0)}</span>
           </div>
           
           ${order.shipping ? `
             <div class="mj-order-shipping">
               <strong>Envío:</strong> ${order.shipping.name || ''}, ${order.shipping.street || ''}, ${order.shipping.neighborhood || ''}, 
-              CP ${order.shipping.cp || ''}, ${order.shipping.city || ''}, ${order.shipping.state || ''}
+              CP ${order.shipping.cp || order.shipping.postalCode || ''}, ${order.shipping.city || ''}, ${order.shipping.state || ''}
               ${order.shipping.phone ? `<br><strong>Tel:</strong> ${order.shipping.phone}` : ''}
             </div>
           ` : ''}
@@ -127,7 +148,61 @@
       `).join('');
     }
     
-    loadOrders();
+    // Load orders from localStorage
+    function loadLocalOrders() {
+      const orders = JSON.parse(localStorage.getItem('mj_orders') || '[]');
+      renderOrders(orders);
+    }
+    
+    // Fetch orders from server by email
+    async function fetchOrdersByEmail(email) {
+      const container = document.getElementById('orders-list');
+      container.innerHTML = '<div style="text-align:center;padding:2rem;color:#999;">Buscando...</div>';
+      
+      try {
+        const res = await fetch(`/api/orders/by-email?email=${encodeURIComponent(email)}`);
+        const data = await res.json();
+        
+        // Merge with localStorage orders
+        const localOrders = JSON.parse(localStorage.getItem('mj_orders') || '[]');
+        const serverOrders = data.orders || [];
+        
+        // Dedupe by orderId
+        const allOrders = [...localOrders];
+        serverOrders.forEach(so => {
+          if (!allOrders.find(lo => lo.orderId === so.orderId)) {
+            allOrders.push(so);
+          }
+        });
+        
+        // Save email for future visits
+        localStorage.setItem('mj_orders_email', email);
+        
+        renderOrders(allOrders);
+      } catch (err) {
+        console.error('Error fetching orders:', err);
+        // Fallback to localStorage
+        loadLocalOrders();
+      }
+    }
+    
+    // Form handler
+    document.getElementById('lookup-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const email = document.getElementById('lookup-email').value.trim();
+      if (email) {
+        fetchOrdersByEmail(email);
+      }
+    });
+    
+    // On page load, check for saved email or show localStorage orders
+    const savedEmail = localStorage.getItem('mj_orders_email');
+    if (savedEmail) {
+      document.getElementById('lookup-email').value = savedEmail;
+      fetchOrdersByEmail(savedEmail);
+    } else {
+      loadLocalOrders();
+    }
   </script>
   
   <script src="js/mobile-nav.js"></script>
