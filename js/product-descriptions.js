@@ -58,6 +58,13 @@ window.MJ_DESCRIPTIONS = {
       'Set de dados + bolsa para dados',
     ]
   },
+  'rack blanco': {
+    description: 'White Racks\n\nA clean, classic design that goes with everything. These white racks bring a fresh, understated look to your mahjong table, making them a versatile choice for any game night.',
+    specs: [
+      "What's included: Four white acrylic racks with pushers.",
+      'Size: 18 inches (45.72 cm)',
+    ]
+  },
 };
 
 // Generic specs by category (SKU prefix)
