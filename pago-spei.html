@@ -30,16 +30,17 @@
     }
     .logo {
       text-align: center;
-      margin-bottom: 2rem;
+      margin-bottom: 2.5rem;
     }
     .logo img {
-      height: 50px;
+      height: 60px;
+      filter: drop-shadow(0 2px 8px rgba(107, 15, 42, 0.15));
     }
     .card {
       background: #fff;
-      border-radius: 24px;
-      padding: 2.5rem 2rem;
-      box-shadow: 0 10px 40px rgba(107, 15, 42, 0.1);
+      border-radius: 28px;
+      padding: 2.5rem 1.75rem;
+      box-shadow: 0 8px 32px rgba(107, 15, 42, 0.12), 0 2px 8px rgba(107, 15, 42, 0.06);
     }
     .title {
       font-family: 'Playfair Display', serif;
@@ -56,17 +57,20 @@
       margin-bottom: 2rem;
     }
     .field {
-      background: var(--blush);
-      border-radius: 16px;
-      padding: 1.25rem 1.5rem;
+      background: linear-gradient(135deg, #FDF8FB 0%, var(--blush) 100%);
+      border: 1px solid rgba(199, 107, 164, 0.15);
+      border-radius: 18px;
+      padding: 1.25rem 1.25rem;
+      padding-right: 4rem;
       margin-bottom: 1rem;
       position: relative;
       cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
     }
     .field:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(107, 15, 42, 0.1);
+      box-shadow: 0 6px 20px rgba(107, 15, 42, 0.12);
+      border-color: var(--orchid);
     }
     .field:active {
       transform: translateY(0);
@@ -80,15 +84,12 @@
       font-weight: 600;
     }
     .field-value {
-      font-size: 1.25rem;
+      font-size: 1.15rem;
       font-weight: 700;
       color: var(--burgundy);
-      font-family: 'Plus Jakarta Sans', monospace;
-      letter-spacing: 0.02em;
-    }
-    .field-value.beneficiario {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      letter-spacing: 0;
+      letter-spacing: 0.08em;
+      text-decoration: none;
     }
     .copy-btn {
       position: absolute;
@@ -183,7 +184,7 @@
       
       <div class="field" onclick="copyToClipboard('710969000328128079', 'CLABE')">
         <div class="field-label">CLABE</div>
-        <div class="field-value">710 969 00032812807 9</div>
+        <div class="field-value">710969000328128079</div>
         <button class="copy-btn" aria-label="Copiar CLABE">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
