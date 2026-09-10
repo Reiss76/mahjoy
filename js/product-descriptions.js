@@ -111,7 +111,7 @@ window.MJ_SPECS = {
   'BAG': {
     description: 'MAHJOY BAG\n\nDiseñada para llevar tu set completo de Mahjong de forma hermosa y sin esfuerzo.\n\nNuestra Mahjoy Bag está cuidadosamente diseñada con amplio espacio para todo lo que necesitas, manteniendo una silueta elegante y perfectamente proporcionada. Su espacioso interior permite que tu mat quepa cómodamente enrollado, ayudándolo a mantener su forma y protección en movimiento.\n\nDos compartimentos exteriores proporcionan fácil acceso a tus card holders, tarjetas y otros esenciales del juego, mientras que una correa ajustable para el hombro hace que sea cómoda y fácil de llevar a donde te lleve el juego.\n\nEspaciosa sin sentirse grande, es la manera perfecta de mantener tu set de Mahjong junto y listo para jugar donde vayas.',
     specs: [
-      'Medida: 31.50" L (80 cm)',
+      'Medida: 80 × 16 × 28 cm',
     ]
   },
   'SHUF': {
