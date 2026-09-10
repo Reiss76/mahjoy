@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Pago SPEI — MAH JOY</title>
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <link href="images/icon-burgundy.svg" rel="shortcut icon" type="image/svg+xml">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --burgundy: #6B0F2A;
+      --orchid: #C76BA4;
+      --blush: #F5E8F0;
+      --cream: #FAF6F0;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: linear-gradient(180deg, var(--blush) 0%, var(--cream) 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .container {
+      max-width: 420px;
+      width: 100%;
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .logo img {
+      height: 50px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 24px;
+      padding: 2.5rem 2rem;
+      box-shadow: 0 10px 40px rgba(107, 15, 42, 0.1);
+    }
+    .title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      color: var(--burgundy);
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .subtitle {
+      text-align: center;
+      color: #666;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 2rem;
+    }
+    .field {
+      background: var(--blush);
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .field:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(107, 15, 42, 0.1);
+    }
+    .field:active {
+      transform: translateY(0);
+    }
+    .field-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--orchid);
+      margin-bottom: 0.4rem;
+      font-weight: 600;
+    }
+    .field-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--burgundy);
+      font-family: 'Plus Jakarta Sans', monospace;
+      letter-spacing: 0.02em;
+    }
+    .field-value.beneficiario {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      letter-spacing: 0;
+    }
+    .copy-btn {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--burgundy);
+      border: none;
+      border-radius: 10px;
+      padding: 0.6rem 0.8rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .copy-btn:hover {
+      background: var(--orchid);
+    }
+    .copy-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: #fff;
+    }
+    .bank-info {
+      text-align: center;
+      padding: 1rem;
+      background: rgba(107, 15, 42, 0.03);
+      border-radius: 12px;
+      margin-top: 0.5rem;
+    }
+    .bank-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: #999;
+      margin-bottom: 0.25rem;
+    }
+    .bank-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--burgundy);
+    }
+    .note {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.8rem;
+      color: #888;
+      line-height: 1.5;
+    }
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--burgundy);
+      color: #fff;
+      padding: 1rem 2rem;
+      border-radius: 100px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(107, 15, 42, 0.3);
+      opacity: 0;
+      transition: transform 0.3s, opacity 0.3s;
+      z-index: 1000;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    .footer {
+      margin-top: 2rem;
+      text-align: center;
+    }
+    .footer a {
+      color: var(--orchid);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <img src="images/logo-mahjoy-horizontal.png" alt="MAH JOY">
+    </div>
+    
+    <div class="card">
+      <h1 class="title">Pago por SPEI</h1>
+      <p class="subtitle">Transfiere desde cualquier banco en México. Tu pago se refleja en 1-2 minutos.</p>
+      
+      <div class="field" onclick="copyToClipboard('710969000328128079', 'CLABE')">
+        <div class="field-label">CLABE</div>
+        <div class="field-value">710 969 00032812807 9</div>
+        <button class="copy-btn" aria-label="Copiar CLABE">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="field" onclick="copyToClipboard('Play Mahjoy', 'Beneficiario')">
+        <div class="field-label">Beneficiario</div>
+        <div class="field-value beneficiario">Play Mahjoy</div>
+        <button class="copy-btn" aria-label="Copiar Beneficiario">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="bank-info">
+        <div class="bank-label">Banco</div>
+        <div class="bank-name">NVIO</div>
+      </div>
+      
+      <p class="note">
+        💡 Incluye tu número de pedido en el concepto para identificar tu pago más rápido.
+      </p>
+    </div>
+    
+    <div class="footer">
+      <a href="index.html">← Volver a la tienda</a>
+    </div>
+  </div>
+  
+  <div class="toast" id="toast">✓ Copiado al portapapeles</div>
+  
+  <script>
+    function copyToClipboard(text, label) {
+      navigator.clipboard.writeText(text).then(() => {
+        const toast = document.getElementById('toast');
+        toast.textContent = '✓ ' + label + ' copiado';
+        toast.classList.add('show');
+        setTimeout(() => {
+          toast.classList.remove('show');
+        }, 2000);
+      }).catch(err => {
+        // Fallback for older browsers
+        const input = document.createElement('input');
+        input.value = text;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        
+        const toast = document.getElementById('toast');
+        toast.textContent = '✓ ' + label + ' copiado';
+        toast.classList.add('show');
+        setTimeout(() => {
+          toast.classList.remove('show');
+        }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>
