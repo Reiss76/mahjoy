@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <title>Mis Pedidos — MAH JOY</title>
+  <title>My Orders — MAH JOY</title>
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <link href="css/normalize.css" rel="stylesheet">
   <link href="css/webflow.css" rel="stylesheet">
@@ -80,22 +80,22 @@
 <body>
   <!-- Navigation -->
   <nav style="background:var(--burgundy);padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center;">
-    <a href="index.html" style="color:#fff;text-decoration:none;font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;">MAH JOY</a>
+    <a href="../index.html" style="color:#fff;text-decoration:none;font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;">MAH JOY</a>
     <div style="display:flex;gap:1.5rem;">
       <a href="shop.html" style="color:#fff;text-decoration:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;">Shop</a>
-      <a href="cart.html" style="color:#fff;text-decoration:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;">Carrito</a>
+      <a href="cart.html" style="color:#fff;text-decoration:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;">Cart</a>
     </div>
   </nav>
 
   <div class="mj-orders-wrap">
-    <h1 class="mj-orders-title">Mis Pedidos</h1>
+    <h1 class="mj-orders-title">My Orders</h1>
     
     <!-- Email lookup form -->
     <div class="mj-lookup-box">
-      <p class="mj-lookup-text">Ingresa tu email para ver el estado de tus pedidos:</p>
+      <p class="mj-lookup-text">Enter your email to check your order status:</p>
       <form id="lookup-form" class="mj-lookup-form">
-        <input type="email" id="lookup-email" placeholder="tu@email.com" required class="mj-lookup-input">
-        <button type="submit" class="mj-lookup-btn">Buscar</button>
+        <input type="email" id="lookup-email" placeholder="your@email.com" required class="mj-lookup-input">
+        <button type="submit" class="mj-lookup-btn">Search</button>
       </form>
     </div>
     
@@ -107,10 +107,10 @@
     
     // Timeline steps configuration
     const TIMELINE_STEPS = [
-      { key: 'received', label: 'Pedido recibido', icon: '📋' },
-      { key: 'paid', label: 'Pago confirmado', icon: '✓' },
-      { key: 'shipped', label: 'Enviado', icon: '📦' },
-      { key: 'delivered', label: 'Entregado', icon: '🎉' }
+      { key: 'received', label: 'Order received', icon: '📋' },
+      { key: 'paid', label: 'Payment confirmed', icon: '✓' },
+      { key: 'shipped', label: 'Shipped', icon: '📦' },
+      { key: 'delivered', label: 'Delivered', icon: '🎉' }
     ];
     
     function formatDate(ts) {
@@ -184,11 +184,11 @@
           ${order.tracking_number || order.trackingNumber ? `
             <div class="mj-tracking-box">
               <div class="mj-tracking-info">
-                📦 <strong>Guía:</strong> ${order.tracking_number || order.trackingNumber}
+                📦 <strong>Tracking:</strong> ${order.tracking_number || order.trackingNumber}
               </div>
               ${order.tracking_url || order.trackingUrl ? `
                 <a href="${order.tracking_url || order.trackingUrl}" target="_blank" class="mj-tracking-link">
-                  Rastrear envío →
+                  Track shipment →
                 </a>
               ` : ''}
             </div>
@@ -212,7 +212,7 @@
             
             ${order.shipping || order.shipping_address ? `
               <div class="mj-order-shipping">
-                <strong>Envío:</strong> ${(order.shipping || order.shipping_address).name || ''}, 
+                <strong>Shipping:</strong> ${(order.shipping || order.shipping_address).name || ''}, 
                 ${(order.shipping || order.shipping_address).street || ''}, 
                 ${(order.shipping || order.shipping_address).neighborhood || ''}, 
                 CP ${(order.shipping || order.shipping_address).cp || (order.shipping || order.shipping_address).postalCode || ''}, 
@@ -239,8 +239,8 @@
         container.innerHTML = `
           <div class="mj-orders-empty">
             <div class="mj-orders-empty-icon">📦</div>
-            <p class="mj-orders-empty-text">No encontramos pedidos con este email</p>
-            <a href="shop.html" class="mj-orders-cta">Ir a la tienda</a>
+            <p class="mj-orders-empty-text">No orders found for this email</p>
+            <a href="shop.html" class="mj-orders-cta">Go to shop</a>
           </div>
         `;
         return;
@@ -258,7 +258,7 @@
     
     async function fetchOrdersByEmail(email) {
       const container = document.getElementById('orders-list');
-      container.innerHTML = '<div class="mj-loading">Buscando pedidos</div>';
+      container.innerHTML = '<div class="mj-loading">Searching orders</div>';
       
       try {
         // Fetch from Proax API
@@ -290,8 +290,8 @@
           container.innerHTML = `
             <div class="mj-orders-empty">
               <div class="mj-orders-empty-icon">😕</div>
-              <p class="mj-orders-empty-text">No pudimos conectar con el servidor. Intenta de nuevo.</p>
-              <button onclick="fetchOrdersByEmail('${email}')" class="mj-orders-cta" style="border:none;cursor:pointer;">Reintentar</button>
+              <p class="mj-orders-empty-text">Could not connect to server. Try again.</p>
+              <button onclick="fetchOrdersByEmail('${email}')" class="mj-orders-cta" style="border:none;cursor:pointer;">Retry</button>
             </div>
           `;
         }
@@ -327,7 +327,7 @@
       // Show specific order
       (async () => {
         const container = document.getElementById('orders-list');
-        container.innerHTML = '<div class="mj-loading">Cargando pedido</div>';
+        container.innerHTML = '<div class="mj-loading">Loading order</div>';
         
         const order = await fetchOrderById(orderIdParam);
         if (order) {
@@ -342,8 +342,8 @@
             container.innerHTML = `
               <div class="mj-orders-empty">
                 <div class="mj-orders-empty-icon">🔍</div>
-                <p class="mj-orders-empty-text">No encontramos el pedido #${orderIdParam}</p>
-                <p class="mj-lookup-text">Intenta buscar con tu email:</p>
+                <p class="mj-orders-empty-text">Order not found #${orderIdParam}</p>
+                <p class="mj-lookup-text">Try searching with your email:</p>
               </div>
             `;
           }
