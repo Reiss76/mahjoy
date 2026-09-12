@@ -184,6 +184,8 @@ app.get('/cart', (req, res) => res.sendFile(path.join(__dirname, 'cart.html')));
 app.get('/product', (req, res) => res.sendFile(path.join(__dirname, 'product.html')));
 app.get('/checkout', (req, res) => res.sendFile(path.join(__dirname, 'checkout.html')));
 app.get('/collab', (req, res) => res.sendFile(path.join(__dirname, 'collab.html')));
+app.get('/mis-pedidos', (req, res) => res.sendFile(path.join(__dirname, 'mis-pedidos.html')));
+app.get('/pedidos', (req, res) => res.sendFile(path.join(__dirname, 'mis-pedidos.html')));
 
 // ─── Static files ─────────────────────────────────────────────────────────────
 
