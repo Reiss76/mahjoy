@@ -130,9 +130,9 @@
     
     function getCurrentStep(timeline) {
       if (!timeline || !timeline.length) return 0;
-      // Find the last completed step
+      // Find the last completed step (API uses 'done', frontend uses 'completed')
       for (let i = timeline.length - 1; i >= 0; i--) {
-        if (timeline[i].completed) return i;
+        if (timeline[i].done || timeline[i].completed) return i;
       }
       return 0;
     }
@@ -147,14 +147,17 @@
       return `
         <div class="mj-timeline">
           ${steps.map((step, i) => {
-            const isCompleted = step.completed;
+            // API uses 'done', frontend uses 'completed'
+            const isCompleted = step.done || step.completed;
             const isCurrent = i === currentStep;
             const dotClass = isCompleted ? 'completed' : (isCurrent ? 'active' : '');
             const labelClass = isCompleted || isCurrent ? 'active' : '';
+            // API uses 'step', frontend uses 'label'
+            const label = step.step || step.label || '';
             return `
               <div class="mj-timeline-step">
                 <div class="mj-timeline-dot ${dotClass}">${step.icon || (isCompleted ? '✓' : i + 1)}</div>
-                <span class="mj-timeline-label ${labelClass}">${step.label}</span>
+                <span class="mj-timeline-label ${labelClass}">${label}</span>
               </div>
             `;
           }).join('')}
@@ -174,7 +177,7 @@
           <div class="mj-order-header">
             <div>
               <div class="mj-order-id">Pedido #${order.orderId || order.order_id || order.id || '—'}</div>
-              <div class="mj-order-date">${formatDate(order.createdAt || order.timestamp)}</div>
+              <div class="mj-order-date">${formatDate(order.created_at || order.createdAt || order.timestamp)}</div>
             </div>
             <span class="mj-order-status ${statusClass}">${statusEmoji} ${statusLabel}</span>
           </div>
