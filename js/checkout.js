@@ -465,3 +465,40 @@ document.addEventListener('DOMContentLoaded', () => {
   // Allow pressing Enter in discount input
   discInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); discBtn.click(); } });
 });
+
+// Expose variables for PayPal integration
+window.MJCheckoutProduct = null;
+window.MJAppliedDiscount = null;
+window.MJShippingCost = 0;
+
+// Update exposed variables when checkout loads
+const _origLoadCheckout = window.loadCheckout || loadCheckout;
+if (typeof loadCheckout !== 'undefined') {
+  const _origSetProduct = function(p) {
+    currentProduct = p;
+    window.MJCheckoutProduct = p;
+  };
+}
+
+// Watch for changes
+const _origUpdateTotals = updateTotals;
+const newUpdateTotals = function() {
+  _origUpdateTotals();
+  window.MJCheckoutProduct = currentProduct;
+  window.MJAppliedDiscount = appliedDiscount;
+  window.MJShippingCost = selectedShippingCost;
+};
+
+// Override updateTotals
+if (typeof updateTotals !== 'undefined') {
+  updateTotals = newUpdateTotals;
+}
+
+// Also expose on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    window.MJCheckoutProduct = currentProduct;
+    window.MJAppliedDiscount = appliedDiscount;
+    window.MJShippingCost = selectedShippingCost;
+  }, 600);
+});

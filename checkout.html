@@ -466,11 +466,22 @@
             Al enviar tu pedido, un asesor de MAH JOY te contactará vía WhatsApp para confirmar disponibilidad, coordinar el pago y el envío.
           </div>
 
-          <button type="submit" id="co-submit" style="display:block;width:100%;background:var(--burgundy);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:1rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:1.2rem 2rem;border-radius:999px;border:none;cursor:pointer;transition:background .2s;margin-top:.5rem;">
-            Pagar con tarjeta →
-          </button>
+          <!-- Payment Options -->
+          <div style="margin-top:1rem;">
+            <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--orchid);margin-bottom:1rem;text-align:center;">💳 Método de pago</div>
+            
+            <!-- CentumPay Button -->
+            <button type="submit" id="co-submit" style="display:block;width:100%;background:var(--burgundy);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:1rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:1.2rem 2rem;border-radius:999px;border:none;cursor:pointer;transition:background .2s;">
+              💳 Pagar con tarjeta →
+            </button>
+            
+            <div style="text-align:center;margin:1rem 0;font-family:'Plus Jakarta Sans',sans-serif;font-size:.8rem;color:#999;">— o —</div>
+            
+            <!-- PayPal Button Container -->
+            <div id="paypal-button-container" style="min-height:45px;"></div>
+          </div>
 
-          <a id="co-wa-btn" href="#" target="_blank" style="display:block;text-align:center;background:transparent;color:var(--burgundy);border:2px solid var(--burgundy);font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;font-weight:700;letter-spacing:.04em;padding:1rem 2rem;border-radius:999px;text-decoration:none;transition:background .2s;">
+          <a id="co-wa-btn" href="#" target="_blank" style="display:block;text-align:center;background:transparent;color:var(--burgundy);border:2px solid var(--burgundy);font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;font-weight:700;letter-spacing:.04em;padding:1rem 2rem;border-radius:999px;text-decoration:none;transition:background .2s;margin-top:1rem;">
             💬 Continuar por WhatsApp
           </a>
 
@@ -486,6 +497,9 @@
   <script src="js/currency.js"></script>
   <script src="js/webflow.js"></script>
   <script src="js/checkout.js"></script>
+  <!-- PayPal SDK -->
+  <script src="https://www.paypal.com/sdk/js?client-id=BAAbbz1L2qH_VMP2ACU9ua4HeR2A3NfU8Hp_v3POkGyYIuz4_ot1tihAmUP3h-KHzP9AiAjTRblKvZeKn4&currency=MXN&locale=es_MX"></script>
+  <script src="js/paypal-checkout.js"></script>
 
   <style>
     .mj-co-label {
