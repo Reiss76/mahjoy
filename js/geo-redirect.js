@@ -6,6 +6,11 @@
   // If user manually selected a language, respect it
   if (localStorage.getItem('mj_lang_manual')) return;
   
+  // Pages that should NOT be redirected (same content for all regions)
+  var noRedirectPages = ['mis-pedidos', 'my-orders', 'pago-spei', 'checkout', 'cart'];
+  var currentPage = window.location.pathname.split('/').pop().replace('.html', '');
+  if (noRedirectPages.includes(currentPage)) return;
+  
   // Check current path
   var isEN = window.location.pathname.includes('/en/');
   var isRoot = window.location.pathname === '/' || window.location.pathname === '/index.html';
