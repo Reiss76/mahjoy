@@ -348,8 +348,27 @@
 
           <div>
             <label class="mj-co-label">Email *</label>
-            <input class="mj-co-input" type="email" name="email" placeholder="tu@email.com" required>
+            <input class="mj-co-input" type="email" name="email" id="co-email" placeholder="tu@email.com" required>
           </div>
+
+          <div>
+            <label class="mj-co-label">Confirmar Email *</label>
+            <input class="mj-co-input" type="email" name="email_confirm" id="co-email-confirm" placeholder="Confirma tu email" required>
+            <span id="email-mismatch" style="display:none;color:#c62828;font-size:.75rem;font-family:'Plus Jakarta Sans',sans-serif;margin-top:.25rem;">Los emails no coinciden</span>
+          </div>
+          <script>
+          (function(){
+            var email=document.getElementById('co-email');
+            var confirm=document.getElementById('co-email-confirm');
+            var msg=document.getElementById('email-mismatch');
+            function check(){
+              if(!confirm.value)return msg.style.display='none';
+              msg.style.display=email.value.trim()!==confirm.value.trim()?'block':'none';
+              confirm.style.borderColor=email.value.trim()!==confirm.value.trim()?'#c62828':'#f0e4ec';
+            }
+            if(email&&confirm){email.addEventListener('input',check);confirm.addEventListener('input',check);}
+          })();
+          </script>
 
           <div>
             <label class="mj-co-label">WhatsApp / Teléfono *</label>

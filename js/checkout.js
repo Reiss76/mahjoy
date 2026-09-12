@@ -246,6 +246,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = e.target;
     const btn = document.getElementById('co-submit');
 
+    // Email validation - must match
+    const email = form.email.value.trim();
+    const emailConfirm = form.email_confirm?.value.trim();
+    const mismatchEl = document.getElementById('email-mismatch');
+    
+    if (emailConfirm && email !== emailConfirm) {
+      if (mismatchEl) mismatchEl.style.display = 'block';
+      document.getElementById('co-email-confirm')?.focus();
+      return;
+    }
+    if (mismatchEl) mismatchEl.style.display = 'none';
+
     const data = {
       name: `${form.name.value} ${form.lastname.value}`.trim(),
       email: form.email.value,
