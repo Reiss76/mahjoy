@@ -144,7 +144,7 @@
             <div id="co-name" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.15rem;font-weight:800;color:var(--burgundy);margin-bottom:.3rem;"></div>
             <div id="co-sku" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.72rem;color:#aaa;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.75rem;"></div>
             <div style="display:flex;justify-content:space-between;align-items:center;padding-top:.75rem;border-top:1px solid #f0e4ec;">
-              <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;color:#888;">Price unitario</span>
+              <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;color:#888;">Unit price</span>
               <span id="co-price" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.1rem;font-weight:700;color:var(--burgundy);"></span>
             </div>
           </div>
@@ -162,10 +162,10 @@
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
             <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:#888;">Shipping</span>
-            <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:var(--orchid-mid);font-weight:600;">A cotizar</span>
+            <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:var(--orchid-mid);font-weight:600;">To quote</span>
           </div>
           <div style="border-top:1px solid #f0e4ec;padding-top:.75rem;display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1rem;font-weight:700;color:var(--burgundy);">Total estimado</span>
+            <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1rem;font-weight:700;color:var(--burgundy);">Estimated total</span>
             <span id="co-total" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.2rem;font-weight:800;color:var(--burgundy);"></span>
           </div>
         </div>
@@ -177,7 +177,7 @@
 
       <!-- RIGHT: Form -->
       <div>
-        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--orchid);margin-bottom:1rem;">Tus datos</div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--orchid);margin-bottom:1rem;">Your info</div>
 
         <form id="co-form" style="display:flex;flex-direction:column;gap:1.1rem;">
 
@@ -188,7 +188,7 @@
             </div>
             <div>
               <label class="mj-co-label">Last Name *</label>
-              <input class="mj-co-input" type="text" name="lastname" placeholder="Tu apellido" required>
+              <input class="mj-co-input" type="text" name="lastname" placeholder="Your last name" required>
             </div>
           </div>
 
@@ -436,7 +436,7 @@
 
   function syncShippingToCheckout() {
     // Update shipping display in the order summary
-    const shippingEl = document.querySelector('#co-content span[style*="To be quoted"], #co-content span[style*="A cotizar"]');
+    const shippingEl = document.querySelector('#co-content span[style*="To be quoted"], #co-content span[style*="To quote"]');
     const currency = 'USD';
     const shippingDisplay = currency === 'USD' ? selectedShipping / 18 : selectedShipping;
     
