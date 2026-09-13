@@ -49,7 +49,7 @@ let selectedShippingCost = 0; // Set by shipping quote script
 
 function getDiscountedTotal() {
   if (!currentProduct) return 0;
-  const sub = (parseFloat(currentProduct.price) || 0) * qty;
+  const sub = getProductPrice(currentProduct) * qty;
   if (!appliedDiscount || appliedDiscount.pct <= 0) return sub;
   return sub * (1 - appliedDiscount.pct / 100);
 }
@@ -61,9 +61,25 @@ function resolveImageUrl(url) {
   return url;
 }
 
+// Detect if we're on EN pages
+const isEN = window.location.pathname.includes('/en/');
+const CURRENCY = isEN ? 'USD' : 'MXN';
+
+function getProductPrice(product) {
+  if (!product) return 0;
+  // Use price_usd for EN pages if available
+  if (isEN && product.price_usd) {
+    return parseFloat(product.price_usd) || 0;
+  }
+  return parseFloat(product.price) || 0;
+}
+
 function formatPrice(price) {
   const num = parseFloat(price);
-  if (!num || num === 0) return 'Consultar';
+  if (!num || num === 0) return isEN ? 'Contact us' : 'Consultar';
+  if (isEN) {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+  }
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(num);
 }
 
@@ -82,9 +98,9 @@ function guessCategory(p) {
 
 function updateTotals() {
   if (!currentProduct) return;
-  const unit = formatPriceNum(currentProduct.price);
+  const unit = getProductPrice(currentProduct);
   const sub = unit * qty;
-  document.getElementById('co-subtotal').textContent = unit ? formatPrice(sub) : 'Consultar';
+  document.getElementById('co-subtotal').textContent = unit ? formatPrice(sub) : (isEN ? 'Contact us' : 'Consultar');
 
   // Discount row
   const discRow = document.getElementById('co-discount-row');
@@ -225,7 +241,7 @@ async function loadCheckout() {
   document.getElementById('co-cat-badge').textContent = catLabel;
   document.getElementById('co-name').textContent = product.name;
   document.getElementById('co-sku').textContent = product.sku || '';
-  document.getElementById('co-price').textContent = formatPrice(product.price);
+  document.getElementById('co-price').textContent = formatPrice(getProductPrice(product));
 
   updateTotals();
 
@@ -275,12 +291,12 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.style.opacity = '0.7';
 
     // Build cart — apply discount if active
-    const basePrice = parseFloat(currentProduct?.price) || 0;
+    const basePrice = getProductPrice(currentProduct);
     const discountedPrice = appliedDiscount && appliedDiscount.pct > 0
       ? Math.round(basePrice * (1 - appliedDiscount.pct / 100) * 100) / 100
       : basePrice;
     const cart = currentProduct
-      ? [{ name: currentProduct.name, price: discountedPrice, qty: data.qty }]
+      ? [{ name: currentProduct.name, price: discountedPrice, qty: data.qty, currency: CURRENCY }]
       : [];
     
     // Add shipping cost to cart if selected
