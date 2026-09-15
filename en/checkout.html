@@ -232,13 +232,21 @@
           </div>
 
           <div>
+            <label class="mj-co-label">Country *</label>
+            <select class="mj-co-input" name="country" id="co-country" required style="height:48px;">
+              <option value="US" selected>🇺🇸 United States</option>
+              <option value="MX">🇲🇽 Mexico</option>
+            </select>
+          </div>
+
+          <div>
             <label class="mj-co-label">State / City *</label>
-            <input class="mj-co-input" type="text" name="city" placeholder="City de México" required>
+            <input class="mj-co-input" type="text" name="city" placeholder="Los Angeles, CA" required>
           </div>
 
           <div>
             <label class="mj-co-label">Postal Code *</label>
-            <input class="mj-co-input" type="text" name="cp" id="co-cp" placeholder="10001" maxlength="5" pattern="[0-9]{5}" required style="width:150px;">
+            <input class="mj-co-input" type="text" name="cp" id="co-cp" placeholder="90210" maxlength="5" pattern="[0-9]{5}" required style="width:150px;">
             <div id="co-shipping-quote" style="margin:1rem 0;font-family:Plus Jakarta Sans,sans-serif;font-size:.85rem;color:#666;display:none;"></div>
           </div>
           <div style="margin-bottom:1.25rem;">
@@ -367,6 +375,35 @@
 <script src="../js/whatsapp-bubble.js"></script></body>
 </html>
 
+<!-- Country selector logic -->
+<script>
+(function(){
+  const countrySelect = document.getElementById('co-country');
+  const cpInput = document.getElementById('co-cp');
+  const cityInput = document.querySelector('input[name="city"]');
+  
+  if (!countrySelect) return;
+  
+  function updateFormForCountry(country) {
+    const isUS = country === 'US';
+    if (cpInput) cpInput.placeholder = isUS ? '90210' : '06600';
+    if (cityInput) cityInput.placeholder = isUS ? 'Los Angeles, CA' : 'Ciudad de México';
+    // Clear postal code and shipping quote
+    if (cpInput) cpInput.value = '';
+    const quoteDiv = document.getElementById('co-shipping-quote');
+    if (quoteDiv) quoteDiv.style.display = 'none';
+  }
+  
+  countrySelect.addEventListener('change', function() {
+    updateFormForCountry(this.value);
+  });
+  
+  window.getSelectedCountry = function() {
+    return countrySelect?.value || 'US';
+  };
+})();
+</script>
+
 <!-- Shipping Quote (envia.com) -->
 <script>
 (function(){
@@ -391,6 +428,10 @@
   });
 
   async function fetchShippingQuote(cp) {
+    const country = window.getSelectedCountry ? window.getSelectedCountry() : 'US';
+    const isUS = country === 'US';
+    const currency = isUS ? 'USD' : 'MXN';
+    
     quoteDiv.innerHTML = '<div style="color:var(--orchid);"><span style="animation:pulse 1s infinite">✦</span> Getting shipping rates...</div>';
     quoteDiv.style.display = 'block';
     
@@ -398,13 +439,13 @@
       const res = await fetch('/api/shipping/quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ destination: cp, items: [{ weight: 2 }] })
+        body: JSON.stringify({ destination: cp, country: country, items: [{ weight: 2 }] })
       });
       
       const data = await res.json();
       
       if (data.quotes && data.quotes.length > 0) {
-        renderQuotes(data.quotes);
+        renderQuotes(data.quotes, currency);
       } else {
         quoteDiv.innerHTML = '<div style="color:#c53030;">No shipping options available for this postal code</div>';
       }
@@ -414,23 +455,28 @@
     }
   }
 
-  function renderQuotes(quotes) {
-    const sorted = quotes.sort((a, b) => a.price - b.price);
-    const currency = 'USD';
-    const rate = currency === 'USD' ? 18 : 1;
+  function renderQuotes(quotes, currency) {
+    // Group by carrier, keep only cheapest per carrier
+    const byCarrier = {};
+    quotes.forEach(q => {
+      const key = q.carrier.toUpperCase();
+      if (!byCarrier[key] || q.price < byCarrier[key].price) {
+        byCarrier[key] = q;
+      }
+    });
     
-    const html = sorted.slice(0, 5).map((q, i) => {
-      const price = currency === 'USD' ? q.price / 18 : q.price;
-      return `
+    const sorted = Object.values(byCarrier).sort((a, b) => a.price - b.price);
+    
+    const html = sorted.map((q, i) => `
       <label style="display:flex;align-items:center;gap:.75rem;padding:.75rem;margin:.5rem 0;background:#fff;border:2px solid ${i===0?'var(--orchid)':'#eee'};border-radius:8px;cursor:pointer;transition:border .2s;">
         <input type="radio" name="shipping_option" value="${q.id}" data-price="${q.price}" ${i===0?'checked':''} style="accent-color:var(--orchid);">
         <div style="flex:1;">
           <div style="font-weight:700;color:var(--burgundy);font-size:.85rem;">${q.carrier}</div>
-          <div style="color:#888;font-size:.75rem;">${q.service || ''} · ${q.days || '?'} days</div>
+          <div style="color:#888;font-size:.75rem;">${q.days || '2-5'} business days</div>
         </div>
-        <div style="font-weight:700;color:var(--burgundy);">$${price.toFixed(2)} ${currency}</div>
+        <div style="font-weight:700;color:var(--burgundy);">$${q.price.toFixed(2)} ${currency}</div>
       </label>
-    `}).join('');
+    `).join('');
     
     quoteDiv.innerHTML = '<div style="font-size:.75rem;color:var(--orchid);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.5rem;">Shipping Options</div>' + html;
     quoteDiv.style.display = 'block';

@@ -210,18 +210,56 @@ app.listen(PORT, () => {
 // ─── Envia.com Shipping API ──────────────────────────────────────────────────
 
 const ENVIA_API_KEY = process.env.ENVIA_API_KEY || 'c541f5b32442e1505448fbdcf85f6cc4ac132a273f148242b8159234fa34432c';
-const ENVIA_ORIGIN_CP = process.env.ENVIA_ORIGIN_CP || '66278'; // Default: Monterrey
+const ENVIA_ORIGIN_CP_MX = process.env.ENVIA_ORIGIN_CP || '66278'; // Mexico: Monterrey
+const ENVIA_ORIGIN_CP_US = '78852'; // USA: Eagle Pass, TX
 const ENVIA_API_URL = 'https://api.envia.com/ship/rate/';
+
+// Origin addresses for each country
+const ORIGINS = {
+  MX: {
+    name: 'Mah Joy',
+    company: 'Mah Joy',
+    email: 'info@playmahjoy.com',
+    phone: '5530395891',
+    street: 'Av. Vasconcelos',
+    number: '1000',
+    district: 'Del Valle',
+    city: 'San Pedro Garza García',
+    state: 'NL',
+    country: 'MX',
+    postalCode: ENVIA_ORIGIN_CP_MX
+  },
+  US: {
+    name: 'Play Mahjoy',
+    company: 'Play Mahjoy',
+    email: 'info@playmahjoy.com',
+    phone: '8305551234',
+    street: 'Webster St',
+    number: '3267',
+    district: '',
+    city: 'Eagle Pass',
+    state: 'TX',
+    country: 'US',
+    postalCode: ENVIA_ORIGIN_CP_US
+  }
+};
 
 app.post('/api/shipping/quote', async (req, res) => {
   if (!ENVIA_API_KEY) {
     return res.status(500).json({ error: 'Shipping not configured' });
   }
 
-  const { destination, items } = req.body;
+  const { destination, country, items } = req.body;
+  const destCountry = (country || 'MX').toUpperCase();
   
+  // Validate postal code length (5 for both MX and US)
   if (!destination || destination.length !== 5) {
     return res.status(400).json({ error: 'Invalid postal code' });
+  }
+  
+  // Only support MX and US for now
+  if (!['MX', 'US'].includes(destCountry)) {
+    return res.status(400).json({ error: 'Country not supported. Contact us for international shipping.' });
   }
 
   try {
@@ -229,30 +267,21 @@ app.post('/api/shipping/quote', async (req, res) => {
     // Default: medium box for mahjong sets
     const weight = items?.reduce((sum, i) => sum + (i.weight || 2), 0) || 2;
     
+    // Select origin based on destination country (ship from same country)
+    const origin = ORIGINS[destCountry];
+    
     // Envia.com API requires full address structure
     const payload = {
-      origin: {
-        name: 'Mah Joy',
-        company: 'Mah Joy',
-        email: 'info@playmahjoy.com',
-        phone: '5530395891',
-        street: 'Av. Vasconcelos',
-        number: '1000',
-        district: 'Del Valle',
-        city: 'San Pedro Garza García',
-        state: 'NL',
-        country: 'MX',
-        postalCode: ENVIA_ORIGIN_CP
-      },
+      origin: origin,
       destination: {
         name: 'Cliente',
-        phone: '5500000000',
-        street: 'Calle',
+        phone: destCountry === 'US' ? '5551234567' : '5500000000',
+        street: 'Street',
         number: '1',
-        district: 'Colonia',
-        city: 'Ciudad',
-        state: 'MX', // Will be determined from CP
-        country: 'MX',
+        district: destCountry === 'US' ? '' : 'Colonia',
+        city: 'City',
+        state: destCountry === 'US' ? 'TX' : 'MX', // Will be determined from CP
+        country: destCountry,
         postalCode: destination
       },
       packages: [{
@@ -275,8 +304,10 @@ app.post('/api/shipping/quote', async (req, res) => {
       }
     };
 
-    // Query multiple carriers in parallel
-    const carriers = ['fedex', 'dhl', 'estafeta', 'paquetexpress'];
+    // Query multiple carriers in parallel - different carriers per country
+    const carriers = destCountry === 'US' 
+      ? ['usps', 'fedex', 'ups'] // USA carriers
+      : ['fedex', 'dhl', 'estafeta', 'paquetexpress']; // Mexico carriers
     
     const fetchCarrierQuotes = async (carrier) => {
       try {
