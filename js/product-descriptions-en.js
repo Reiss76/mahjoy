@@ -83,6 +83,7 @@ window.MJ_SPECS = {
     specs: [
       'What\'s Included: 4 Acrylic Racks + 4 Acrylic Pushers',
       'Size: 18.11" L',
+      'Exposure: 43mm',
     ]
   },
   'RAKBAG': {
