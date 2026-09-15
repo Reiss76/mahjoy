@@ -59,10 +59,10 @@ window.MJ_DESCRIPTIONS = {
     ]
   },
   'rack blanco': {
-    description: 'White Racks\n\nA clean, classic design that goes with everything. These white racks bring a fresh, understated look to your mahjong table, making them a versatile choice for any game night.',
+    description: 'Un diseño limpio y clásico que combina con todo. Estos racks blancos aportan un look fresco y discreto a tu mesa de mahjong, haciéndolos una opción versátil para cualquier noche de juego.',
     specs: [
-      "What's included: Four white acrylic racks with pushers.",
-      'Size: 18 inches (45.72 cm)',
+      'Incluye: Cuatro racks de acrílico blanco con empujadores.',
+      'Medida: 18 pulgadas (45.72 cm)',
     ]
   },
 };
@@ -86,17 +86,18 @@ window.MJ_SPECS = {
     ]
   },
   'RACK': {
-    description: 'MAHJOY RACKS\n\nCrafted to stand apart.\n\nNuestros racks premium de Mahjong están hechos con excepcional atención al detalle, combinando materiales de calidad, un peso sustancial y un acabado bellamente pulido. Diseñados para elevar tu juego mientras aportan un toque distintivo a la mesa.\n\nHermosos, funcionales y hechos para durar — la clase de calidad que puedes ver y sentir.',
+    description: 'MAHJOY RACKS\n\nHechos para destacar.\n\nNuestros racks premium de Mahjong están hechos con excepcional atención al detalle, combinando materiales de calidad, un peso sustancial y un acabado bellamente pulido. Diseñados para elevar tu juego mientras aportan un toque distintivo a la mesa.\n\nHermosos, funcionales y hechos para durar — la clase de calidad que puedes ver y sentir.',
     specs: [
       'Incluye: 4 Racks de Acrílico + 4 Pushers de Acrílico',
       'Medida: 18.11" L (46 cm)',
+      'Exposición: 43mm',
     ]
   },
   'rack blanco': {
-    description: 'White Racks\n\nA clean, classic design that goes with everything. These white racks bring a fresh, understated look to your mahjong table, making them a versatile choice for any game night.',
+    description: 'Un diseño limpio y clásico que combina con todo. Estos racks blancos aportan un look fresco y discreto a tu mesa de mahjong, haciéndolos una opción versátil para cualquier noche de juego.',
     specs: [
-      "What's included: Four white acrylic racks with pushers.",
-      'Size: 18 inches (45.72 cm)',
+      'Incluye: Cuatro racks de acrílico blanco con empujadores.',
+      'Medida: 18 pulgadas (45.72 cm)',
     ]
   },
   'RAKBAG': {
