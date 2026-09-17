@@ -5,6 +5,14 @@
 
 const MJ_API_BASE = 'https://api-production-b888.up.railway.app';
 
+// Products that are actually IN STOCK (not presale)
+// If SKU is not in this list and stock > 0, show as "Pre venta"
+const IN_STOCK_SKUS = [
+  // Add SKUs that are ready to ship immediately
+  'MAT-PIEL', // Mat Polo Club
+  'Rack-007', // Rack Blanco
+];
+
 const CATEGORY_LABELS = {
   'tiles': 'Tiles',
   'mats': 'Mats',
@@ -64,6 +72,7 @@ const T = isEnglish ? {
   inStock: '● In Stock',
   lowStock: '● Only a few left',
   outOfStock: '● Out of Stock',
+  presale: '● Pre-order · Ships Oct 10',
   buyNow: 'Buy Now →',
   addToCart: 'Add to Cart',
   adding: 'Adding...',
@@ -73,6 +82,7 @@ const T = isEnglish ? {
   inStock: '● En stock',
   lowStock: '● Pocas piezas disponibles',
   outOfStock: '● Agotado',
+  presale: '● Pre venta · Envío Oct 10',
   buyNow: 'Comprar ahora →',
   addToCart: 'Agregar al carrito',
   adding: 'Agregando...',
@@ -270,16 +280,22 @@ async function loadProduct() {
     descEl.style.display = 'none';
   }
 
-  // Stock
+  // Stock - check if product is presale (not in IN_STOCK_SKUS)
   const stockEl = document.getElementById('pdp-stock');
-  if (product.stock > 5) {
-    stockEl.innerHTML = '<span class="mj-pdp-stock-badge in">' + T.inStock + '</span>';
-  } else if (product.stock > 0) {
-    stockEl.innerHTML = '<span class="mj-pdp-stock-badge low">' + T.lowStock + '</span>';
-  } else {
+  const isInStock = IN_STOCK_SKUS.includes(product.sku);
+  
+  if (product.stock === 0) {
+    // Out of stock or coming soon
     stockEl.innerHTML = '<span class="mj-pdp-stock-badge out">' + T.outOfStock + '</span>';
     document.getElementById('pdp-order-btn').style.opacity = '0.4';
     document.getElementById('pdp-order-btn').style.pointerEvents = 'none';
+  } else if (!isInStock) {
+    // Has stock but not in IN_STOCK list = presale
+    stockEl.innerHTML = '<span class="mj-pdp-stock-badge presale" style="color:var(--orchid);font-weight:700;">' + T.presale + '</span>';
+  } else if (product.stock > 5) {
+    stockEl.innerHTML = '<span class="mj-pdp-stock-badge in">' + T.inStock + '</span>';
+  } else {
+    stockEl.innerHTML = '<span class="mj-pdp-stock-badge low">' + T.lowStock + '</span>';
   }
 
   // Order button with product info pre-filled in contact URL
