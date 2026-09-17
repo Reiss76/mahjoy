@@ -8,9 +8,20 @@ const MJ_API_BASE = 'https://api-production-b888.up.railway.app';
 // Products that are actually IN STOCK (not presale)
 // If SKU is not in this list and stock > 0, show as "Pre venta"
 const IN_STOCK_SKUS = [
-  // Add SKUs that are ready to ship immediately
-  'MAT-PIEL', // Mat Polo Club
-  'Rack-007', // Rack Blanco
+  // Mats
+  'MAT-PIEL',
+  // Racks
+  'Rack-007',
+  // Mahjoy Bags
+  'Bag-blue', 'Bag-fiucsa', 'BAG-lila', 'Bag-pink', 'Bag-rouge',
+  // Card Holders
+  'Folio-1', 'Folio-2',
+  // Tile Bags
+  'BAG-tilelila', 'BAG-tilepink',
+  // Line Finders
+  'LINE-001', 'LINE-002', 'LINE-003', 'LINE-005',
+  // Shufflers
+  'SHUF-001', 'SHUF-002', 'SHUF-003', 'SHUF-004',
 ];
 
 const CATEGORY_LABELS = {
