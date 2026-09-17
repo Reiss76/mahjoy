@@ -8,6 +8,8 @@ const MJ_API_BASE = 'https://api-production-b888.up.railway.app';
 // Products that are actually IN STOCK (not presale)
 // If SKU is not in this list and stock > 0, show as "Pre venta"
 const IN_STOCK_SKUS = [
+  // Tiles
+  'TILE-dina', 'TILE-heri', 'TILE-impe', 'TILE-Kale', 'TILE-mythos', 'TILE-sensu',
   // Mats
   'MAT-PIEL',
   // Racks
