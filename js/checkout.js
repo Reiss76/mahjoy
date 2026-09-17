@@ -426,7 +426,8 @@ document.addEventListener('DOMContentLoaded', () => {
     discMsg.style.display = 'none';
 
     try {
-      const res = await fetch(`${MJ_API_BASE}/public/vendors/discount/${encodeURIComponent(code)}`);
+      // Use proax.app for discount validation (vendor codes are stored there)
+      const res = await fetch(`https://proax.app/api/public/vendors/discount/${encodeURIComponent(code)}`);
       const data = await res.json();
 
       if (!res.ok || !data.valid) {
