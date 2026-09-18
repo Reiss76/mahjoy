@@ -352,10 +352,25 @@ html, body {
   .mj-pdp-layout {
     grid-template-columns: 1fr;
     gap: 2rem;
+    max-width: 100%;
+    overflow: hidden;
   }
   .mj-pdp-gallery {
     position: relative;
     top: 0;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+  .mj-pdp-main-img-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+  .mj-pdp-main-img {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
   }
   .mj-pdp-thumbnails {
     display: flex !important;
@@ -366,25 +381,35 @@ html, body {
     touch-action: pan-x;
     padding: 8px 0;
     gap: 8px;
+    width: 100%;
+    max-width: 100%;
   }
   .mj-pdp-thumb {
     flex: 0 0 56px;
     width: 56px;
     height: 56px;
+    min-width: 56px;
   }
 }
 
 /* Gallery */
-.mj-pdp-gallery { position: sticky; top: 2rem; }
+.mj-pdp-gallery { 
+  position: sticky; 
+  top: 2rem;
+  box-sizing: border-box;
+}
 .mj-pdp-main-img-wrap {
   border-radius: 16px;
   overflow: hidden;
   background: #fdf8fb;
+  box-sizing: border-box;
 }
 .mj-pdp-main-img {
   width: 100%;
+  max-width: 100%;
   height: auto;
   display: block;
+  box-sizing: border-box;
 }
 .mj-pdp-main-img:hover { transform: scale(1.03); }
 .mj-pdp-thumbnails {
