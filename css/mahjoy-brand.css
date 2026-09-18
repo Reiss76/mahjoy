@@ -357,22 +357,6 @@ html, body {
     position: relative;
     top: 0;
   }
-  .mj-pdp-main-img-wrap {
-    aspect-ratio: unset;
-    max-height: unset;
-    height: auto;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: #fdf8fb;
-  }
-  .mj-pdp-main-img {
-    width: 100%;
-    height: auto;
-    max-height: 50vh;
-    object-fit: contain;
-  }
   .mj-pdp-thumbnails {
     display: flex !important;
     flex-wrap: nowrap !important;
@@ -396,16 +380,11 @@ html, body {
   border-radius: 16px;
   overflow: hidden;
   background: #fdf8fb;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 .mj-pdp-main-img {
   width: 100%;
   height: auto;
-  object-fit: contain;
   display: block;
-  transition: transform 0.4s ease;
 }
 .mj-pdp-main-img:hover { transform: scale(1.03); }
 .mj-pdp-thumbnails {
