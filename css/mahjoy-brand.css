@@ -349,6 +349,12 @@ html, body {
   align-items: flex-start;
 }
 @media (max-width: 768px) {
+  .mj-pdp-section .container {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
+  }
   .mj-pdp-layout {
     grid-template-columns: 1fr;
     gap: 2rem;
