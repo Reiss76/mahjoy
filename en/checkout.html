@@ -384,6 +384,18 @@
   
   if (!countrySelect) return;
   
+  // Auto-detect country based on IP
+  fetch('https://ipapi.co/json/')
+    .then(r => r.json())
+    .then(data => {
+      const country = data.country_code || data.country;
+      if (country === 'MX' && countrySelect.value !== 'MX') {
+        countrySelect.value = 'MX';
+        updateFormForCountry('MX');
+      }
+    })
+    .catch(() => {});
+  
   function updateFormForCountry(country) {
     const isUS = country === 'US';
     if (cpInput) cpInput.placeholder = isUS ? '90210' : '06600';
