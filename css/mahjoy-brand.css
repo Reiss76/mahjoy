@@ -369,14 +369,15 @@ html, body {
     overflow: hidden;
   }
   .mj-pdp-main-img-wrap {
-    width: 100%;
-    max-width: 100%;
-    overflow: hidden;
+    width: 100% !important;
+    max-width: calc(100vw - 32px) !important;
+    overflow: hidden !important;
   }
   .mj-pdp-main-img {
-    width: 100%;
-    max-width: 100%;
-    height: auto;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
   }
   .mj-pdp-thumbnails {
     display: flex !important;
