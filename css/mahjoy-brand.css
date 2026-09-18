@@ -353,6 +353,18 @@ html, body {
     grid-template-columns: 1fr;
     gap: 2rem;
   }
+  .mj-pdp-gallery {
+    position: relative;
+    top: 0;
+  }
+  .mj-pdp-main-img-wrap {
+    aspect-ratio: 4 / 3;
+    max-height: 350px;
+  }
+  .mj-pdp-thumbnails {
+    max-width: 100%;
+    width: 100%;
+  }
 }
 
 /* Gallery */
@@ -362,6 +374,7 @@ html, body {
   overflow: hidden;
   background: #fdf8fb;
   aspect-ratio: 1 / 1;
+  max-height: 500px;
 }
 .mj-pdp-main-img {
   width: 100%;
@@ -375,11 +388,13 @@ html, body {
   display: flex;
   gap: 0.5rem;
   margin-top: 0.75rem;
-  overflow-x: auto;
+  overflow-x: scroll;
   overflow-y: hidden;
   padding: 0.25rem 0;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  width: 100%;
+  max-width: 100%;
 }
 .mj-pdp-thumbnails::-webkit-scrollbar {
   display: none;
