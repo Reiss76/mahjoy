@@ -358,15 +358,20 @@ html, body {
     top: 0;
   }
   .mj-pdp-main-img-wrap {
-    aspect-ratio: 1 / 1;
-    max-height: 380px;
+    aspect-ratio: unset;
+    max-height: unset;
+    height: auto;
     width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #fdf8fb;
   }
   .mj-pdp-main-img {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
+    height: auto;
+    max-height: 50vh;
+    object-fit: contain;
   }
   .mj-pdp-thumbnails {
     display: flex !important;
@@ -391,13 +396,14 @@ html, body {
   border-radius: 16px;
   overflow: hidden;
   background: #fdf8fb;
-  aspect-ratio: 1 / 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 .mj-pdp-main-img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
+  height: auto;
+  object-fit: contain;
   display: block;
   transition: transform 0.4s ease;
 }
