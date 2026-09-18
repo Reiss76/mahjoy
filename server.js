@@ -323,13 +323,30 @@ app.post('/api/shipping/quote', async (req, res) => {
         const data = await response.json();
         const rates = data.data || data || [];
         if (Array.isArray(rates)) {
-          return rates.map(q => ({
-            id: q.carrier_service_code || q.serviceCode || `${carrier}-${q.service}`,
-            carrier: q.carrier || carrier,
-            service: q.service || q.serviceName || 'Standard',
-            days: q.delivery_days || q.deliveryDays || q.estimated_delivery || '2-5',
-            price: parseFloat(q.total_price || q.totalPrice || q.amount || q.price || 0)
-          })).filter(q => q.price > 0);
+          // Exchange rate MXN to USD (approximate)
+          const MXN_TO_USD = 0.05; // 1 MXN = 0.05 USD (20 MXN = 1 USD)
+          
+          return rates.map(q => {
+            const rawPrice = parseFloat(q.total_price || q.totalPrice || q.amount || q.price || 0);
+            const currency = q.currency || 'MXN';
+            
+            // If destination is US and price is in MXN, convert to USD
+            let finalPrice = rawPrice;
+            let finalCurrency = currency;
+            if (destCountry === 'US' && currency === 'MXN') {
+              finalPrice = rawPrice * MXN_TO_USD;
+              finalCurrency = 'USD';
+            }
+            
+            return {
+              id: q.carrier_service_code || q.serviceCode || `${carrier}-${q.service}`,
+              carrier: (q.carrierDescription || q.carrier || carrier).toUpperCase(),
+              service: q.serviceDescription || q.service || q.serviceName || 'Standard',
+              days: q.deliveryEstimate || q.delivery_days || q.deliveryDays || q.estimated_delivery || '2-5',
+              price: Math.round(finalPrice * 100) / 100,
+              currency: finalCurrency
+            };
+          }).filter(q => q.price > 0);
         }
         return [];
       } catch (e) {
@@ -341,8 +358,11 @@ app.post('/api/shipping/quote', async (req, res) => {
     const allQuotes = await Promise.all(carriers.map(fetchCarrierQuotes));
     const quotes = allQuotes.flat().sort((a, b) => a.price - b.price);
     
+    // Determine display currency based on destination
+    const displayCurrency = destCountry === 'US' ? 'USD' : 'MXN';
+    
     if (quotes.length > 0) {
-      res.json({ quotes });
+      res.json({ quotes, currency: displayCurrency });
     } else {
       res.json({ error: 'No shipping options available' });
     }
