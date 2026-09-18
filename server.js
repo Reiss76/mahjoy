@@ -214,6 +214,25 @@ const ENVIA_ORIGIN_CP_MX = process.env.ENVIA_ORIGIN_CP || '66278'; // Mexico: Mo
 const ENVIA_ORIGIN_CP_US = '78852'; // USA: Eagle Pass, TX
 const ENVIA_API_URL = 'https://api.envia.com/ship/rate/';
 
+// Cache exchange rate (refresh every hour)
+let cachedExchangeRate = { rate: 19.5, timestamp: 0 };
+async function getMXNtoUSDRate() {
+  const now = Date.now();
+  // Refresh rate every hour
+  if (now - cachedExchangeRate.timestamp > 3600000) {
+    try {
+      const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+      const data = await res.json();
+      if (data.rates && data.rates.MXN) {
+        cachedExchangeRate = { rate: data.rates.MXN, timestamp: now };
+      }
+    } catch (e) {
+      console.error('Exchange rate fetch failed, using cached:', e.message);
+    }
+  }
+  return cachedExchangeRate.rate;
+}
+
 // Origin addresses for each country
 const ORIGINS = {
   MX: {
@@ -323,28 +342,17 @@ app.post('/api/shipping/quote', async (req, res) => {
         const data = await response.json();
         const rates = data.data || data || [];
         if (Array.isArray(rates)) {
-          // Exchange rate MXN to USD (approximate)
-          const MXN_TO_USD = 0.05; // 1 MXN = 0.05 USD (20 MXN = 1 USD)
-          
           return rates.map(q => {
             const rawPrice = parseFloat(q.total_price || q.totalPrice || q.amount || q.price || 0);
             const currency = q.currency || 'MXN';
-            
-            // If destination is US and price is in MXN, convert to USD
-            let finalPrice = rawPrice;
-            let finalCurrency = currency;
-            if (destCountry === 'US' && currency === 'MXN') {
-              finalPrice = rawPrice * MXN_TO_USD;
-              finalCurrency = 'USD';
-            }
             
             return {
               id: q.carrier_service_code || q.serviceCode || `${carrier}-${q.service}`,
               carrier: (q.carrierDescription || q.carrier || carrier).toUpperCase(),
               service: q.serviceDescription || q.service || q.serviceName || 'Standard',
               days: q.deliveryEstimate || q.delivery_days || q.deliveryDays || q.estimated_delivery || '2-5',
-              price: Math.round(finalPrice * 100) / 100,
-              currency: finalCurrency
+              price: rawPrice,
+              currency: currency
             };
           }).filter(q => q.price > 0);
         }
@@ -356,10 +364,20 @@ app.post('/api/shipping/quote', async (req, res) => {
     };
 
     const allQuotes = await Promise.all(carriers.map(fetchCarrierQuotes));
-    const quotes = allQuotes.flat().sort((a, b) => a.price - b.price);
+    let quotes = allQuotes.flat().sort((a, b) => a.price - b.price);
     
     // Determine display currency based on destination
     const displayCurrency = destCountry === 'US' ? 'USD' : 'MXN';
+    
+    // Convert MXN to USD for US destinations using live exchange rate
+    if (destCountry === 'US') {
+      const exchangeRate = await getMXNtoUSDRate();
+      quotes = quotes.map(q => ({
+        ...q,
+        price: q.currency === 'MXN' ? Math.round((q.price / exchangeRate) * 100) / 100 : q.price,
+        currency: 'USD'
+      }));
+    }
     
     if (quotes.length > 0) {
       res.json({ quotes, currency: displayCurrency });
