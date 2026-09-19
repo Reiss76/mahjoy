@@ -30,10 +30,10 @@ function initPayPalButton() {
     return;
   }
   
-  // Check if PayPal SDK loaded
+  // Check if PayPal SDK loaded (may be blocked by Safari privacy settings)
   if (typeof paypal === 'undefined') {
-    console.error('PayPal SDK not loaded');
-    container.innerHTML = '<p style="color:#999;font-size:.8rem;text-align:center;">PayPal no disponible</p>';
+    console.error('PayPal SDK not loaded - may be blocked by browser privacy settings');
+    container.innerHTML = '<p style="color:#888;font-size:.75rem;text-align:center;padding:8px;">PayPal blocked by browser. Use Card payment or disable "Prevent Cross-Site Tracking" in Safari Settings.</p>';
     return;
   }
   
@@ -175,9 +175,17 @@ function initPayPalButton() {
     console.log('PayPal buttons rendered successfully');
   }).catch(function(err) {
     console.error('PayPal render error:', err);
-    container.innerHTML = '<p style="color:#999;font-size:.8rem;text-align:center;">PayPal temporarily unavailable</p>';
+    container.innerHTML = '<p style="color:#888;font-size:.75rem;text-align:center;padding:8px;">PayPal unavailable. Please use Card payment.</p>';
   });
 }
+
+// Fallback: If buttons don't appear after 5 seconds, show message
+setTimeout(function() {
+  const container = document.getElementById('paypal-button-container');
+  if (container && container.innerHTML.trim() === '') {
+    container.innerHTML = '<p style="color:#888;font-size:.75rem;text-align:center;padding:8px;">PayPal not available. Use Card or WhatsApp.</p>';
+  }
+}, 5000);
 
 async function savePayPalOrder(paypalDetails) {
   const form = document.getElementById('co-form');
