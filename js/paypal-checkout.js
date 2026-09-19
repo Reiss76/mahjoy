@@ -29,8 +29,9 @@ function initPayPalButton() {
     return;
   }
   
-  // Clear container before rendering
+  // Clear container and mark as rendering
   container.innerHTML = '';
+  paypalButtonRendered = true; // Set BEFORE render to prevent race conditions
 
   paypal.Buttons({
     style: {
@@ -153,8 +154,10 @@ function initPayPalButton() {
       // Don't re-render — buttons still exist
     }
   }).render('#paypal-button-container').then(function() {
-    paypalButtonRendered = true;
-    console.log('PayPal buttons rendered');
+    console.log('PayPal buttons rendered successfully');
+  }).catch(function(err) {
+    console.error('PayPal render error:', err);
+    paypalButtonRendered = false; // Allow retry on render failure
   });
 }
 
