@@ -6,6 +6,46 @@ const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
 const fs = require('fs');
+const { Pool } = require('pg');
+
+// ─── Neon PostgreSQL Connection ───────────────────────────────────────────────
+const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_x2RgNOqr1TSV@ep-sweet-dawn-aht8zmog-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require';
+const pool = new Pool({ 
+  connectionString: DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
+
+// Initialize orders table
+async function initDatabase() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS mahjoy_orders (
+        id SERIAL PRIMARY KEY,
+        order_id VARCHAR(100) UNIQUE NOT NULL,
+        customer_name VARCHAR(100),
+        customer_lastname VARCHAR(100),
+        customer_email VARCHAR(255),
+        customer_phone VARCHAR(50),
+        shipping_street VARCHAR(255),
+        shipping_interior VARCHAR(100),
+        shipping_neighborhood VARCHAR(100),
+        shipping_city VARCHAR(100),
+        shipping_state VARCHAR(100),
+        shipping_cp VARCHAR(20),
+        shipping_cost DECIMAL(10,2),
+        cart JSONB,
+        status VARCHAR(50) DEFAULT 'checkout_started',
+        source VARCHAR(50),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('[db] Orders table ready');
+  } catch (err) {
+    console.error('[db] Failed to init database:', err.message);
+  }
+}
+initDatabase();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -151,8 +191,8 @@ app.post('/api/centumpay/checkout', async (req, res) => {
       shipping_cost: Number(shipping_cost) || 0
     };
 
-    // BACKUP: Save order data to file BEFORE calling Proax
-    saveOrderToBackup({
+    // BACKUP: Save order data to file AND database BEFORE calling Proax
+    const orderBackupData = {
       orderId: myOrderId,
       cart: cartItems,
       customer_name,
@@ -168,7 +208,13 @@ app.post('/api/centumpay/checkout', async (req, res) => {
       shipping_cost: Number(shipping_cost) || 0,
       status: 'checkout_started',
       source: 'centumpay'
-    });
+    };
+    
+    // Save to file (fallback)
+    saveOrderToBackup(orderBackupData);
+    
+    // Save to Neon database (primary)
+    await saveOrderToDatabase(orderBackupData);
 
     console.log('[centumpay] Forwarding to Proax:', JSON.stringify(universePayload, null, 2));
 
@@ -477,6 +523,104 @@ function saveOrderToBackup(orderData) {
 // Get all orders from backup
 function getAllOrdersFromBackup() {
   return loadOrdersBackup();
+}
+
+// ─── Database Functions ───────────────────────────────────────────────────────
+async function saveOrderToDatabase(orderData) {
+  try {
+    const result = await pool.query(`
+      INSERT INTO mahjoy_orders (
+        order_id, customer_name, customer_lastname, customer_email, customer_phone,
+        shipping_street, shipping_interior, shipping_neighborhood, shipping_city, 
+        shipping_state, shipping_cp, shipping_cost, cart, status, source
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      ON CONFLICT (order_id) DO UPDATE SET
+        status = EXCLUDED.status,
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING id
+    `, [
+      orderData.orderId,
+      orderData.customer_name || '',
+      orderData.customer_lastname || '',
+      orderData.customer_email || '',
+      orderData.customer_phone || '',
+      orderData.shipping_street || '',
+      orderData.shipping_interior || '',
+      orderData.shipping_neighborhood || '',
+      orderData.shipping_city || '',
+      orderData.shipping_state || '',
+      orderData.shipping_cp || '',
+      orderData.shipping_cost || 0,
+      JSON.stringify(orderData.cart || []),
+      orderData.status || 'checkout_started',
+      orderData.source || 'web'
+    ]);
+    console.log(`[db] Saved order ${orderData.orderId} (id: ${result.rows[0]?.id})`);
+    return true;
+  } catch (err) {
+    console.error('[db] Failed to save order:', err.message);
+    return false;
+  }
+}
+
+async function getOrdersFromDatabase(limit = 100) {
+  try {
+    const result = await pool.query(`
+      SELECT * FROM mahjoy_orders 
+      ORDER BY created_at DESC 
+      LIMIT $1
+    `, [limit]);
+    return result.rows.map(row => ({
+      orderId: row.order_id,
+      customer_name: row.customer_name,
+      customer_lastname: row.customer_lastname,
+      customer_email: row.customer_email,
+      customer_phone: row.customer_phone,
+      shipping_street: row.shipping_street,
+      shipping_interior: row.shipping_interior,
+      shipping_neighborhood: row.shipping_neighborhood,
+      shipping_city: row.shipping_city,
+      shipping_state: row.shipping_state,
+      shipping_cp: row.shipping_cp,
+      shipping_cost: parseFloat(row.shipping_cost),
+      cart: row.cart,
+      status: row.status,
+      source: row.source,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    }));
+  } catch (err) {
+    console.error('[db] Failed to get orders:', err.message);
+    return [];
+  }
+}
+
+async function getTodayOrdersFromDatabase() {
+  try {
+    const result = await pool.query(`
+      SELECT * FROM mahjoy_orders 
+      WHERE created_at >= CURRENT_DATE
+      ORDER BY created_at DESC
+    `);
+    return result.rows.map(row => ({
+      orderId: row.order_id,
+      customer_name: row.customer_name,
+      customer_lastname: row.customer_lastname,
+      customer_email: row.customer_email,
+      customer_phone: row.customer_phone,
+      shipping_street: row.shipping_street,
+      shipping_city: row.shipping_city,
+      shipping_state: row.shipping_state,
+      shipping_cp: row.shipping_cp,
+      shipping_cost: parseFloat(row.shipping_cost),
+      cart: row.cart,
+      status: row.status,
+      createdAt: row.created_at
+    }));
+  } catch (err) {
+    console.error('[db] Failed to get today orders:', err.message);
+    return [];
+  }
 }
 
 // Helper to update order in Proax
@@ -1043,32 +1187,27 @@ app.get('/api/orders/:orderId', (req, res) => {
   }
 });
 
-// List recent orders (from backup + memory)
-app.get('/api/orders', (req, res) => {
-  const memoryOrders = Array.from(pendingOrders.values());
-  const backupOrders = getAllOrdersFromBackup();
-  
-  // Merge, preferring memory orders (more recent state)
-  const allOrderIds = new Set([...memoryOrders.map(o => o.orderId), ...backupOrders.map(o => o.orderId)]);
-  const mergedOrders = [];
-  
-  for (const id of allOrderIds) {
-    const memOrder = memoryOrders.find(o => o.orderId === id);
-    const backupOrder = backupOrders.find(o => o.orderId === id);
-    mergedOrders.push(memOrder || backupOrder);
+// List recent orders (from Neon database)
+app.get('/api/orders', async (req, res) => {
+  try {
+    const orders = await getOrdersFromDatabase(100);
+    res.json({ orders, count: orders.length, source: 'neon' });
+  } catch (err) {
+    // Fallback to file backup
+    const backupOrders = getAllOrdersFromBackup();
+    res.json({ orders: backupOrders, count: backupOrders.length, source: 'file_backup' });
   }
-  
-  mergedOrders.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-  res.json({ orders: mergedOrders.slice(0, 100), count: mergedOrders.length });
 });
 
-// Get orders from today
-app.get('/api/orders/today', (req, res) => {
-  const today = new Date().toISOString().split('T')[0];
-  const allOrders = getAllOrdersFromBackup();
-  const todayOrders = allOrders.filter(o => o.createdAt && o.createdAt.startsWith(today));
-  todayOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  res.json({ orders: todayOrders, count: todayOrders.length, date: today });
+// Get orders from today (from Neon database)
+app.get('/api/orders/today', async (req, res) => {
+  try {
+    const orders = await getTodayOrdersFromDatabase();
+    const today = new Date().toISOString().split('T')[0];
+    res.json({ orders, count: orders.length, date: today, source: 'neon' });
+  } catch (err) {
+    res.json({ orders: [], count: 0, error: err.message });
+  }
 });
 
 // ─── CentumPay Polling (since they don't have webhooks) ──────────────────────
