@@ -10,14 +10,22 @@ let paypalButtonRendered = false; // Prevent duplicate renders
 const isEnCheckout = window.location.pathname.includes('/en/');
 const PAYPAL_CURRENCY = isEnCheckout ? 'USD' : 'MXN';
 
-// Wait for DOM and PayPal SDK to load
+// Wait for DOM and PayPal SDK to load - with retry logic
+function tryInitPayPal(retries) {
+  if (typeof paypal !== 'undefined' && document.getElementById('paypal-button-container')) {
+    initPayPalButton();
+  } else if (retries > 0) {
+    setTimeout(function() { tryInitPayPal(retries - 1); }, 500);
+  }
+}
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(initPayPalButton, 500);
+    setTimeout(function() { tryInitPayPal(5); }, 500);
   });
 } else {
-  // DOM already loaded - init immediately with a small delay for checkout.js
-  setTimeout(initPayPalButton, 500);
+  // DOM already loaded - try immediately with retries
+  setTimeout(function() { tryInitPayPal(5); }, 500);
 }
 
 function initPayPalButton() {
