@@ -217,8 +217,8 @@
           </script>
 
           <div>
-            <label class="mj-co-label">WhatsApp / Phone *</label>
-            <input class="mj-co-input" type="tel" name="phone" placeholder="+52 55 0000 0000" required>
+            <label class="mj-co-label">Phone *</label>
+            <input class="mj-co-input" type="tel" name="phone" placeholder="+1 (555) 123-4567" required>
           </div>
 
           <div>
@@ -240,25 +240,40 @@
           </div>
 
           <div>
-            <label class="mj-co-label">State / City *</label>
-            <input class="mj-co-input" type="text" name="city" placeholder="Los Angeles, CA" required>
+            <label class="mj-co-label">Street Address *</label>
+            <input class="mj-co-input" type="text" name="street" placeholder="123 Main Street" required>
           </div>
 
           <div>
-            <label class="mj-co-label">Postal Code *</label>
+            <label class="mj-co-label">Apt / Suite / Unit</label>
+            <input class="mj-co-input" type="text" name="interior" placeholder="Apt 4B (optional)">
+          </div>
+
+          <div>
+            <label class="mj-co-label">City *</label>
+            <input class="mj-co-input" type="text" name="city" placeholder="Los Angeles" required>
+          </div>
+
+          <div>
+            <label class="mj-co-label">State *</label>
+            <input class="mj-co-input" type="text" name="state" placeholder="CA" required style="width:100px;">
+          </div>
+
+          <div>
+            <label class="mj-co-label">ZIP Code *</label>
             <input class="mj-co-input" type="text" name="cp" id="co-cp" placeholder="90210" maxlength="5" pattern="[0-9]{5}" required style="width:150px;">
             <div id="co-shipping-quote" style="margin:1rem 0;font-family:Plus Jakarta Sans,sans-serif;font-size:.85rem;color:#666;display:none;"></div>
           </div>
           <div style="margin-bottom:1.25rem;">
             <label class="mj-co-label">Additional Notes</label>
-            <textarea class="mj-co-input" name="notes" rows="3" placeholder="Color preferido, variante, instrucciones de entrega..." style="resize:vertical;"></textarea>
+            <textarea class="mj-co-input" name="notes" rows="3" placeholder="Preferred color, variant, delivery instructions..." style="resize:vertical;"></textarea>
           </div>
 
           <!-- Discount Code -->
           <div id="co-discount-wrap" style="border:1.5px solid #f0e4ec;border-radius:12px;padding:1rem;background:#fdf8fb;">
             <label class="mj-co-label" style="margin-bottom:.5rem;">Discount Code</label>
             <div style="display:flex;gap:.6rem;align-items:center;">
-              <input class="mj-co-input" type="text" id="co-discount-input" placeholder="Ingresa tu código" autocomplete="off"
+              <input class="mj-co-input" type="text" id="co-discount-input" placeholder="Enter your code" autocomplete="off"
                 style="flex:1;text-transform:uppercase;letter-spacing:.08em;margin-bottom:0;" maxlength="20">
               <button type="button" id="co-discount-btn"
                 style="background:var(--burgundy);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;font-weight:700;padding:.6rem 1.1rem;border-radius:999px;border:none;cursor:pointer;white-space:nowrap;">
@@ -287,7 +302,8 @@
             <div id="paypal-button-container" style="min-height:45px;"></div>
           </div>
 
-          <a id="co-wa-btn" href="#" target="_blank" style="display:block;text-align:center;background:transparent;color:var(--burgundy);border:2px solid var(--burgundy);font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;font-weight:700;letter-spacing:.04em;padding:1rem 2rem;border-radius:999px;text-decoration:none;transition:background .2s;margin-top:1rem;">
+          <!-- WhatsApp hidden for US customers -->
+          <a id="co-wa-btn" href="#" target="_blank" style="display:none;">
             💬 Continue via WhatsApp
           </a>
 
