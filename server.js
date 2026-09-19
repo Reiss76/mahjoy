@@ -138,9 +138,9 @@ app.post('/api/centumpay/checkout', async (req, res) => {
       shipping_cost: Number(shipping_cost) || 0
     };
 
-    console.log('[centumpay] Forwarding to Universe:', JSON.stringify(universePayload, null, 2));
+    console.log('[centumpay] Forwarding to Proax:', JSON.stringify(universePayload, null, 2));
 
-    const universeRes = await fetch('https://universeapp.pro/api/payments/centumpay/checkout', {
+    const universeRes = await fetch('https://proax.app/api/payments/centumpay/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(universePayload),
