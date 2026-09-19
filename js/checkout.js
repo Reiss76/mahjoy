@@ -205,14 +205,16 @@ async function loadCheckout() {
       }
     }
     
-    // Fallback to local products.json for offline/cache
+    // Fallback to local products.json for offline/cache (use absolute path for /en/)
     if (!product) {
-      const res = await fetch('products.json');
-      const data = await res.json();
-      const products = data.products || [];
-      product = productId
-        ? products.find(p => p.id === productId)
-        : products.find(p => p.sku === productSku);
+      const res = await fetch('/products.json');
+      if (res.ok) {
+        const data = await res.json();
+        const products = data.products || [];
+        product = productId
+          ? products.find(p => p.id === productId)
+          : products.find(p => p.sku === productSku || p.sku?.toLowerCase() === productSku?.toLowerCase());
+      }
     }
   } catch (e) {
     console.error('Error loading product:', e);
