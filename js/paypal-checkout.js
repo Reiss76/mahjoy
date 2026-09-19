@@ -6,6 +6,10 @@
 const MJ_PAYPAL_API = 'https://proax.app/api/public/mahjoy';
 let paypalButtonRendered = false; // Prevent duplicate renders
 
+// Detect if EN checkout (uses USD) or ES checkout (uses MXN)
+const isEnCheckout = window.location.pathname.includes('/en/');
+const PAYPAL_CURRENCY = isEnCheckout ? 'USD' : 'MXN';
+
 // Wait for DOM and PayPal SDK to load
 document.addEventListener('DOMContentLoaded', function() {
   // Give checkout.js time to initialize
@@ -85,39 +89,49 @@ function initPayPalButton() {
       const productTotal = discountedPrice * qty;
       const total = productTotal + shippingCost;
       
-      // Build order items
+      // Build order items - use USD for EN, MXN for ES
       const items = [{
         name: currentProduct.name.substring(0, 127), // PayPal limit
         unit_amount: {
-          currency_code: 'MXN',
+          currency_code: PAYPAL_CURRENCY,
           value: discountedPrice.toFixed(2)
         },
         quantity: qty.toString()
       }];
       
       // Add shipping as item if present
-      if (shippingCost > 0) {
+      // For EN checkout, shipping from Envia is MXN - need to convert to USD
+      let shippingForPayPal = shippingCost;
+      if (isEnCheckout && shippingCost > 0) {
+        const rate = window.cachedExchangeRate || 19.5;
+        shippingForPayPal = Math.round((shippingCost / rate) * 100) / 100;
+      }
+      
+      if (shippingForPayPal > 0) {
         items.push({
-          name: 'Envío',
+          name: 'Shipping',
           unit_amount: {
-            currency_code: 'MXN',
-            value: shippingCost.toFixed(2)
+            currency_code: PAYPAL_CURRENCY,
+            value: shippingForPayPal.toFixed(2)
           },
           quantity: '1'
         });
       }
+      
+      // Calculate final total with converted shipping
+      const finalTotal = productTotal + shippingForPayPal;
       
       return actions.order.create({
         intent: 'CAPTURE',
         purchase_units: [{
           description: 'MAH JOY - ' + currentProduct.name,
           amount: {
-            currency_code: 'MXN',
-            value: total.toFixed(2),
+            currency_code: PAYPAL_CURRENCY,
+            value: finalTotal.toFixed(2),
             breakdown: {
               item_total: {
-                currency_code: 'MXN',
-                value: total.toFixed(2)
+                currency_code: PAYPAL_CURRENCY,
+                value: finalTotal.toFixed(2)
               }
             }
           },
