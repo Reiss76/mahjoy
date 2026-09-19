@@ -46,6 +46,19 @@ let currentProduct = null;
 let qty = 1;
 let appliedDiscount = null; // { code, vendorCode, vendorName, pct }
 let selectedShippingCost = 0; // Set by shipping quote script
+let cachedExchangeRate = 19.5; // Default rate, will be fetched
+window.cachedExchangeRate = cachedExchangeRate; // Expose globally for shipping script
+
+// Fetch exchange rate for USD→MXN conversion (CentumPay only accepts MXN)
+fetch('https://api.exchangerate-api.com/v4/latest/USD')
+  .then(r => r.json())
+  .then(data => { 
+    if (data.rates?.MXN) {
+      cachedExchangeRate = data.rates.MXN;
+      window.cachedExchangeRate = cachedExchangeRate;
+    }
+  })
+  .catch(() => {});
 
 function getDiscountedTotal() {
   if (!currentProduct) return 0;
@@ -295,13 +308,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const discountedPrice = appliedDiscount && appliedDiscount.pct > 0
       ? Math.round(basePrice * (1 - appliedDiscount.pct / 100) * 100) / 100
       : basePrice;
+    
+    // CentumPay only accepts MXN — convert USD product prices to MXN
+    const priceForPayment = isEN ? Math.round(discountedPrice * cachedExchangeRate * 100) / 100 : discountedPrice;
     const cart = currentProduct
-      ? [{ name: currentProduct.name, price: discountedPrice, qty: data.qty, currency: CURRENCY }]
+      ? [{ name: currentProduct.name, price: priceForPayment, qty: data.qty, currency: 'MXN' }]
       : [];
     
-    // Add shipping cost to cart if selected
+    // Add shipping cost (already in MXN from Envia API for both MX and US)
     if (selectedShippingCost > 0) {
-      cart.push({ name: 'Envio', price: selectedShippingCost, qty: 1 });
+      cart.push({ name: 'Envio', price: selectedShippingCost, qty: 1, currency: 'MXN' });
     }
 
     // Include vendor ref in order ID

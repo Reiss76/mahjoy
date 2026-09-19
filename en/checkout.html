@@ -510,7 +510,9 @@
     // Update shipping display in the order summary
     const shippingEl = document.querySelector('#co-content span[style*="To be quoted"], #co-content span[style*="To quote"]');
     const currency = 'USD';
-    const shippingDisplay = currency === 'USD' ? selectedShipping / 18 : selectedShipping;
+    // Convert MXN shipping to USD for display (Envia returns MXN)
+    const usdRate = window.cachedExchangeRate || 19.5;
+    const shippingDisplay = selectedShipping / usdRate;
     
     if (shippingEl && selectedShipping > 0) {
       shippingEl.textContent = '$' + shippingDisplay.toFixed(2) + ' ' + currency;
