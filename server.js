@@ -5,6 +5,7 @@
 const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -149,6 +150,25 @@ app.post('/api/centumpay/checkout', async (req, res) => {
       shipping_cp: shipping_cp || '',
       shipping_cost: Number(shipping_cost) || 0
     };
+
+    // BACKUP: Save order data to file BEFORE calling Proax
+    saveOrderToBackup({
+      orderId: myOrderId,
+      cart: cartItems,
+      customer_name,
+      customer_lastname,
+      customer_email,
+      customer_phone,
+      shipping_street,
+      shipping_interior,
+      shipping_neighborhood,
+      shipping_city,
+      shipping_state,
+      shipping_cp,
+      shipping_cost: Number(shipping_cost) || 0,
+      status: 'checkout_started',
+      source: 'centumpay'
+    });
 
     console.log('[centumpay] Forwarding to Proax:', JSON.stringify(universePayload, null, 2));
 
@@ -409,6 +429,55 @@ const pendingOrders = new Map();
 const PROAX_API_URL = process.env.PROAX_API_URL || 'https://proax.app';
 const PROAX_NODE_ID = process.env.PROAX_NODE_ID || '31'; // Mahjoy node ID
 const PROAX_API_KEY = process.env.PROAX_API_KEY || 'mj-secret-2024';
+
+// ─── Orders Backup (File Persistence) ─────────────────────────────────────────
+const ORDERS_BACKUP_FILE = path.join(__dirname, 'data', 'orders-backup.json');
+
+// Ensure data directory exists
+const dataDir = path.join(__dirname, 'data');
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+// Load existing orders from backup file
+function loadOrdersBackup() {
+  try {
+    if (fs.existsSync(ORDERS_BACKUP_FILE)) {
+      const data = fs.readFileSync(ORDERS_BACKUP_FILE, 'utf8');
+      const orders = JSON.parse(data);
+      console.log(`[orders-backup] Loaded ${orders.length} orders from backup`);
+      return orders;
+    }
+  } catch (err) {
+    console.error('[orders-backup] Failed to load:', err.message);
+  }
+  return [];
+}
+
+// Save order to backup file
+function saveOrderToBackup(orderData) {
+  try {
+    let orders = loadOrdersBackup();
+    // Check if order already exists (by orderId)
+    const existingIndex = orders.findIndex(o => o.orderId === orderData.orderId);
+    if (existingIndex >= 0) {
+      orders[existingIndex] = { ...orders[existingIndex], ...orderData, updatedAt: new Date().toISOString() };
+    } else {
+      orders.push({ ...orderData, createdAt: new Date().toISOString() });
+    }
+    fs.writeFileSync(ORDERS_BACKUP_FILE, JSON.stringify(orders, null, 2));
+    console.log(`[orders-backup] Saved order ${orderData.orderId}`);
+    return true;
+  } catch (err) {
+    console.error('[orders-backup] Failed to save:', err.message);
+    return false;
+  }
+}
+
+// Get all orders from backup
+function getAllOrdersFromBackup() {
+  return loadOrdersBackup();
+}
 
 // Helper to update order in Proax
 async function updateProaxOrder(orderId, updates) {
@@ -974,12 +1043,32 @@ app.get('/api/orders/:orderId', (req, res) => {
   }
 });
 
-// List recent orders (for admin)
+// List recent orders (from backup + memory)
 app.get('/api/orders', (req, res) => {
-  const orders = Array.from(pendingOrders.values())
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .slice(0, 50);
-  res.json({ orders });
+  const memoryOrders = Array.from(pendingOrders.values());
+  const backupOrders = getAllOrdersFromBackup();
+  
+  // Merge, preferring memory orders (more recent state)
+  const allOrderIds = new Set([...memoryOrders.map(o => o.orderId), ...backupOrders.map(o => o.orderId)]);
+  const mergedOrders = [];
+  
+  for (const id of allOrderIds) {
+    const memOrder = memoryOrders.find(o => o.orderId === id);
+    const backupOrder = backupOrders.find(o => o.orderId === id);
+    mergedOrders.push(memOrder || backupOrder);
+  }
+  
+  mergedOrders.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  res.json({ orders: mergedOrders.slice(0, 100), count: mergedOrders.length });
+});
+
+// Get orders from today
+app.get('/api/orders/today', (req, res) => {
+  const today = new Date().toISOString().split('T')[0];
+  const allOrders = getAllOrdersFromBackup();
+  const todayOrders = allOrders.filter(o => o.createdAt && o.createdAt.startsWith(today));
+  todayOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  res.json({ orders: todayOrders, count: todayOrders.length, date: today });
 });
 
 // ─── CentumPay Polling (since they don't have webhooks) ──────────────────────
