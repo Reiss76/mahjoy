@@ -327,15 +327,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const orderId = `mahjoy-${currentProduct?.id || ''}-${vendorCode ? vendorCode + '-' : ''}${Date.now()}`;
 
     try {
-      // Call CentumPay proxy on Proax API
+      // Build complete payload with customer and shipping data
+      const centumPayload = {
+        orderId,
+        cart: cart.filter(i => i.name !== 'Envio'), // Products only, shipping separate
+        customer_name: form.name.value.trim(),
+        customer_lastname: form.lastname.value.trim(),
+        customer_email: form.email.value.trim(),
+        customer_phone: form.phone.value.trim(),
+        shipping_street: form.street?.value?.trim() || '',
+        shipping_interior: form.interior?.value?.trim() || '',
+        shipping_neighborhood: form.neighborhood?.value?.trim() || '',
+        shipping_city: form.city?.value?.trim() || '',
+        shipping_state: form.state?.value?.trim() || '',
+        shipping_cp: form.cp?.value?.trim() || '',
+        shipping_cost: selectedShippingCost || 0,
+        webSite: 'https://mahjoy-production.up.railway.app',
+      };
+      
+      // Call CentumPay proxy
       const res = await fetch(MJ_CENTUMPAY_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          cart,
-          orderId,
-          webSite: 'https://mahjoy-production.up.railway.app',
-        }),
+        body: JSON.stringify(centumPayload),
       });
 
       const result = await res.json();

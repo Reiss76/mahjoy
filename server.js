@@ -96,76 +96,72 @@ function generateTotp(secret) {
 app.post('/api/centumpay/checkout', async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   try {
-    if (!CENTUMPAY_API_KEY || !CENTUMPAY_API_SECRET || !CENTUMPAY_TOTP_SECRET || !CENTUMPAY_API_HASH) {
-      return res.status(500).json({ error: 'CentumPay no configurado' });
-    }
-
-    const { cart = [], orderId, webSite } = req.body;
+    const { 
+      cart = [], 
+      orderId,
+      customer_name,
+      customer_lastname,
+      customer_email,
+      customer_phone,
+      shipping_street,
+      shipping_interior,
+      shipping_neighborhood,
+      shipping_city,
+      shipping_state,
+      shipping_cp,
+      shipping_cost,
+      webSite 
+    } = req.body;
+    
     if (!cart.length) return res.status(400).json({ error: 'Cart vacío' });
 
-    const totp = generateTotp(CENTUMPAY_TOTP_SECRET);
-    const authToken = crypto.createHmac('sha256', CENTUMPAY_API_SECRET)
-      .update(`${CENTUMPAY_API_KEY}${totp}`, 'utf8').digest('hex');
-
-    const subtotal = cart.reduce((acc, l) => acc + Number(l.price) * Number(l.qty), 0);
-    const total = Number(subtotal.toFixed(2));
     const myOrderId = orderId || `mahjoy-${Date.now()}`;
-    const site = webSite || `https://${req.headers.host}`;
 
-    // Return URL after successful payment
-    const returnUrl = `${site}/checkout.html?payment=success&order=${encodeURIComponent(myOrderId)}`;
-    
-    const payload = {
-      group: 'wmx_api',
-      method: 'get_token',
-      token: authToken,
-      api_key: CENTUMPAY_API_KEY,
-      data: {
-        web_site: site,
-        return_url: returnUrl,
-        success_url: returnUrl,
-        callback_url: returnUrl,
-        order_details: { wl_name: 'wl_centumpay', my_id: myOrderId },
-        tx_info: {
-          cart: {
-            description: `Compra MAH JOY (${cart.length} producto${cart.length > 1 ? 's' : ''})`,
-            concept: cart.map(l => ({ item: l.name.normalize('NFD').replace(/[\u0300-\u036f]/g, ''), cant: Number(l.qty), price: Number(l.price) })),
-            discount: 0,
-            subtotal,
-            total,
-          },
-        },
-      },
+    // Forward to Universe API with all customer data
+    const universePayload = {
+      orderId: myOrderId,
+      cart: cart.map(item => ({
+        name: item.name,
+        qty: Number(item.qty),
+        price: Number(item.price)
+      })),
+      customer_name: customer_name || '',
+      customer_lastname: customer_lastname || '',
+      customer_email: customer_email || '',
+      customer_phone: customer_phone || '',
+      shipping_street: shipping_street || '',
+      shipping_interior: shipping_interior || '',
+      shipping_neighborhood: shipping_neighborhood || '',
+      shipping_city: shipping_city || '',
+      shipping_state: shipping_state || '',
+      shipping_cp: shipping_cp || '',
+      shipping_cost: Number(shipping_cost) || 0
     };
 
-    const ecommerceUrl = CENTUMPAY_ENV === 'prod'
-      ? 'https://ecommapi-centumpay.centum.mx/ecommerce'
-      : 'https://test-ecommapi-centumpay.centum.mx/ecommerce';
+    console.log('[centumpay] Forwarding to Universe:', JSON.stringify(universePayload, null, 2));
 
-    const tokenRes = await fetch(ecommerceUrl, {
+    const universeRes = await fetch('https://universeapp.pro/api/payments/centumpay/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(universePayload),
     });
 
-    const tokenJson = await tokenRes.json();
-    if (tokenJson?.status?.code !== '0') {
-      return res.status(502).json({ error: 'CentumPay rechazó la orden', centum: tokenJson });
+    const universeJson = await universeRes.json();
+    console.log('[centumpay] Universe response:', JSON.stringify(universeJson, null, 2));
+
+    if (universeJson.ok && universeJson.checkoutUrl) {
+      return res.json({ 
+        ok: true, 
+        checkoutUrl: universeJson.checkoutUrl, 
+        saleToken: universeJson.saleToken,
+        orderId: universeJson.orderId || myOrderId 
+      });
+    } else {
+      return res.status(502).json({ 
+        error: 'Universe API error', 
+        detail: universeJson 
+      });
     }
-
-    const saleToken = Array.isArray(tokenJson?.payload)
-      ? tokenJson.payload[0]?.token
-      : tokenJson?.payload?.token || null;
-
-    if (!saleToken) return res.status(502).json({ error: 'CentumPay no regresó token' });
-
-    const checkoutBase = CENTUMPAY_ENV === 'prod'
-      ? 'https://api-centumpay.centum.mx/CheckOut'
-      : 'https://test-api-centumpay.centum.mx/CheckOut';
-
-    const checkoutUrl = `${checkoutBase}?ApiKey=${encodeURIComponent(CENTUMPAY_API_KEY)}&Token=${encodeURIComponent(saleToken)}&Hash=${encodeURIComponent(CENTUMPAY_API_HASH)}`;
-
-    return res.json({ ok: true, checkoutUrl, orderId: myOrderId });
   } catch (err) {
     console.error('[centumpay]', err);
     return res.status(500).json({ error: 'Error interno', detail: String(err) });
