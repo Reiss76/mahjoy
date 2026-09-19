@@ -117,14 +117,26 @@ app.post('/api/centumpay/checkout', async (req, res) => {
 
     const myOrderId = orderId || `mahjoy-${Date.now()}`;
 
-    // Forward to Universe API with all customer data
+    // Build cart with shipping included
+    const cartItems = cart.map(item => ({
+      name: item.name,
+      qty: Number(item.qty),
+      price: Number(item.price)
+    }));
+    
+    // Add shipping as cart item if present
+    if (shipping_cost && Number(shipping_cost) > 0) {
+      cartItems.push({
+        name: 'Envío',
+        qty: 1,
+        price: Number(shipping_cost)
+      });
+    }
+
+    // Forward to Proax API with all customer data
     const universePayload = {
       orderId: myOrderId,
-      cart: cart.map(item => ({
-        name: item.name,
-        qty: Number(item.qty),
-        price: Number(item.price)
-      })),
+      cart: cartItems,
       customer_name: customer_name || '',
       customer_lastname: customer_lastname || '',
       customer_email: customer_email || '',
