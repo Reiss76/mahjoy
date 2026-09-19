@@ -11,10 +11,14 @@ const isEnCheckout = window.location.pathname.includes('/en/');
 const PAYPAL_CURRENCY = isEnCheckout ? 'USD' : 'MXN';
 
 // Wait for DOM and PayPal SDK to load
-document.addEventListener('DOMContentLoaded', function() {
-  // Give checkout.js time to initialize
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(initPayPalButton, 500);
+  });
+} else {
+  // DOM already loaded - init immediately with a small delay for checkout.js
   setTimeout(initPayPalButton, 500);
-});
+}
 
 function initPayPalButton() {
   const container = document.getElementById('paypal-button-container');
