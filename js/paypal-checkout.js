@@ -4,6 +4,7 @@
  */
 
 const MJ_PAYPAL_API = 'https://proax.app/api/public/mahjoy';
+let paypalButtonRendered = false; // Prevent duplicate renders
 
 // Wait for DOM and PayPal SDK to load
 document.addEventListener('DOMContentLoaded', function() {
@@ -15,12 +16,21 @@ function initPayPalButton() {
   const container = document.getElementById('paypal-button-container');
   if (!container) return;
   
+  // Prevent duplicate renders
+  if (paypalButtonRendered) {
+    console.log('PayPal buttons already rendered');
+    return;
+  }
+  
   // Check if PayPal SDK loaded
   if (typeof paypal === 'undefined') {
     console.error('PayPal SDK not loaded');
     container.innerHTML = '<p style="color:#999;font-size:.8rem;text-align:center;">PayPal no disponible</p>';
     return;
   }
+  
+  // Clear container before rendering
+  container.innerHTML = '';
 
   paypal.Buttons({
     style: {
@@ -140,10 +150,12 @@ function initPayPalButton() {
     onError: function(err) {
       console.error('PayPal error:', err);
       alert('Error al procesar el pago con PayPal. Por favor intenta de nuevo.');
-      // Restore button
-      initPayPalButton();
+      // Don't re-render — buttons still exist
     }
-  }).render('#paypal-button-container');
+  }).render('#paypal-button-container').then(function() {
+    paypalButtonRendered = true;
+    console.log('PayPal buttons rendered');
+  });
 }
 
 async function savePayPalOrder(paypalDetails) {
