@@ -549,5 +549,9 @@ document.addEventListener('DOMContentLoaded', function() {
     window.MJCheckoutProduct = currentProduct;
     window.MJAppliedDiscount = appliedDiscount;
     window.MJShippingCost = selectedShippingCost;
+    // Trigger PayPal init now that product is ready
+    if (typeof window.initPayPalWhenReady === 'function') {
+      window.initPayPalWhenReady();
+    }
   }, 600);
 });
