@@ -423,9 +423,11 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   <script src="https://www.paypal.com/sdk/js?client-id=BAAbbz1L2qH_VMP2ACU9ua4HeR2A3NfU8Hp_v3POkGyYIuz4_ot1tihAmUP3h-KHzP9AiAjTRblKvZeKn4&currency=USD&locale=en_US"></script>
   <script src="../js/paypal-checkout.js"></script>
   
-  <!-- PayPal Express Checkout (uses PayPal's saved address) -->
+  <!-- PayPal Express Checkout with flat US shipping -->
   <script>
   (function() {
+    var US_SHIPPING_FLAT = 25; // $25 USD flat rate shipping to US
+    
     function initPayPalExpress() {
       if (typeof paypal === 'undefined' || !window.MJCheckoutProduct) {
         setTimeout(initPayPalExpress, 500);
@@ -445,7 +447,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           var price = parseFloat(product.price) || 0;
           var discount = window.MJAppliedDiscount;
           if (discount && discount.pct > 0) price = Math.round(price * (1 - discount.pct / 100) * 100) / 100;
-          var subtotal = (price * qty).toFixed(2);
+          var subtotal = price * qty;
+          var total = subtotal + US_SHIPPING_FLAT;
           
           return actions.order.create({
             intent: 'CAPTURE',
@@ -453,9 +456,10 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
               description: 'MAH JOY - ' + product.name,
               amount: {
                 currency_code: 'USD',
-                value: subtotal,
+                value: total.toFixed(2),
                 breakdown: {
-                  item_total: { currency_code: 'USD', value: subtotal }
+                  item_total: { currency_code: 'USD', value: subtotal.toFixed(2) },
+                  shipping: { currency_code: 'USD', value: US_SHIPPING_FLAT.toFixed(2) }
                 }
               },
               items: [{
@@ -473,11 +477,21 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           });
         },
         
+        onShippingChange: function(data, actions) {
+          // For US, just verify it's a US address
+          var country = data.shipping_address?.country_code || '';
+          if (country !== 'US') {
+            return actions.reject(); // Only ship to US from EN checkout
+          }
+          return actions.resolve(); // Accept US addresses with flat rate
+        },
+        
         onApprove: function(data, actions) {
           return actions.order.capture().then(function(details) {
             var payer = details.payer || {};
             var shipping = details.purchase_units?.[0]?.shipping || {};
             var address = shipping.address || {};
+            var amount = details.purchase_units?.[0]?.amount || {};
             
             var orderData = {
               orderId: data.orderID,
@@ -495,7 +509,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
                 city: address.admin_area_2 || '',
                 state: address.admin_area_1 || '',
                 cp: address.postal_code || '',
-                country: address.country_code || 'US'
+                country: address.country_code || 'US',
+                cost: US_SHIPPING_FLAT
               },
               product: {
                 name: window.MJCheckoutProduct?.name,
@@ -507,6 +522,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
                 method: 'paypal',
                 currency: 'USD',
                 status: details.status,
+                total: amount.value,
+                shipping_charged: US_SHIPPING_FLAT,
                 captureId: details.purchase_units?.[0]?.payments?.captures?.[0]?.id
               },
               timestamp: new Date().toISOString()
