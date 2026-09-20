@@ -779,9 +779,9 @@ app.get('/api/orders/by-email', async (req, res) => {
 // ─── PayPal Express Checkout Order ────────────────────────────────────────────
 app.post('/api/orders/paypal-express', async (req, res) => {
   try {
-    const { orderId, paypalOrderId, customer, shipping, product, payment, timestamp } = req.body;
+    const { orderId, paypalOrderId, customer, shipping, product, payment, discount, timestamp } = req.body;
     
-    console.log('[PayPal Express] Nueva orden:', orderId);
+    console.log('[PayPal Express] Nueva orden:', orderId, discount ? `con descuento ${discount.pct}%` : '');
     
     // Construir datos de orden
     const orderData = {
@@ -797,12 +797,6 @@ app.post('/api/orders/paypal-express', async (req, res) => {
       shipping_state: shipping?.state,
       shipping_cp: shipping?.cp,
       shipping_country: shipping?.country,
-      cart: [{
-        name: product?.name,
-        sku: product?.sku,
-        price: parseFloat(product?.price) || 0,
-        qty: product?.qty || 1
-      }],
       payment_method: 'paypal_express',
       payment_status: payment?.status,
       capture_id: payment?.captureId,
@@ -810,6 +804,23 @@ app.post('/api/orders/paypal-express', async (req, res) => {
       source: 'paypal_express',
       createdAt: timestamp
     };
+    
+    // Calcular precio con descuento
+    let unitPrice = parseFloat(product?.price) || 0;
+    if (discount && discount.pct > 0) {
+      unitPrice = Math.round(unitPrice * (1 - discount.pct / 100) * 100) / 100;
+    }
+    
+    orderData.cart = [{
+      name: product?.name,
+      sku: product?.sku,
+      price: unitPrice,
+      original_price: parseFloat(product?.price) || 0,
+      qty: product?.qty || 1,
+      discount_pct: discount?.pct || 0
+    }];
+    
+    orderData.discount = discount || null;
     
     // Extraer costo de envío
     const shippingCost = parseFloat(shipping?.cost) || parseFloat(payment?.shipping_charged) || 0;
@@ -861,6 +872,12 @@ app.post('/api/orders/paypal-express', async (req, res) => {
         },
         items: orderData.cart,
         shipping_cost: shippingCost,
+        discount: discount ? {
+          code: discount.code,
+          pct: discount.pct,
+          vendor_name: discount.vendorName,
+          vendor_code: discount.vendorCode
+        } : null,
         payment: {
           method: 'paypal',
           status: 'paid',
@@ -889,6 +906,10 @@ app.post('/api/orders/paypal-express', async (req, res) => {
     }
     
     // Notificar por Telegram
+    const itemTotal = orderData.cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
+    const grandTotal = itemTotal + shippingCost;
+    const discountLine = discount ? `\n🏷️ *Descuento:* ${discount.pct}% (${discount.vendorName || discount.code})` : '';
+    
     const telegramMsg = `🎉 *NUEVA VENTA PayPal Express*
 
 📦 Orden: \`${orderId}\`
@@ -897,13 +918,14 @@ app.post('/api/orders/paypal-express', async (req, res) => {
 📱 ${orderData.customer_phone || 'N/A'}
 
 🛍️ *Producto:*
-• ${product?.name} x${product?.qty} - $${product?.price} MXN
+• ${product?.name} x${product?.qty} - $${orderData.cart[0]?.price} MXN${discount ? ` (era $${product?.price})` : ''}${discountLine}
 
-📍 *Envío:*
+📍 *Envío a:*
 ${orderData.shipping_street}
 ${orderData.shipping_city}, ${orderData.shipping_state} ${orderData.shipping_cp}
 
-💰 *Total:* $${(parseFloat(product?.price) * (product?.qty || 1)).toFixed(2)} MXN
+🚚 *Envío:* $${shippingCost} MXN
+💰 *Total:* $${grandTotal.toFixed(2)} MXN
 ✅ *Pagado con PayPal*`;
 
     try {

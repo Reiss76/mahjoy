@@ -956,6 +956,12 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
                 price: window.MJCheckoutProduct?.price,
                 qty: parseInt(document.getElementById('co-qty')?.value) || 1
               },
+              discount: window.MJAppliedDiscount ? {
+                code: window.MJAppliedDiscount.code,
+                pct: window.MJAppliedDiscount.pct,
+                vendorName: window.MJAppliedDiscount.vendorName,
+                vendorCode: window.MJAppliedDiscount.vendorCode
+              } : null,
               payment: {
                 method: 'paypal',
                 status: details.status,
