@@ -919,6 +919,24 @@ ${orderData.shipping_city}, ${orderData.shipping_state} ${orderData.shipping_cp}
       console.error('[PayPal Express] Error Telegram:', tgErr.message);
     }
     
+    // Enviar email de notificación al admin
+    sendAdminOrderNotification({
+      orderId,
+      source: 'PayPal Express',
+      customer_name: orderData.customer_name,
+      customer_lastname: orderData.customer_lastname,
+      customer_email: orderData.customer_email,
+      customer_phone: orderData.customer_phone,
+      shipping_street: orderData.shipping_street,
+      shipping_interior: orderData.shipping_interior,
+      shipping_city: orderData.shipping_city,
+      shipping_state: orderData.shipping_state,
+      shipping_cp: orderData.shipping_cp,
+      shipping_cost: shippingCost,
+      cart: orderData.cart,
+      total: (parseFloat(product?.price) * (product?.qty || 1)) + shippingCost
+    });
+    
     res.json({ ok: true, orderId, message: 'Orden guardada exitosamente' });
     
   } catch (err) {
@@ -1039,6 +1057,121 @@ async function sendOrderReceivedEmail(order) {
     }
   } catch (err) {
     console.error('[email] Error:', err);
+    return false;
+  }
+}
+
+// Send admin notification email when new order comes in
+async function sendAdminOrderNotification(order) {
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  const ADMIN_EMAIL = process.env.ADMIN_ORDER_EMAIL || 'info@playmahjoy.com';
+  
+  if (!RESEND_API_KEY) {
+    console.log('[email] Resend API key not configured, skipping admin notification');
+    return false;
+  }
+
+  const items = order.items || order.cart || [];
+  const shippingCost = order.shipping_cost || order.shipping?.cost || 0;
+  const itemsTotal = items.reduce((sum, i) => sum + ((i.price || 0) * (i.qty || 1)), 0);
+  const total = order.total || (itemsTotal + shippingCost);
+  
+  const itemsList = items
+    .map(i => `<tr><td style="padding:8px;border-bottom:1px solid #eee;">${i.name || '—'}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">×${i.qty || 1}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">$${((i.price || 0) * (i.qty || 1)).toLocaleString('es-MX')}</td></tr>`)
+    .join('');
+
+  const addr = order.shipping_street || order.shipping?.street || '';
+  const interior = order.shipping_interior || order.shipping?.neighborhood || '';
+  const city = order.shipping_city || order.shipping?.city || '';
+  const state = order.shipping_state || order.shipping?.state || '';
+  const cp = order.shipping_cp || order.shipping?.cp || '';
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: #722F37; color: #fff; padding: 20px; border-radius: 12px 12px 0 0; text-align: center;">
+        <h1 style="margin: 0; font-size: 20px;">🛒 Nueva Orden — MAH JOY</h1>
+      </div>
+      
+      <div style="background: #fff; border: 1px solid #e0e0e0; border-top: none; padding: 25px; border-radius: 0 0 12px 12px;">
+        <p style="margin: 0 0 5px; color: #722F37; font-size: 18px; font-weight: bold;">
+          Pedido #${order.orderId}
+        </p>
+        <p style="margin: 0 0 20px; color: #888; font-size: 14px;">
+          ${new Date().toLocaleString('es-MX', { dateStyle: 'long', timeStyle: 'short' })}
+        </p>
+        
+        <div style="background: #d4edda; color: #155724; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: 600;">
+          ✅ Pago confirmado — ${order.source || 'PayPal'}
+        </div>
+        
+        <h3 style="color: #333; font-size: 14px; margin: 20px 0 10px; border-bottom: 2px solid #722F37; padding-bottom: 5px;">
+          👤 CLIENTE
+        </h3>
+        <p style="margin: 0; color: #333; line-height: 1.6;">
+          <strong>${order.customer_name || ''} ${order.customer_lastname || ''}</strong><br>
+          📧 ${order.customer_email || '—'}<br>
+          📱 ${order.customer_phone || '—'}
+        </p>
+        
+        <h3 style="color: #333; font-size: 14px; margin: 20px 0 10px; border-bottom: 2px solid #722F37; padding-bottom: 5px;">
+          🏠 DIRECCIÓN DE ENVÍO
+        </h3>
+        <p style="margin: 0; color: #333; line-height: 1.6; background: #f9f9f9; padding: 12px; border-radius: 8px;">
+          ${addr}<br>
+          ${interior ? interior + '<br>' : ''}
+          ${city}, ${state}<br>
+          CP ${cp}
+        </p>
+        
+        <h3 style="color: #333; font-size: 14px; margin: 20px 0 10px; border-bottom: 2px solid #722F37; padding-bottom: 5px;">
+          📦 PRODUCTOS
+        </h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+          ${itemsList}
+          <tr style="background: #f9f9f9;">
+            <td colspan="2" style="padding: 8px;">📦 Envío</td>
+            <td style="padding: 8px; text-align: right;">$${shippingCost.toLocaleString('es-MX')}</td>
+          </tr>
+          <tr style="font-weight: bold; color: #722F37; font-size: 16px;">
+            <td colspan="2" style="padding: 12px 8px;">TOTAL</td>
+            <td style="padding: 12px 8px; text-align: right;">$${total.toLocaleString('es-MX')} MXN</td>
+          </tr>
+        </table>
+        
+        <div style="margin-top: 25px; text-align: center;">
+          <a href="https://www.playmahjoy.com/admin" style="display: inline-block; background: #722F37; color: #fff; text-decoration: none; padding: 12px 25px; border-radius: 8px; font-weight: 600;">
+            Ver en Admin →
+          </a>
+        </div>
+      </div>
+    </div>
+  `;
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: 'MAH JOY Orders <pedidos@playmahjoy.com>',
+        to: ADMIN_EMAIL,
+        subject: `🛒 Nueva orden #${order.orderId} — $${total.toLocaleString('es-MX')} MXN`,
+        html: html
+      })
+    });
+
+    const result = await response.json();
+    if (response.ok) {
+      console.log(`[email] ✅ Admin notification sent to ${ADMIN_EMAIL}`);
+      return true;
+    } else {
+      console.error(`[email] ❌ Admin notification failed:`, result);
+      return false;
+    }
+  } catch (err) {
+    console.error('[email] Admin notification error:', err);
     return false;
   }
 }
@@ -1380,6 +1513,44 @@ app.get('/api/orders/today', async (req, res) => {
     res.json({ orders: [], count: 0, error: err.message });
   }
 });
+
+// Update order status (for admin panel)
+app.patch('/api/orders/:orderId/status', async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { status, tracking_number } = req.body;
+    
+    const updates = [];
+    const values = [];
+    let paramCount = 1;
+    
+    if (status) {
+      updates.push(`status = $${paramCount++}`);
+      values.push(status);
+    }
+    if (tracking_number) {
+      updates.push(`tracking_number = $${paramCount++}`);
+      values.push(tracking_number);
+    }
+    updates.push(`updated_at = CURRENT_TIMESTAMP`);
+    values.push(orderId);
+    
+    await pool.query(`
+      UPDATE mahjoy_orders 
+      SET ${updates.join(', ')}
+      WHERE order_id = $${paramCount}
+    `, values);
+    
+    console.log(`[admin] Order ${orderId} updated: status=${status}, tracking=${tracking_number}`);
+    res.json({ success: true, orderId, status, tracking_number });
+  } catch (err) {
+    console.error('[admin] Update order error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin page
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 
 // ─── CentumPay Polling (since they don't have webhooks) ──────────────────────
 
