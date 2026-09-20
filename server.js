@@ -570,25 +570,45 @@ async function getOrdersFromDatabase(limit = 100) {
       ORDER BY created_at DESC 
       LIMIT $1
     `, [limit]);
-    return result.rows.map(row => ({
-      orderId: row.order_id,
-      customer_name: row.customer_name,
-      customer_lastname: row.customer_lastname,
-      customer_email: row.customer_email,
-      customer_phone: row.customer_phone,
-      shipping_street: row.shipping_street,
-      shipping_interior: row.shipping_interior,
-      shipping_neighborhood: row.shipping_neighborhood,
-      shipping_city: row.shipping_city,
-      shipping_state: row.shipping_state,
-      shipping_cp: row.shipping_cp,
-      shipping_cost: parseFloat(row.shipping_cost),
-      cart: row.cart,
-      status: row.status,
-      source: row.source,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at
-    }));
+    return result.rows.map(row => {
+      const cart = row.cart || [];
+      const shippingCost = parseFloat(row.shipping_cost) || 0;
+      const itemsTotal = cart.reduce((sum, item) => sum + ((parseFloat(item.price) || 0) * (item.qty || 1)), 0);
+      const total = itemsTotal + shippingCost;
+      
+      return {
+        orderId: row.order_id,
+        customer_name: row.customer_name,
+        customer_lastname: row.customer_lastname,
+        customer_email: row.customer_email,
+        customer_phone: row.customer_phone,
+        // Flat shipping fields for backward compatibility
+        shipping_street: row.shipping_street,
+        shipping_interior: row.shipping_interior,
+        shipping_neighborhood: row.shipping_neighborhood,
+        shipping_city: row.shipping_city,
+        shipping_state: row.shipping_state,
+        shipping_cp: row.shipping_cp,
+        shipping_cost: shippingCost,
+        // Shipping as object for "Mis Pedidos" page
+        shipping: {
+          name: `${row.customer_name || ''} ${row.customer_lastname || ''}`.trim(),
+          street: row.shipping_street || '',
+          neighborhood: row.shipping_interior || row.shipping_neighborhood || '',
+          city: row.shipping_city || '',
+          state: row.shipping_state || '',
+          cp: row.shipping_cp || ''
+        },
+        cart: cart,
+        items: cart, // Alias for compatibility
+        total: total,
+        amount: total,
+        status: row.status,
+        source: row.source,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      };
+    });
   } catch (err) {
     console.error('[db] Failed to get orders:', err.message);
     return [];
@@ -791,25 +811,30 @@ app.post('/api/orders/paypal-express', async (req, res) => {
       createdAt: timestamp
     };
     
+    // Extraer costo de envío
+    const shippingCost = parseFloat(shipping?.cost) || parseFloat(payment?.shipping_charged) || 0;
+    orderData.shipping_cost = shippingCost;
+    
     // Guardar en Neon PostgreSQL
     try {
       await pool.query(`
         INSERT INTO mahjoy_orders (
           order_id, customer_name, customer_lastname, customer_email, customer_phone,
           shipping_street, shipping_interior, shipping_city, shipping_state, shipping_cp,
-          cart, status, source
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+          shipping_cost, cart, status, source
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         ON CONFLICT (order_id) DO UPDATE SET
           status = EXCLUDED.status,
+          shipping_cost = EXCLUDED.shipping_cost,
           updated_at = CURRENT_TIMESTAMP
       `, [
         orderId, orderData.customer_name, orderData.customer_lastname,
         orderData.customer_email, orderData.customer_phone,
         orderData.shipping_street, orderData.shipping_interior,
         orderData.shipping_city, orderData.shipping_state, orderData.shipping_cp,
-        JSON.stringify(orderData.cart), 'paid', 'paypal_express'
+        shippingCost, JSON.stringify(orderData.cart), 'paid', 'paypal_express'
       ]);
-      console.log('[PayPal Express] Guardado en Neon:', orderId);
+      console.log('[PayPal Express] Guardado en Neon:', orderId, 'Envío:', shippingCost);
     } catch (dbErr) {
       console.error('[PayPal Express] Error Neon:', dbErr.message);
     }
