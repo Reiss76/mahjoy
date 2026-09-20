@@ -548,13 +548,18 @@
               </p>
             </div>
             <script>
-              // Mensaje si PayPal no carga después de 6 segundos
+              // Mensaje si PayPal no carga después de 10 segundos
               setTimeout(function() {
-                var fb = document.getElementById('paypal-fallback');
-                if (fb && fb.parentElement.querySelectorAll('iframe').length === 0) {
-                  fb.innerHTML = '⚠️ PayPal no disponible (bloqueado por configuración de privacidad).<br>Por favor usa <strong>Pagar con tarjeta</strong>.';
+                var container = document.getElementById('paypal-button-container');
+                if (container && container.querySelectorAll('iframe').length === 0) {
+                  var fb = document.getElementById('paypal-fallback');
+                  if (fb) {
+                    fb.innerHTML = '⚠️ PayPal no disponible.<br>Por favor usa <strong>Pagar con tarjeta</strong>.';
+                  } else {
+                    container.innerHTML = '<p style="color:#888;font-size:.75rem;text-align:center;padding:12px;">⚠️ PayPal no disponible. Usa Pagar con tarjeta.</p>';
+                  }
                 }
-              }, 6000);
+              }, 10000);
             </script>
           </div>
 

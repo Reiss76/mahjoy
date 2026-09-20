@@ -10,22 +10,30 @@ let paypalButtonRendered = false; // Prevent duplicate renders
 const isEnCheckout = window.location.pathname.includes('/en/');
 const PAYPAL_CURRENCY = isEnCheckout ? 'USD' : 'MXN';
 
-// Wait for DOM and PayPal SDK to load - with retry logic
+// Wait for DOM, PayPal SDK, and product to load - with retry logic
 function tryInitPayPal(retries) {
-  if (typeof paypal !== 'undefined' && document.getElementById('paypal-button-container')) {
+  const hasPayPal = typeof paypal !== 'undefined';
+  const hasContainer = document.getElementById('paypal-button-container');
+  const hasProduct = window.MJCheckoutProduct;
+  
+  console.log('[PayPal] Checking:', { hasPayPal, hasContainer, hasProduct: !!hasProduct, retries });
+  
+  if (hasPayPal && hasContainer && hasProduct) {
     initPayPalButton();
   } else if (retries > 0) {
-    setTimeout(function() { tryInitPayPal(retries - 1); }, 500);
+    setTimeout(function() { tryInitPayPal(retries - 1); }, 1000); // Wait 1s between retries
+  } else {
+    console.warn('[PayPal] Failed to initialize after all retries');
   }
 }
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(function() { tryInitPayPal(5); }, 500);
+    setTimeout(function() { tryInitPayPal(8); }, 1000); // 8 retries, 1s each = 8s max wait
   });
 } else {
   // DOM already loaded - try immediately with retries
-  setTimeout(function() { tryInitPayPal(5); }, 500);
+  setTimeout(function() { tryInitPayPal(8); }, 1000);
 }
 
 function initPayPalButton() {

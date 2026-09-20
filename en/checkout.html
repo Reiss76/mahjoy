@@ -305,13 +305,18 @@
               </p>
             </div>
             <script>
-              // Show fallback message if PayPal doesn't load after 6 seconds
+              // Show fallback message if PayPal doesn't load after 10 seconds
               setTimeout(function() {
-                var fb = document.getElementById('paypal-fallback');
-                if (fb && fb.parentElement.querySelectorAll('iframe').length === 0) {
-                  fb.innerHTML = '⚠️ PayPal unavailable (blocked by browser privacy settings).<br>Please use <strong>Pay with Card</strong> above.';
+                var container = document.getElementById('paypal-button-container');
+                if (container && container.querySelectorAll('iframe').length === 0) {
+                  var fb = document.getElementById('paypal-fallback');
+                  if (fb) {
+                    fb.innerHTML = '⚠️ PayPal unavailable.<br>Please use <strong>Pay with Card</strong> above.';
+                  } else {
+                    container.innerHTML = '<p style="color:#888;font-size:.75rem;text-align:center;padding:12px;">⚠️ PayPal unavailable. Use Pay with Card.</p>';
+                  }
                 }
-              }, 6000);
+              }, 10000);
             </script>
           </div>
 
