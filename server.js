@@ -844,6 +844,7 @@ app.post('/api/orders/paypal-express', async (req, res) => {
       const proaxPayload = {
         order_id: orderId,
         source: 'paypal_express',
+        status: 'paid', // Ya pagado via PayPal
         customer: {
           name: orderData.customer_name,
           lastname: orderData.customer_lastname,
@@ -859,13 +860,14 @@ app.post('/api/orders/paypal-express', async (req, res) => {
           country: orderData.shipping_country
         },
         items: orderData.cart,
+        shipping_cost: shippingCost,
         payment: {
           method: 'paypal',
           status: 'paid',
           paypal_order_id: paypalOrderId,
           capture_id: payment?.captureId
         },
-        total: orderData.cart.reduce((sum, i) => sum + (i.price * i.qty), 0)
+        total: orderData.cart.reduce((sum, i) => sum + (i.price * i.qty), 0) + shippingCost
       };
       
       const proaxRes = await fetch(`${PROAX_API_URL}/api/inventory/${PROAX_NODE_ID}/web-orders`, {
