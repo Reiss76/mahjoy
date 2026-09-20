@@ -241,6 +241,21 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         </div>
       </div>
       
+      <!-- Order Breakdown -->
+      <div id="co-complete-breakdown" style="background:#fafafa;border-radius:12px;padding:1.2rem;margin-bottom:1.5rem;text-align:left;display:none;">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--orchid);margin-bottom:.8rem;font-weight:600;">Resumen de tu pedido</div>
+        <div id="co-breakdown-items" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:#333;"></div>
+        <div style="border-top:1px dashed #ddd;margin:.8rem 0;"></div>
+        <div id="co-breakdown-shipping" style="display:flex;justify-content:space-between;font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:#666;margin-bottom:.3rem;">
+          <span>📦 Envío</span>
+          <span id="co-breakdown-shipping-val">$0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-family:'Plus Jakarta Sans',sans-serif;font-size:1rem;color:var(--burgundy);font-weight:700;margin-top:.5rem;">
+          <span>Total pagado</span>
+          <span id="co-breakdown-total">$0</span>
+        </div>
+      </div>
+      
       <p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.95rem;color:#666;line-height:1.7;margin-bottom:2rem;">
         Recibirás un email de confirmación y te avisaremos cuando enviemos tu pedido con la guía de rastreo.
       </p>
@@ -356,6 +371,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           </div>
           <div id="paypal-express-container"></div>
           <p style="text-align:center;font-size:.7rem;color:#666;margin-top:.5rem;">No necesitas llenar el formulario</p>
+          <p style="text-align:center;font-size:.7rem;color:#003087;margin-top:.3rem;font-style:italic;">📦 El envío se calcula automáticamente con tu dirección de PayPal</p>
         </div>
         
         <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;">
@@ -1274,6 +1290,48 @@ if (window.location.search.includes('payment=success') ||
       currency: 'MXN',
       num_items: cartItems.reduce((sum, i) => sum + i.qty, 0)
     });
+  }
+  
+  // Populate order breakdown
+  const paypalOrder = JSON.parse(localStorage.getItem('mj_paypal_order') || 'null');
+  const breakdownEl = document.getElementById('co-complete-breakdown');
+  const itemsEl = document.getElementById('co-breakdown-items');
+  const shippingValEl = document.getElementById('co-breakdown-shipping-val');
+  const totalEl = document.getElementById('co-breakdown-total');
+  
+  if (breakdownEl && itemsEl) {
+    let items = [];
+    let shippingCost = 0;
+    let total = 0;
+    
+    if (paypalOrder && paypalOrder.product) {
+      // PayPal Express order
+      items = [{
+        name: paypalOrder.product.name,
+        qty: paypalOrder.product.qty || 1,
+        price: parseFloat(paypalOrder.product.price) || 0
+      }];
+      shippingCost = parseFloat(paypalOrder.shipping?.cost) || parseFloat(paypalOrder.payment?.shipping_charged) || 0;
+      total = parseFloat(paypalOrder.payment?.total) || (items[0].price * items[0].qty + shippingCost);
+    } else if (cartItems.length > 0) {
+      // Regular checkout
+      items = cartItems;
+      shippingCost = parseFloat(checkoutData.shippingCost) || 0;
+      total = items.reduce((sum, item) => sum + (item.price * item.qty), 0) + shippingCost;
+    }
+    
+    if (items.length > 0) {
+      itemsEl.innerHTML = items.map(item => `
+        <div style="display:flex;justify-content:space-between;margin-bottom:.4rem;">
+          <span>${item.name} × ${item.qty}</span>
+          <span>$${((item.price || 0) * (item.qty || 1)).toLocaleString('es-MX')}</span>
+        </div>
+      `).join('');
+      
+      shippingValEl.textContent = shippingCost > 0 ? `$${shippingCost.toLocaleString('es-MX')}` : 'Incluido';
+      totalEl.textContent = `$${total.toLocaleString('es-MX')}`;
+      breakdownEl.style.display = 'block';
+    }
   }
   
   // Skip shipping form - go directly to complete
