@@ -10,11 +10,107 @@ let paypalButtonRendered = false; // Prevent duplicate renders
 const isEnCheckout = window.location.pathname.includes('/en/');
 const PAYPAL_CURRENCY = isEnCheckout ? 'USD' : 'MXN';
 
+// Handle static PayPal button click
+document.addEventListener('DOMContentLoaded', function() {
+  const staticBtn = document.getElementById('paypal-static-btn');
+  if (staticBtn) {
+    staticBtn.addEventListener('click', function() {
+      // Validate form first
+      const form = document.getElementById('co-form');
+      if (form && !form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+      
+      // Check email match
+      if (form) {
+        const email = form.email?.value?.trim();
+        const emailConfirm = form.email_confirm?.value?.trim();
+        if (emailConfirm && email !== emailConfirm) {
+          const mismatchEl = document.getElementById('email-mismatch');
+          if (mismatchEl) mismatchEl.style.display = 'block';
+          document.getElementById('co-email-confirm')?.focus();
+          return;
+        }
+      }
+      
+      // Check if PayPal SDK is available
+      if (typeof paypal === 'undefined') {
+        alert('PayPal no está disponible en este momento. Por favor usa "Pagar con tarjeta".');
+        return;
+      }
+      
+      // Check if product is loaded
+      if (!window.MJCheckoutProduct) {
+        alert('Error: Producto no cargado. Recarga la página.');
+        return;
+      }
+      
+      // Trigger PayPal checkout
+      processPayPalPayment();
+    });
+  }
+});
+
+// Process PayPal payment when static button clicked
+function processPayPalPayment() {
+  const form = document.getElementById('co-form');
+  const currentProduct = window.MJCheckoutProduct;
+  const qty = parseInt(form?.qty?.value) || 1;
+  const appliedDiscount = window.MJAppliedDiscount || null;
+  const shippingCost = window.MJShippingCost || 0;
+  
+  const basePrice = parseFloat(currentProduct.price) || 0;
+  const discountedPrice = appliedDiscount && appliedDiscount.pct > 0
+    ? Math.round(basePrice * (1 - appliedDiscount.pct / 100) * 100) / 100
+    : basePrice;
+  
+  const productTotal = discountedPrice * qty;
+  let shippingForPayPal = shippingCost;
+  if (isEnCheckout && shippingCost > 0) {
+    const rate = window.cachedExchangeRate || 19.5;
+    shippingForPayPal = Math.round((shippingCost / rate) * 100) / 100;
+  }
+  const total = productTotal + shippingForPayPal;
+  
+  // Create PayPal order
+  paypal.Buttons({
+    style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal', height: 45 },
+    createOrder: function(data, actions) {
+      return actions.order.create({
+        intent: 'CAPTURE',
+        purchase_units: [{
+          description: 'MAH JOY - ' + currentProduct.name,
+          amount: {
+            currency_code: PAYPAL_CURRENCY,
+            value: total.toFixed(2)
+          }
+        }],
+        application_context: {
+          brand_name: 'MAH JOY',
+          shipping_preference: 'NO_SHIPPING'
+        }
+      });
+    },
+    onApprove: function(data, actions) {
+      return actions.order.capture().then(function(details) {
+        savePayPalOrder(details);
+      });
+    },
+    onError: function(err) {
+      console.error('PayPal error:', err);
+      alert('Error de PayPal. Por favor intenta de nuevo o usa "Pagar con tarjeta".');
+    }
+  }).render('#paypal-button-container').then(function() {
+    // Trigger click on the rendered PayPal button
+    const ppBtn = document.querySelector('#paypal-button-container .paypal-button');
+    if (ppBtn) ppBtn.click();
+  });
+}
+
 // Expose function for checkout.js to call when product is ready
 window.initPayPalWhenReady = function() {
-  if (typeof paypal !== 'undefined' && document.getElementById('paypal-button-container') && window.MJCheckoutProduct) {
-    initPayPalButton();
-  }
+  // No longer auto-rendering, using static button instead
 };
 
 // Also try automatic initialization with retries as backup
