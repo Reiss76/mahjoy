@@ -1139,8 +1139,8 @@ async function sendAdminOrderNotification(order) {
         </table>
         
         <div style="margin-top: 25px; text-align: center;">
-          <a href="https://www.playmahjoy.com/admin" style="display: inline-block; background: #722F37; color: #fff; text-decoration: none; padding: 12px 25px; border-radius: 8px; font-weight: 600;">
-            Ver en Admin →
+          <a href="https://proax.app" style="display: inline-block; background: #722F37; color: #fff; text-decoration: none; padding: 12px 25px; border-radius: 8px; font-weight: 600;">
+            Ver en Proax →
           </a>
         </div>
       </div>
@@ -1548,9 +1548,6 @@ app.patch('/api/orders/:orderId/status', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-// Admin page
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 
 // ─── CentumPay Polling (since they don't have webhooks) ──────────────────────
 
