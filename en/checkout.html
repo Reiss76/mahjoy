@@ -348,7 +348,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
               
               var container = document.getElementById('paypal-button-container');
               container.style.display = 'block';
-              container.innerHTML = '<p style="text-align:center;color:#666;font-size:.8rem;padding:8px;">Loading PayPal...</p>';
+              container.innerHTML = '';
               
               var product = window.MJCheckoutProduct;
               var qty = parseInt(form.qty ? form.qty.value : 1) || 1;
