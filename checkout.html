@@ -732,6 +732,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
                 vendorName: data.vendor_name,
                 pct: data.discount_pct
               };
+              console.log('[Express Discount] Applied:', window.MJAppliedDiscount);
               
               expressDiscInput.disabled = true;
               expressDiscInput.style.opacity = '.6';
@@ -791,8 +792,13 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           var qty = parseInt(document.getElementById('co-qty')?.value) || 1;
           var price = parseFloat(product.price) || 0;
           var discount = window.MJAppliedDiscount;
-          if (discount && discount.pct > 0) price = Math.round(price * (1 - discount.pct / 100) * 100) / 100;
+          console.log('[PayPal Express] createOrder - discount:', discount, 'original price:', price);
+          if (discount && discount.pct > 0) {
+            price = Math.round(price * (1 - discount.pct / 100) * 100) / 100;
+            console.log('[PayPal Express] price after discount:', price);
+          }
           var subtotal = (price * qty).toFixed(2);
+          console.log('[PayPal Express] subtotal:', subtotal);
           
           // Crear orden SIN envío inicialmente - se actualiza en onShippingChange
           return actions.order.create({
