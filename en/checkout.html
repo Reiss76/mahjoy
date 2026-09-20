@@ -315,26 +315,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
             
             <div style="text-align:center;margin:1rem 0;font-family:'Plus Jakarta Sans',sans-serif;font-size:.8rem;color:#999;">— or —</div>
             
-            <!-- PayPal Button Container -->
-            <div id="paypal-button-container" style="min-height:45px;">
-              <p id="paypal-fallback" style="color:#888;font-size:.75rem;text-align:center;padding:12px;margin:0;">
-                Loading PayPal...
-              </p>
-            </div>
-            <script>
-              // Show fallback message if PayPal doesn't load after 10 seconds
-              setTimeout(function() {
-                var container = document.getElementById('paypal-button-container');
-                if (container && container.querySelectorAll('iframe').length === 0) {
-                  var fb = document.getElementById('paypal-fallback');
-                  if (fb) {
-                    fb.innerHTML = '⚠️ PayPal unavailable.<br>Please use <strong>Pay with Card</strong> above.';
-                  } else {
-                    container.innerHTML = '<p style="color:#888;font-size:.75rem;text-align:center;padding:12px;">⚠️ PayPal unavailable. Use Pay with Card.</p>';
-                  }
-                }
-              }, 10000);
-            </script>
+            <!-- PayPal Button Container (renders automatically if available) -->
+            <div id="paypal-button-container" style="min-height:0;"></div>
           </div>
 
           <!-- WhatsApp hidden for US customers -->

@@ -558,26 +558,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
             
             <div style="text-align:center;margin:1rem 0;font-family:'Plus Jakarta Sans',sans-serif;font-size:.8rem;color:#999;">— o —</div>
             
-            <!-- PayPal Button Container -->
-            <div id="paypal-button-container" style="min-height:45px;">
-              <p id="paypal-fallback" style="color:#888;font-size:.75rem;text-align:center;padding:12px;margin:0;">
-                Cargando PayPal...
-              </p>
-            </div>
-            <script>
-              // Mensaje si PayPal no carga después de 10 segundos
-              setTimeout(function() {
-                var container = document.getElementById('paypal-button-container');
-                if (container && container.querySelectorAll('iframe').length === 0) {
-                  var fb = document.getElementById('paypal-fallback');
-                  if (fb) {
-                    fb.innerHTML = '⚠️ PayPal no disponible.<br>Por favor usa <strong>Pagar con tarjeta</strong>.';
-                  } else {
-                    container.innerHTML = '<p style="color:#888;font-size:.75rem;text-align:center;padding:12px;">⚠️ PayPal no disponible. Usa Pagar con tarjeta.</p>';
-                  }
-                }
-              }, 10000);
-            </script>
+            <!-- PayPal Button Container (renders automatically if available) -->
+            <div id="paypal-button-container" style="min-height:0;"></div>
           </div>
 
           <a id="co-wa-btn" href="#" target="_blank" style="display:block;text-align:center;background:transparent;color:var(--burgundy);border:2px solid var(--burgundy);font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;font-weight:700;letter-spacing:.04em;padding:1rem 2rem;border-radius:999px;text-decoration:none;transition:background .2s;margin-top:1rem;">
