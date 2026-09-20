@@ -12,10 +12,14 @@ const PAYPAL_CURRENCY = isEnCheckout ? 'USD' : 'MXN';
 
 // Handle static PayPal button click
 function setupPayPalStaticButton() {
+  console.log('[PayPal] setupPayPalStaticButton called');
   const staticBtn = document.getElementById('paypal-static-btn');
+  console.log('[PayPal] Button found:', !!staticBtn);
   if (staticBtn && !staticBtn._paypalHandlerAttached) {
     staticBtn._paypalHandlerAttached = true;
+    console.log('[PayPal] Attaching click handler');
     staticBtn.addEventListener('click', function() {
+      console.log('[PayPal] Button clicked!');
       // Validate form first
       const form = document.getElementById('co-form');
       if (form && !form.checkValidity()) {
@@ -54,9 +58,12 @@ function setupPayPalStaticButton() {
 }
 
 // Run setup immediately if DOM ready, otherwise wait
+console.log('[PayPal] Script loaded, readyState:', document.readyState);
 if (document.readyState === 'loading') {
+  console.log('[PayPal] Waiting for DOMContentLoaded');
   document.addEventListener('DOMContentLoaded', setupPayPalStaticButton);
 } else {
+  console.log('[PayPal] DOM ready, running setup now');
   setupPayPalStaticButton();
 }
 
