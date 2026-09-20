@@ -756,6 +756,152 @@ app.get('/api/orders/by-email', async (req, res) => {
   }
 });
 
+// ─── PayPal Express Checkout Order ────────────────────────────────────────────
+app.post('/api/orders/paypal-express', async (req, res) => {
+  try {
+    const { orderId, paypalOrderId, customer, shipping, product, payment, timestamp } = req.body;
+    
+    console.log('[PayPal Express] Nueva orden:', orderId);
+    
+    // Construir datos de orden
+    const orderData = {
+      orderId,
+      paypalOrderId,
+      customer_name: customer?.name?.split(' ')[0] || '',
+      customer_lastname: customer?.name?.split(' ').slice(1).join(' ') || '',
+      customer_email: customer?.email,
+      customer_phone: customer?.phone,
+      shipping_street: shipping?.street,
+      shipping_interior: shipping?.street2,
+      shipping_city: shipping?.city,
+      shipping_state: shipping?.state,
+      shipping_cp: shipping?.cp,
+      shipping_country: shipping?.country,
+      cart: [{
+        name: product?.name,
+        sku: product?.sku,
+        price: parseFloat(product?.price) || 0,
+        qty: product?.qty || 1
+      }],
+      payment_method: 'paypal_express',
+      payment_status: payment?.status,
+      capture_id: payment?.captureId,
+      status: 'paid',
+      source: 'paypal_express',
+      createdAt: timestamp
+    };
+    
+    // Guardar en Neon PostgreSQL
+    try {
+      await pool.query(`
+        INSERT INTO mahjoy_orders (
+          order_id, customer_name, customer_lastname, customer_email, customer_phone,
+          shipping_street, shipping_interior, shipping_city, shipping_state, shipping_cp,
+          cart, status, source
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        ON CONFLICT (order_id) DO UPDATE SET
+          status = EXCLUDED.status,
+          updated_at = CURRENT_TIMESTAMP
+      `, [
+        orderId, orderData.customer_name, orderData.customer_lastname,
+        orderData.customer_email, orderData.customer_phone,
+        orderData.shipping_street, orderData.shipping_interior,
+        orderData.shipping_city, orderData.shipping_state, orderData.shipping_cp,
+        JSON.stringify(orderData.cart), 'paid', 'paypal_express'
+      ]);
+      console.log('[PayPal Express] Guardado en Neon:', orderId);
+    } catch (dbErr) {
+      console.error('[PayPal Express] Error Neon:', dbErr.message);
+    }
+    
+    // Enviar a Proax
+    try {
+      const proaxPayload = {
+        order_id: orderId,
+        source: 'paypal_express',
+        customer: {
+          name: orderData.customer_name,
+          lastname: orderData.customer_lastname,
+          email: orderData.customer_email,
+          phone: orderData.customer_phone
+        },
+        shipping: {
+          street: orderData.shipping_street,
+          interior: orderData.shipping_interior,
+          city: orderData.shipping_city,
+          state: orderData.shipping_state,
+          postal_code: orderData.shipping_cp,
+          country: orderData.shipping_country
+        },
+        items: orderData.cart,
+        payment: {
+          method: 'paypal',
+          status: 'paid',
+          paypal_order_id: paypalOrderId,
+          capture_id: payment?.captureId
+        },
+        total: orderData.cart.reduce((sum, i) => sum + (i.price * i.qty), 0)
+      };
+      
+      const proaxRes = await fetch(`${PROAX_API_URL}/api/inventory/${PROAX_NODE_ID}/web-orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${PROAX_API_KEY}`
+        },
+        body: JSON.stringify(proaxPayload)
+      });
+      
+      if (proaxRes.ok) {
+        console.log('[PayPal Express] Enviado a Proax:', orderId);
+      } else {
+        console.error('[PayPal Express] Error Proax:', await proaxRes.text());
+      }
+    } catch (proaxErr) {
+      console.error('[PayPal Express] Error enviando a Proax:', proaxErr.message);
+    }
+    
+    // Notificar por Telegram
+    const telegramMsg = `🎉 *NUEVA VENTA PayPal Express*
+
+📦 Orden: \`${orderId}\`
+👤 ${orderData.customer_name} ${orderData.customer_lastname}
+📧 ${orderData.customer_email}
+📱 ${orderData.customer_phone || 'N/A'}
+
+🛍️ *Producto:*
+• ${product?.name} x${product?.qty} - $${product?.price} MXN
+
+📍 *Envío:*
+${orderData.shipping_street}
+${orderData.shipping_city}, ${orderData.shipping_state} ${orderData.shipping_cp}
+
+💰 *Total:* $${(parseFloat(product?.price) * (product?.qty || 1)).toFixed(2)} MXN
+✅ *Pagado con PayPal*`;
+
+    try {
+      await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: process.env.TELEGRAM_CHAT_ID || '-5458285985',
+          text: telegramMsg,
+          parse_mode: 'Markdown'
+        })
+      });
+      console.log('[PayPal Express] Notificación Telegram enviada');
+    } catch (tgErr) {
+      console.error('[PayPal Express] Error Telegram:', tgErr.message);
+    }
+    
+    res.json({ ok: true, orderId, message: 'Orden guardada exitosamente' });
+    
+  } catch (err) {
+    console.error('[PayPal Express] Error general:', err);
+    res.status(500).json({ error: 'Failed to save order', message: err.message });
+  }
+});
+
 // Send "order received" email when checkout is submitted
 async function sendOrderReceivedEmail(order) {
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
