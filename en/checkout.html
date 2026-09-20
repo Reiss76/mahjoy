@@ -194,6 +194,22 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
 
       <!-- RIGHT: Form -->
       <div>
+        <!-- PayPal Express Checkout -->
+        <div id="paypal-express-box" style="background:linear-gradient(135deg,#fff9e6 0%,#fff4d4 100%);border:2px solid #FFC439;border-radius:16px;padding:1.5rem;margin-bottom:1.5rem;">
+          <div style="text-align:center;margin-bottom:1rem;">
+            <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:#003087;font-weight:700;">⚡ Express Checkout</span>
+            <p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:#333;margin:.5rem 0 0;">Pay with PayPal using your saved address</p>
+          </div>
+          <div id="paypal-express-container"></div>
+          <p style="text-align:center;font-size:.7rem;color:#666;margin-top:.5rem;">No need to fill the form</p>
+        </div>
+        
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;">
+          <div style="flex:1;height:1px;background:#ddd;"></div>
+          <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.75rem;color:#999;">or fill the form</span>
+          <div style="flex:1;height:1px;background:#ddd;"></div>
+        </div>
+        
         <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--orchid);margin-bottom:1rem;">Your info</div>
 
         <form id="co-form" style="display:flex;flex-direction:column;gap:1.1rem;">
@@ -406,6 +422,122 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   <!-- PayPal SDK -->
   <script src="https://www.paypal.com/sdk/js?client-id=BAAbbz1L2qH_VMP2ACU9ua4HeR2A3NfU8Hp_v3POkGyYIuz4_ot1tihAmUP3h-KHzP9AiAjTRblKvZeKn4&currency=USD&locale=en_US"></script>
   <script src="../js/paypal-checkout.js"></script>
+  
+  <!-- PayPal Express Checkout (uses PayPal's saved address) -->
+  <script>
+  (function() {
+    function initPayPalExpress() {
+      if (typeof paypal === 'undefined' || !window.MJCheckoutProduct) {
+        setTimeout(initPayPalExpress, 500);
+        return;
+      }
+      
+      var container = document.getElementById('paypal-express-container');
+      if (!container || container.hasChildNodes()) return;
+      
+      var product = window.MJCheckoutProduct;
+      
+      paypal.Buttons({
+        style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal', height: 50 },
+        
+        createOrder: function(data, actions) {
+          var qty = parseInt(document.getElementById('co-qty')?.value) || 1;
+          var price = parseFloat(product.price) || 0;
+          var discount = window.MJAppliedDiscount;
+          if (discount && discount.pct > 0) price = Math.round(price * (1 - discount.pct / 100) * 100) / 100;
+          var subtotal = (price * qty).toFixed(2);
+          
+          return actions.order.create({
+            intent: 'CAPTURE',
+            purchase_units: [{
+              description: 'MAH JOY - ' + product.name,
+              amount: {
+                currency_code: 'USD',
+                value: subtotal,
+                breakdown: {
+                  item_total: { currency_code: 'USD', value: subtotal }
+                }
+              },
+              items: [{
+                name: product.name,
+                unit_amount: { currency_code: 'USD', value: price.toFixed(2) },
+                quantity: qty.toString(),
+                sku: product.sku || ''
+              }]
+            }],
+            application_context: {
+              brand_name: 'MAH JOY',
+              shipping_preference: 'GET_FROM_FILE',
+              user_action: 'PAY_NOW'
+            }
+          });
+        },
+        
+        onApprove: function(data, actions) {
+          return actions.order.capture().then(function(details) {
+            var payer = details.payer || {};
+            var shipping = details.purchase_units?.[0]?.shipping || {};
+            var address = shipping.address || {};
+            
+            var orderData = {
+              orderId: data.orderID,
+              paypalOrderId: details.id,
+              source: 'paypal_express_en',
+              customer: {
+                name: (payer.name?.given_name || '') + ' ' + (payer.name?.surname || ''),
+                email: payer.email_address || '',
+                phone: payer.phone?.phone_number?.national_number || ''
+              },
+              shipping: {
+                name: shipping.name?.full_name || '',
+                street: address.address_line_1 || '',
+                street2: address.address_line_2 || '',
+                city: address.admin_area_2 || '',
+                state: address.admin_area_1 || '',
+                cp: address.postal_code || '',
+                country: address.country_code || 'US'
+              },
+              product: {
+                name: window.MJCheckoutProduct?.name,
+                sku: window.MJCheckoutProduct?.sku,
+                price: window.MJCheckoutProduct?.price,
+                qty: parseInt(document.getElementById('co-qty')?.value) || 1
+              },
+              payment: {
+                method: 'paypal',
+                currency: 'USD',
+                status: details.status,
+                captureId: details.purchase_units?.[0]?.payments?.captures?.[0]?.id
+              },
+              timestamp: new Date().toISOString()
+            };
+            
+            fetch('/api/orders/paypal-express', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(orderData)
+            }).catch(function(err) { console.error('Error saving:', err); });
+            
+            localStorage.setItem('mj_paypal_order', JSON.stringify(orderData));
+            localStorage.setItem('mj_last_order_id', data.orderID);
+            
+            window.location.href = 'checkout.html?payment=success&order=' + data.orderID + '&method=paypal';
+          });
+        },
+        
+        onError: function(err) {
+          alert('PayPal error. Please try again or use Pay with Card.');
+        }
+      }).render('#paypal-express-container');
+    }
+    
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function() { setTimeout(initPayPalExpress, 800); });
+    } else {
+      setTimeout(initPayPalExpress, 800);
+    }
+  })();
+  </script>
 
   <style>
     .mj-co-label {
