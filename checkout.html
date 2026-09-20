@@ -356,9 +356,6 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           </div>
         </div>
 
-        <div style="margin-top:1.25rem;padding:1rem;background:var(--blush);border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:.8rem;color:var(--orchid-mid);line-height:1.6;">
-          🔒 Tu pedido es seguro. Te contactaremos para coordinar pago y envío.
-        </div>
       </div>
 
       <!-- RIGHT: Form -->
@@ -369,6 +366,20 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
             <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:#003087;font-weight:700;">⚡ Checkout Express</span>
             <p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:#333;margin:.5rem 0 0;">Paga con PayPal y usa tu dirección guardada</p>
           </div>
+          
+          <!-- Discount code for Express -->
+          <div style="margin-bottom:1rem;">
+            <div style="display:flex;gap:.5rem;">
+              <input type="text" id="co-express-discount" placeholder="¿Tienes código de descuento?" 
+                style="flex:1;padding:.6rem .8rem;border:1px solid #ddd;border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;font-size:.8rem;">
+              <button type="button" id="co-express-discount-btn" 
+                style="padding:.6rem 1rem;background:#003087;color:#fff;border:none;border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;">
+                Aplicar
+              </button>
+            </div>
+            <div id="co-express-discount-msg" style="display:none;margin-top:.4rem;font-family:'Plus Jakarta Sans',sans-serif;font-size:.75rem;font-weight:600;text-align:center;"></div>
+          </div>
+          
           <div id="paypal-express-container"></div>
           <p style="text-align:center;font-size:.7rem;color:#666;margin-top:.5rem;">No necesitas llenar el formulario</p>
           <p style="text-align:center;font-size:.7rem;color:#003087;margin-top:.3rem;font-style:italic;">📦 El envío se calcula automáticamente con tu dirección de PayPal</p>
@@ -687,6 +698,80 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   <script>
   (function() {
     var expressShippingCost = 0; // Se calcula cuando PayPal devuelve la dirección
+    
+    // Express discount handler
+    document.addEventListener('DOMContentLoaded', function() {
+      var expressDiscInput = document.getElementById('co-express-discount');
+      var expressDiscBtn = document.getElementById('co-express-discount-btn');
+      var expressDiscMsg = document.getElementById('co-express-discount-msg');
+      
+      if (expressDiscBtn && expressDiscInput) {
+        expressDiscBtn.addEventListener('click', async function() {
+          var code = expressDiscInput.value.trim().toUpperCase();
+          if (!code) return;
+          
+          expressDiscBtn.textContent = '...';
+          expressDiscBtn.disabled = true;
+          expressDiscMsg.style.display = 'none';
+          
+          try {
+            var res = await fetch('https://proax.app/api/public/vendors/discount/' + encodeURIComponent(code));
+            var data = await res.json();
+            
+            if (!res.ok || !data.valid) {
+              expressDiscMsg.style.display = 'block';
+              expressDiscMsg.style.color = '#dc2626';
+              expressDiscMsg.textContent = '✗ Código no válido';
+              expressDiscBtn.textContent = 'Aplicar';
+              expressDiscBtn.disabled = false;
+            } else {
+              // Apply discount globally
+              window.MJAppliedDiscount = {
+                code: data.discount_code,
+                vendorCode: data.vendor_code,
+                vendorName: data.vendor_name,
+                pct: data.discount_pct
+              };
+              
+              expressDiscInput.disabled = true;
+              expressDiscInput.style.opacity = '.6';
+              expressDiscBtn.textContent = '✓';
+              expressDiscBtn.style.background = '#16a34a';
+              expressDiscMsg.style.display = 'block';
+              expressDiscMsg.style.color = '#16a34a';
+              expressDiscMsg.textContent = '✓ ' + data.discount_pct + '% descuento aplicado';
+              
+              // Sync with form discount
+              var formDiscInput = document.getElementById('co-discount-input');
+              var formDiscBtn = document.getElementById('co-discount-btn');
+              if (formDiscInput) {
+                formDiscInput.value = code;
+                formDiscInput.disabled = true;
+                formDiscInput.style.opacity = '.6';
+              }
+              if (formDiscBtn) {
+                formDiscBtn.textContent = '✓';
+                formDiscBtn.style.background = '#16a34a';
+              }
+              
+              // Update totals display
+              if (typeof updateTotals === 'function') updateTotals();
+            }
+          } catch(e) {
+            expressDiscMsg.style.display = 'block';
+            expressDiscMsg.style.color = '#dc2626';
+            expressDiscMsg.textContent = '✗ Error validando código';
+            expressDiscBtn.textContent = 'Aplicar';
+            expressDiscBtn.disabled = false;
+          }
+        });
+        
+        // Enter key
+        expressDiscInput.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') { e.preventDefault(); expressDiscBtn.click(); }
+        });
+      }
+    });
     
     function initPayPalExpress() {
       if (typeof paypal === 'undefined' || !window.MJCheckoutProduct) {
