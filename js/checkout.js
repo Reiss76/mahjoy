@@ -159,10 +159,12 @@ function changeQty(delta) {
 
 function updateWaLink() {
   if (!currentProduct) return;
+  const waBtn = document.getElementById('co-wa-btn');
+  if (!waBtn) return; // WA button removed
   const form = document.getElementById('co-form');
   const name = form.querySelector('[name=name]').value || '';
   const msg = `Hola MAH JOY! 🀄\n\nQuiero ordenar:\n*${currentProduct.name}* (${currentProduct.sku || ''})\nCantidad: ${qty}\n\n${name ? 'Mi nombre: ' + name + '\n' : ''}¿Pueden ayudarme?`;
-  document.getElementById('co-wa-btn').href = `https://wa.me/${MJ_WA_NUMBER}?text=${encodeURIComponent(msg)}`;
+  waBtn.href = `https://wa.me/${MJ_WA_NUMBER}?text=${encodeURIComponent(msg)}`;
 }
 
 async function loadCheckout() {
