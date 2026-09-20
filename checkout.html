@@ -583,9 +583,16 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
                 alert('Producto no cargado. Recarga la página.');
                 return;
               }
-              // Render PayPal in hidden container and open popup
+              // Hide static button, show PayPal container
+              var staticBtn = document.getElementById('paypal-static-btn');
+              var tagline = staticBtn.nextElementSibling;
+              staticBtn.style.display = 'none';
+              if (tagline && tagline.tagName === 'P') tagline.style.display = 'none';
+              
               var container = document.getElementById('paypal-button-container');
-              container.innerHTML = '';
+              container.style.display = 'block';
+              container.innerHTML = '<p style="text-align:center;color:#666;font-size:.8rem;padding:8px;">Cargando PayPal...</p>';
+              
               var product = window.MJCheckoutProduct;
               var qty = parseInt(form.qty ? form.qty.value : 1) || 1;
               var price = parseFloat(product.price) || 0;
@@ -593,8 +600,9 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
               var discount = window.MJAppliedDiscount;
               if (discount && discount.pct > 0) price = Math.round(price * (1 - discount.pct / 100) * 100) / 100;
               var total = (price * qty + shipping).toFixed(2);
+              
               paypal.Buttons({
-                style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal', height: 45 },
+                style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal', height: 55 },
                 createOrder: function(data, actions) {
                   return actions.order.create({
                     intent: 'CAPTURE',
@@ -605,10 +613,21 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
                 onApprove: function(data, actions) {
                   return actions.order.capture().then(function(details) {
                     alert('¡Pago completado! Gracias, ' + details.payer.name.given_name);
-                    // TODO: Save order and redirect to success
+                    window.location.href = 'checkout.html?payment=success&order=' + data.orderID;
                   });
                 },
-                onError: function(err) { alert('Error de PayPal: ' + err.message); }
+                onCancel: function() {
+                  // User cancelled - show static button again
+                  staticBtn.style.display = 'flex';
+                  if (tagline && tagline.tagName === 'P') tagline.style.display = 'block';
+                  container.style.display = 'none';
+                },
+                onError: function(err) { 
+                  alert('Error de PayPal: ' + err.message);
+                  staticBtn.style.display = 'flex';
+                  if (tagline && tagline.tagName === 'P') tagline.style.display = 'block';
+                  container.style.display = 'none';
+                }
               }).render('#paypal-button-container');
             }
             </script>
