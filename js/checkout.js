@@ -289,6 +289,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (mismatchEl) mismatchEl.style.display = 'none';
 
+    // Meta Pixel: InitiateCheckout event
+    if (typeof fbq === 'function' && currentProduct) {
+      const qty = parseInt(form.qty.value) || 1;
+      fbq('track', 'InitiateCheckout', {
+        content_name: currentProduct.name,
+        content_ids: [currentProduct.sku || currentProduct.id],
+        content_type: 'product',
+        value: (getProductPrice(currentProduct) * qty) + (selectedShippingCost || 0),
+        currency: isEN ? 'USD' : 'MXN',
+        num_items: qty
+      });
+    }
+
     const data = {
       name: `${form.name.value} ${form.lastname.value}`.trim(),
       email: form.email.value,

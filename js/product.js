@@ -395,6 +395,17 @@ async function loadProduct() {
   // Show content
   document.getElementById('pdp-loading').style.display = 'none';
   document.getElementById('pdp-content').style.display = 'block';
+  
+  // Meta Pixel: ViewContent event
+  if (typeof fbq === 'function') {
+    fbq('track', 'ViewContent', {
+      content_name: product.name,
+      content_ids: [product.sku || product.id],
+      content_type: 'product',
+      value: parseFloat(product.price) || 0,
+      currency: 'MXN'
+    });
+  }
 }
 
 document.addEventListener('DOMContentLoaded', loadProduct);

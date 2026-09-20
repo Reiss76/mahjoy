@@ -972,6 +972,18 @@ if (window.location.search.includes('payment=success') ||
     misPedidosLink.href = `mis-pedidos.html?order=${encodeURIComponent(orderId)}`;
   }
   
+  // Meta Pixel: Purchase event
+  if (typeof fbq === 'function' && cartItems.length > 0) {
+    const total = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    fbq('track', 'Purchase', {
+      content_ids: cartItems.map(i => i.sku || i.id),
+      content_type: 'product',
+      value: total,
+      currency: 'MXN',
+      num_items: cartItems.reduce((sum, i) => sum + i.qty, 0)
+    });
+  }
+  
   // Skip shipping form - go directly to complete
   document.getElementById('co-loading').style.display = 'none';
   document.getElementById('co-content').style.display = 'none';

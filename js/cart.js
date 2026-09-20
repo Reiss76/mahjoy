@@ -37,6 +37,17 @@ function addToCart(product, qty = 1) {
   }
   saveCart(cart);
   showAddedFeedback();
+  
+  // Meta Pixel: AddToCart event
+  if (typeof fbq === 'function') {
+    fbq('track', 'AddToCart', {
+      content_name: product.name,
+      content_ids: [product.sku || product.id],
+      content_type: 'product',
+      value: (parseFloat(product.price) || 0) * qty,
+      currency: 'MXN'
+    });
+  }
 }
 
 function removeFromCart(productId) {
