@@ -163,6 +163,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   }).then(function(data){
     var bundles = data.bundles || data || [];
     // Ocultar bundles sin imagen correcta
+    // Ocultar bundles sin imagen correcta
     var hiddenBundles = ['Bundle Jungle', 'Bundle Pink Accessories'];
     bundles = bundles.filter(function(b) { return hiddenBundles.indexOf(b.name) === -1; });
     var grid = document.getElementById('mj-prod-grid');
