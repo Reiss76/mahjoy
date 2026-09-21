@@ -737,39 +737,77 @@ app.get('/api/orders/by-email', async (req, res) => {
       return res.status(400).json({ error: 'Email required' });
     }
 
-    // Fetch orders from Proax
-    const proaxRes = await fetch(`${PROAX_API_URL}/api/inventory/${PROAX_NODE_ID}/web-orders?email=${encodeURIComponent(email)}`, {
-      headers: { 'Authorization': `Bearer ${PROAX_API_KEY}` }
-    });
+    let allOrders = [];
     
-    if (proaxRes.ok) {
-      const data = await proaxRes.json();
-      const orders = (data.orders || data || []).map(o => ({
-        orderId: o.order_id || o.orderId,
-        status: o.status,
-        total: o.total,
-        items: o.items || [],
-        createdAt: o.created_at || o.createdAt,
-        trackingNumber: o.tracking_number || o.trackingNumber,
-        shipping: o.shipping
-      }));
-      return res.json({ orders });
+    // 1. First, check Neon PostgreSQL database (primary source for PayPal Express orders)
+    try {
+      const dbResult = await pool.query(`
+        SELECT * FROM mahjoy_orders 
+        WHERE LOWER(customer_email) = $1
+        ORDER BY created_at DESC
+      `, [email]);
+      
+      const dbOrders = dbResult.rows.map(row => {
+        const cart = row.cart || [];
+        const shippingCost = parseFloat(row.shipping_cost) || 0;
+        const itemsTotal = cart.reduce((sum, item) => sum + ((parseFloat(item.price) || 0) * (item.qty || 1)), 0);
+        const total = itemsTotal + shippingCost;
+        
+        return {
+          orderId: row.order_id,
+          status: row.status,
+          total: total,
+          items: cart,
+          createdAt: row.created_at,
+          trackingNumber: row.tracking_number,
+          shipping: {
+            street: row.shipping_street,
+            city: row.shipping_city,
+            state: row.shipping_state,
+            cp: row.shipping_cp,
+            cost: shippingCost
+          }
+        };
+      });
+      
+      allOrders = [...allOrders, ...dbOrders];
+      console.log(`[orders/by-email] Found ${dbOrders.length} orders in Neon for ${email}`);
+    } catch (dbErr) {
+      console.error('[orders/by-email] Neon query error:', dbErr.message);
+    }
+
+    // 2. Also check Proax API
+    try {
+      const proaxRes = await fetch(`${PROAX_API_URL}/api/inventory/${PROAX_NODE_ID}/web-orders?email=${encodeURIComponent(email)}`, {
+        headers: { 'Authorization': `Bearer ${PROAX_API_KEY}` }
+      });
+      
+      if (proaxRes.ok) {
+        const data = await proaxRes.json();
+        const proaxOrders = (data.orders || data || []).map(o => ({
+          orderId: o.order_id || o.orderId,
+          status: o.status,
+          total: o.total,
+          items: o.items || [],
+          createdAt: o.created_at || o.createdAt,
+          trackingNumber: o.tracking_number || o.trackingNumber,
+          shipping: o.shipping
+        }));
+        
+        // Add Proax orders that aren't already in the list (by orderId)
+        const existingIds = new Set(allOrders.map(o => o.orderId));
+        const newOrders = proaxOrders.filter(o => !existingIds.has(o.orderId));
+        allOrders = [...allOrders, ...newOrders];
+        console.log(`[orders/by-email] Found ${proaxOrders.length} orders in Proax for ${email}`);
+      }
+    } catch (proaxErr) {
+      console.error('[orders/by-email] Proax fetch error:', proaxErr.message);
     }
     
-    // Fallback to in-memory orders
-    const orders = Array.from(pendingOrders.values())
-      .filter(o => o.customer?.email?.toLowerCase() === email)
-      .map(o => ({
-        orderId: o.orderId,
-        status: o.status,
-        total: o.total,
-        items: o.items || [],
-        createdAt: o.createdAt,
-        trackingNumber: o.trackingNumber,
-        shipping: o.shipping
-      }));
+    // Sort by date (newest first)
+    allOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     
-    res.json({ orders });
+    res.json({ orders: allOrders });
   } catch (err) {
     console.error('[orders] Fetch by email error:', err);
     res.status(500).json({ error: 'Failed to fetch orders', orders: [] });
