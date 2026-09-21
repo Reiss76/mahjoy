@@ -348,7 +348,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
             <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:#888;">Envío</span>
-            <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:var(--orchid-mid);font-weight:600;">A cotizar</span>
+            <span id="co-shipping-display" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:var(--orchid-mid);font-weight:600;">A cotizar</span>
           </div>
           <div style="border-top:1px solid #f0e4ec;padding-top:.75rem;display:flex;justify-content:space-between;align-items:center;">
             <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1rem;font-weight:700;color:var(--burgundy);">Total estimado</span>
@@ -703,6 +703,66 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   <script>
   (function() {
     var expressShippingCost = 0; // Se calcula cuando PayPal devuelve la dirección
+    var EXPRESS_ESTIMATED_SHIPPING = 250; // Envío estimado para Express Checkout
+    
+    // Función para actualizar el resumen con envío estimado y descuento
+    function updateExpressSummary(discountPct) {
+      var product = window.MJCheckoutProduct;
+      if (!product) return;
+      
+      var qty = parseInt(document.getElementById('co-qty')?.value) || 1;
+      var price = parseFloat(product.price) || 0;
+      var subtotal = price * qty;
+      
+      // Aplicar descuento
+      if (discountPct && discountPct > 0) {
+        subtotal = Math.round(subtotal * (1 - discountPct / 100) * 100) / 100;
+      }
+      
+      var total = subtotal + EXPRESS_ESTIMATED_SHIPPING;
+      
+      // Actualizar displays
+      var shippingDisplay = document.getElementById('co-shipping-display');
+      var totalDisplay = document.getElementById('co-total');
+      var discountRow = document.getElementById('co-discount-row');
+      var discountAmount = document.getElementById('co-discount-amount');
+      
+      if (shippingDisplay) {
+        shippingDisplay.textContent = '$' + EXPRESS_ESTIMATED_SHIPPING.toFixed(2);
+        shippingDisplay.style.color = '#003087';
+      }
+      
+      if (totalDisplay) {
+        totalDisplay.textContent = '$' + total.toFixed(2);
+      }
+      
+      // Mostrar fila de descuento si aplica
+      if (discountPct && discountPct > 0 && discountRow && discountAmount) {
+        var discountValue = (price * qty) - subtotal;
+        discountRow.style.display = 'flex';
+        discountAmount.textContent = '-$' + discountValue.toFixed(2);
+      }
+    }
+    
+    // Inicializar resumen con envío estimado al cargar
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        var shippingDisplay = document.getElementById('co-shipping-display');
+        var totalDisplay = document.getElementById('co-total');
+        var product = window.MJCheckoutProduct;
+        
+        if (shippingDisplay && product) {
+          shippingDisplay.textContent = '$' + EXPRESS_ESTIMATED_SHIPPING.toFixed(2);
+          shippingDisplay.style.color = '#003087';
+        }
+        if (totalDisplay && product) {
+          var qty = parseInt(document.getElementById('co-qty')?.value) || 1;
+          var price = parseFloat(product.price) || 0;
+          var total = (price * qty) + EXPRESS_ESTIMATED_SHIPPING;
+          totalDisplay.textContent = '$' + total.toFixed(2);
+        }
+      }, 1000);
+    });
     
     // Express discount handler
     document.addEventListener('DOMContentLoaded', function() {
@@ -762,6 +822,9 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
               
               // Update totals display
               if (typeof updateTotals === 'function') updateTotals();
+              
+              // Update summary with Express estimated shipping and discount
+              updateExpressSummary(data.discount_pct);
             }
           } catch(e) {
             expressDiscMsg.style.display = 'block';
