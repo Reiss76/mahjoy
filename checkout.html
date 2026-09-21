@@ -382,7 +382,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           
           <div id="paypal-express-container"></div>
           <p style="text-align:center;font-size:.7rem;color:#666;margin-top:.5rem;">No necesitas llenar el formulario</p>
-          <p style="text-align:center;font-size:.7rem;color:#003087;margin-top:.3rem;font-style:italic;">📦 El envío se calcula automáticamente con tu dirección de PayPal</p>
+          <p style="text-align:center;font-size:.7rem;color:#003087;margin-top:.3rem;font-style:italic;">📦 Incluye envío estimado ($150 MXN) - se ajusta con tu dirección</p>
         </div>
         
         <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;">
@@ -804,19 +804,22 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
             console.log('[PayPal Express] price after discount:', price);
           }
           var subtotal = (price * qty).toFixed(2);
-          console.log('[PayPal Express] subtotal:', subtotal);
+          // Envío estimado mínimo - se ajusta en onShippingChange si el usuario selecciona dirección
+          var estimatedShipping = 150; // $150 MXN mínimo para no perder en envío
+          var total = (parseFloat(subtotal) + estimatedShipping).toFixed(2);
+          console.log('[PayPal Express] subtotal:', subtotal, 'estimated shipping:', estimatedShipping, 'total:', total);
           
-          // Crear orden SIN envío inicialmente - se actualiza en onShippingChange
+          // Crear orden CON envío estimado - se ajusta en onShippingChange
           return actions.order.create({
             intent: 'CAPTURE',
             purchase_units: [{
               description: 'MAH JOY - ' + product.name,
               amount: {
                 currency_code: 'MXN',
-                value: subtotal,
+                value: total,
                 breakdown: {
                   item_total: { currency_code: 'MXN', value: subtotal },
-                  shipping: { currency_code: 'MXN', value: '0.00' }
+                  shipping: { currency_code: 'MXN', value: estimatedShipping.toFixed(2) }
                 }
               },
               items: [{
