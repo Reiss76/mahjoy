@@ -140,8 +140,8 @@ function buildProductCard(product) {
 }
 
 function buildBundleCard(bundle) {
-  // Bundle image: can be a full URL or a relative path
-  let imgSrc = bundle.image_key;
+  // Bundle image: API returns 'image' field, can be a full URL or a relative path
+  let imgSrc = bundle.image || bundle.image_key;
   if (imgSrc && !imgSrc.startsWith('http')) {
     // Convert relative path to full API URL
     imgSrc = imgSrc.startsWith('/api/public/media')
@@ -151,11 +151,15 @@ function buildBundleCard(bundle) {
         : MJ_API_BASE + '/public/media?key=' + encodeURIComponent(imgSrc);
   }
 
-  // Calculate bundle price
-  const bundlePrice = bundle.price ? parseFloat(bundle.price) : 0;
+  // Calculate bundle price - use price_usd for English, price for Spanish
+  // If price is 0 or null, fallback to price_usd
+  const priceMXN = parseFloat(bundle.price) || 0;
+  const priceUSD = parseFloat(bundle.price_usd) || 0;
   const displayPrice = isEnglishShop
-    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(bundlePrice / 20) // Approximate conversion
-    : new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(bundlePrice);
+    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(priceUSD)
+    : (priceMXN > 0 
+        ? new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(priceMXN)
+        : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(priceUSD));
 
   return `
     <div class="mj-product-card mj-bundle-card" onclick="window.location='bundle.html#${bundle.id}'" style="cursor:pointer;">
