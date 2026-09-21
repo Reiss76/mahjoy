@@ -2,13 +2,15 @@
  * MAH JOY — PayPal Checkout Integration
  * Uses PayPal JS SDK for client-side payment
  */
+(function() {
+'use strict';
 
-const MJ_PAYPAL_API = 'https://proax.app/api/public/mahjoy';
-let paypalButtonRendered = false; // Prevent duplicate renders
+var MJ_PAYPAL_API = 'https://proax.app/api/public/mahjoy';
+var paypalButtonRendered = false; // Prevent duplicate renders
 
 // Detect if EN checkout (uses USD) or ES checkout (uses MXN)
-const isEnCheckout = window.location.pathname.includes('/en/');
-const PAYPAL_CURRENCY = isEnCheckout ? 'USD' : 'MXN';
+var isEnCheckout = window.location.pathname.includes('/en/');
+var PAYPAL_CURRENCY = isEnCheckout ? 'USD' : 'MXN';
 
 // Handle static PayPal button click
 function setupPayPalStaticButton() {
@@ -427,3 +429,5 @@ function showPaymentSuccess(details) {
 window.MJPayPal = {
   init: initPayPalButton
 };
+
+})(); // End IIFE
