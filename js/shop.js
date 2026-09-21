@@ -6,6 +6,7 @@
 // Fetch en vivo desde Proax API — siempre sincronizado con el inventario
 const MJ_API_BASE = 'https://api-production-b888.up.railway.app';
 const MJ_API = MJ_API_BASE + '/public/shop/mahjoy/products';
+const MJ_BUNDLES_API = MJ_API_BASE + '/public/shop/mahjoy/bundles';
 
 // Hidden products (SKUs to exclude from shop)
 const MJ_HIDDEN_SKUS = ['Rack-007', 'RACK-007'];
@@ -138,6 +139,43 @@ function buildProductCard(product) {
   `;
 }
 
+function buildBundleCard(bundle) {
+  // Bundle image: can be a full URL or a relative path
+  let imgSrc = bundle.image_key;
+  if (imgSrc && !imgSrc.startsWith('http')) {
+    // Convert relative path to full API URL
+    imgSrc = imgSrc.startsWith('/api/public/media')
+      ? MJ_API_BASE + imgSrc.replace('/api/public/media', '/public/media')
+      : imgSrc.startsWith('/public/media')
+        ? MJ_API_BASE + imgSrc
+        : MJ_API_BASE + '/public/media?key=' + encodeURIComponent(imgSrc);
+  }
+
+  // Calculate bundle price
+  const bundlePrice = bundle.price ? parseFloat(bundle.price) : 0;
+  const displayPrice = isEnglishShop
+    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(bundlePrice / 20) // Approximate conversion
+    : new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(bundlePrice);
+
+  return `
+    <div class="mj-product-card mj-bundle-card" onclick="window.location='bundle.html#${bundle.id}'" style="cursor:pointer;">
+      <div class="mj-product-img-wrap">
+        ${imgSrc
+          ? `<img src="${imgSrc}" alt="${bundle.name}" class="mj-product-img" loading="lazy">`
+          : `<div class="mj-product-img-placeholder"><span>✦</span></div>`
+        }
+        <div class="mj-product-badge" style="background:var(--berry);color:#fff;">Bundle</div>
+      </div>
+      <div class="mj-product-info">
+        <div class="mj-product-name">${bundle.name}</div>
+        ${bundle.description ? `<div class="mj-product-desc">${bundle.description}</div>` : ''}
+        <div class="mj-product-price">${displayPrice}</div>
+      </div>
+      <a href="javascript:void(0)" onclick="window.location='bundle.html#${bundle.id}'" class="mj-product-cta">${TS.viewProduct}</a>
+    </div>
+  `;
+}
+
 function buildEmptyState(categoryLabel) {
   return `
     <div class="mj-empty-state">
@@ -171,9 +209,25 @@ async function loadShopProducts({ containerId, category = null, categoryLabel = 
   `;
 
   try {
-    const res = await fetch(MJ_API);
-    if (!res.ok) throw new Error('API error');
-    const data = await res.json();
+    // Fetch products and bundles in parallel
+    const [productsRes, bundlesRes] = await Promise.all([
+      fetch(MJ_API),
+      fetch(MJ_BUNDLES_API).catch(() => null) // Bundles endpoint may not exist, gracefully handle
+    ]);
+
+    if (!productsRes.ok) throw new Error('API error');
+    const data = await productsRes.json();
+
+    // Parse bundles if available
+    let bundles = [];
+    if (bundlesRes && bundlesRes.ok) {
+      try {
+        const bundlesData = await bundlesRes.json();
+        bundles = bundlesData.bundles || bundlesData || [];
+      } catch (e) {
+        console.warn('Could not parse bundles:', e);
+      }
+    }
 
     // Normalizar URLs de imágenes (la API puede devolver paths relativos)
     let products = (data.products || []).map(p => ({
@@ -192,16 +246,28 @@ async function loadShopProducts({ containerId, category = null, categoryLabel = 
     products = products.filter(p => !MJ_HIDDEN_SKUS.includes(p.sku));
 
     // Filter by category if specified — SKU-based matching
-    if (category) {
+    // Bundles only show on main shop page (no category filter) or "bundles" category
+    const showBundles = !category || category === 'bundles';
+    if (category && category !== 'bundles') {
       products = products.filter(p => matchCategory(p, category));
+      bundles = []; // Don't show bundles on category pages (except bundles page)
     }
 
-    if (products.length === 0) {
+    // If specifically viewing bundles category, only show bundles
+    if (category === 'bundles') {
+      products = [];
+    }
+
+    const totalItems = products.length + bundles.length;
+    if (totalItems === 0) {
       container.innerHTML = buildEmptyState(categoryLabel);
       return;
     }
 
-    container.innerHTML = `<div class="mj-product-grid">${products.map(buildProductCard).join('')}</div>`;
+    // Build grid: bundles first (featured), then products
+    const bundleCards = bundles.map(buildBundleCard).join('');
+    const productCards = products.map(buildProductCard).join('');
+    container.innerHTML = `<div class="mj-product-grid">${bundleCards}${productCards}</div>`;
   } catch (err) {
     console.error('MJ Shop error:', err);
     container.innerHTML = buildErrorState();
