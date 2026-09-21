@@ -145,6 +145,8 @@ function updateTotals() {
 window.MJCheckout = {
   setShippingCost: function(cost) {
     selectedShippingCost = cost;
+    window.MJShippingCost = cost; // CRITICAL: Update for PayPal
+    console.log('[Checkout] Shipping cost set:', cost, '→ window.MJShippingCost:', window.MJShippingCost);
     updateTotals();
   },
   updateTotals: updateTotals

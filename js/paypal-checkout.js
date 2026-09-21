@@ -75,6 +75,8 @@ function processPayPalPayment() {
   const appliedDiscount = window.MJAppliedDiscount || null;
   const shippingCost = window.MJShippingCost || 0;
   
+  console.log('[PayPal] processPayPalPayment - shippingCost:', shippingCost, 'window.MJShippingCost:', window.MJShippingCost);
+  
   const basePrice = parseFloat(currentProduct.price) || 0;
   const discountedPrice = appliedDiscount && appliedDiscount.pct > 0
     ? Math.round(basePrice * (1 - appliedDiscount.pct / 100) * 100) / 100
@@ -206,6 +208,8 @@ function initPayPalButton() {
       const qty = parseInt(form.qty?.value) || 1;
       const appliedDiscount = window.MJAppliedDiscount || null;
       const shippingCost = window.MJShippingCost || 0;
+      
+      console.log('[PayPal] createOrder - shippingCost:', shippingCost, 'window.MJShippingCost:', window.MJShippingCost);
       
       if (!currentProduct) {
         alert('No se encontró el producto');
