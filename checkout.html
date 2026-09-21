@@ -794,6 +794,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal', height: 50 },
         
         createOrder: function(data, actions) {
+          console.log('[PayPal Express] createOrder called, window.MJAppliedDiscount =', window.MJAppliedDiscount);
           var qty = parseInt(document.getElementById('co-qty')?.value) || 1;
           var price = parseFloat(product.price) || 0;
           var discount = window.MJAppliedDiscount;

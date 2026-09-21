@@ -554,7 +554,10 @@ const _origUpdateTotals = updateTotals;
 const newUpdateTotals = function() {
   _origUpdateTotals();
   window.MJCheckoutProduct = currentProduct;
-  window.MJAppliedDiscount = appliedDiscount;
+  // Solo actualizar si hay un descuento en el form, sino mantener el de Express
+  if (appliedDiscount) {
+    window.MJAppliedDiscount = appliedDiscount;
+  }
   window.MJShippingCost = selectedShippingCost;
 };
 
@@ -567,7 +570,10 @@ if (typeof updateTotals !== 'undefined') {
 document.addEventListener('DOMContentLoaded', function() {
   setTimeout(function() {
     window.MJCheckoutProduct = currentProduct;
-    window.MJAppliedDiscount = appliedDiscount;
+    // Solo inicializar si no hay un descuento ya aplicado (ej: desde Express)
+    if (!window.MJAppliedDiscount) {
+      window.MJAppliedDiscount = appliedDiscount;
+    }
     window.MJShippingCost = selectedShippingCost;
     // Trigger PayPal init now that product is ready
     if (typeof window.initPayPalWhenReady === 'function') {
