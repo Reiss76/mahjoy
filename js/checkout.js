@@ -484,6 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
         discMsg.style.color = '#dc2626';
         discMsg.textContent = '✗ Código no válido o expirado';
         appliedDiscount = null;
+        window.MJAppliedDiscount = null; // Clear for PayPal
         updateTotals();
       } else {
         appliedDiscount = {
@@ -492,6 +493,8 @@ document.addEventListener('DOMContentLoaded', () => {
           vendorName: data.vendor_name,
           pct: data.discount_pct,
         };
+        window.MJAppliedDiscount = appliedDiscount; // CRITICAL: Update for PayPal
+        console.log('[Checkout] Discount applied:', appliedDiscount);
         // Also set vendor ref for commission tracking
         if (window.MJVendor) {
           try {
