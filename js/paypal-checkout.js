@@ -90,6 +90,22 @@ function processPayPalPayment() {
   }
   const total = productTotal + shippingForPayPal;
   
+  console.log('[PayPal] FINAL VALUES:', {
+    basePrice,
+    discountedPrice,
+    productTotal,
+    shippingCost,
+    shippingForPayPal,
+    total,
+    'window.MJShippingCost': window.MJShippingCost,
+    'window.MJAppliedDiscount': window.MJAppliedDiscount
+  });
+  
+  // Alert for testing
+  if (total <= productTotal && shippingCost === 0) {
+    console.warn('[PayPal] WARNING: Shipping cost is $0! Check if shipping was selected.');
+  }
+  
   // Create PayPal order
   paypal.Buttons({
     style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal', height: 45 },
