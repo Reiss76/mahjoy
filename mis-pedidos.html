@@ -121,7 +121,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
 
   <script>
     const PROAX_API = 'https://proax.app/api/public/mahjoy';
-    const RAILWAY_API = 'https://api-production-b888.up.railway.app';
+    // Use playmahjoy.com server for orders (has Neon DB + Proax combined)
+    const ORDERS_API = '';
     
     // Timeline steps configuration
     const TIMELINE_STEPS = [
@@ -282,8 +283,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       container.innerHTML = '<div class="mj-loading">Buscando pedidos</div>';
       
       try {
-        // Fetch from Railway API (combines Neon DB + Proax)
-        const res = await fetch(`${RAILWAY_API}/api/orders/by-email?email=${encodeURIComponent(email)}`);
+        // Fetch from playmahjoy server (combines Neon DB + Proax)
+        const res = await fetch(`${ORDERS_API}/api/orders/by-email?email=${encodeURIComponent(email)}`);
         
         if (!res.ok) {
           throw new Error('API error');
