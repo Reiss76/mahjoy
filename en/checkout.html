@@ -514,7 +514,9 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         
         createOrder: function(data, actions) {
           var qty = parseInt(document.getElementById('co-qty')?.value) || 1;
-          var price = parseFloat(product.price) || 0;
+          // Use USD price if available, otherwise fall back to MXN price
+          var price = parseFloat(product.price_usd) || parseFloat(product.price) || 0;
+          console.log('[PayPal Express EN] price:', price, 'price_usd:', product.price_usd, 'price:', product.price);
           var discount = window.MJAppliedDiscount;
           if (discount && discount.pct > 0) price = Math.round(price * (1 - discount.pct / 100) * 100) / 100;
           var subtotal = price * qty;
