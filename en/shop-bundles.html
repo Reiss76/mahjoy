@@ -161,6 +161,9 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     return r.json();
   }).then(function(data){
     var bundles = data.bundles || data || [];
+    // Hide specific bundles
+    var hiddenBundles = ['Bundle Pink Accessories'];
+    bundles = bundles.filter(function(b) { return hiddenBundles.indexOf(b.name) === -1; });
     var grid = document.getElementById('mj-prod-grid');
     if(!bundles.length){
       grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px;font-family:Plus Jakarta Sans,sans-serif;color:var(--orchid);">✦ Coming Soon ✦</div>';
@@ -170,7 +173,14 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     bundles.forEach(function(b){
       var imgSrc = b.image || '';
       if (imgSrc && !imgSrc.startsWith('http')) {
-        imgSrc = imgSrc.startsWith('/') ? '..' + imgSrc : '../' + imgSrc;
+        // Convert relative API URLs to full Railway API URLs
+        imgSrc = imgSrc.startsWith('/api/public/media')
+          ? MJ_API + imgSrc.replace('/api/public/media', '/public/media')
+          : imgSrc.startsWith('/public/media')
+            ? MJ_API + imgSrc
+            : imgSrc.startsWith('/')
+              ? MJ_API + imgSrc
+              : MJ_API + '/' + imgSrc;
       }
       var card = document.createElement('a');
       card.href = 'bundle-detail.html?id=' + b.id;
