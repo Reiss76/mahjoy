@@ -308,6 +308,7 @@ async function loadBundleCheckout(bundleId) {
       name: bundle.name,
       sku: 'BUNDLE-' + bundle.id,
       price: bundle.price || bundle.total_price,
+      price_usd: bundle.price_usd, // For EN checkout
       primary_image_url: bundle.image,
       images: bundle.image ? [bundle.image] : [],
       category: 'Bundles',
@@ -332,7 +333,7 @@ async function loadBundleCheckout(bundleId) {
     document.getElementById('co-cat-badge').textContent = 'BUNDLE ✦';
     document.getElementById('co-name').textContent = bundleProduct.name;
     document.getElementById('co-sku').textContent = bundleProduct.sku;
-    document.getElementById('co-price').textContent = formatPrice(bundleProduct.price);
+    document.getElementById('co-price').textContent = formatPrice(getProductPrice(bundleProduct));
     
     updateTotals();
     
