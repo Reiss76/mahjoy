@@ -843,10 +843,13 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     });
     
     function initPayPalExpress() {
+      console.log('[PayPal Express] initPayPalExpress called, paypal:', typeof paypal, 'product:', window.MJCheckoutProduct);
       if (typeof paypal === 'undefined' || !window.MJCheckoutProduct) {
+        console.log('[PayPal Express] Waiting... paypal loaded:', typeof paypal !== 'undefined', 'product loaded:', !!window.MJCheckoutProduct);
         setTimeout(initPayPalExpress, 500);
         return;
       }
+      console.log('[PayPal Express] Rendering buttons for product:', window.MJCheckoutProduct?.name);
       
       var container = document.getElementById('paypal-express-container');
       if (!container || container.hasChildNodes()) return;

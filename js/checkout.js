@@ -176,6 +176,14 @@ async function loadCheckout() {
   const rawId = hashVal && !isNaN(hashVal) ? hashVal : params.get('id');
   const productId = rawId ? parseInt(rawId) : null;
   const productSku = (!productId && hashVal) ? hashVal : params.get('sku');
+  
+  // Check if loading a bundle
+  const bundleId = params.get('bundle');
+  if (bundleId) {
+    console.log('[Checkout] Loading bundle:', bundleId);
+    await loadBundleCheckout(bundleId);
+    return;
+  }
 
   if (!productId && !productSku) {
     document.getElementById('co-loading').style.display = 'none';
@@ -270,6 +278,76 @@ async function loadCheckout() {
 
   // Update WA link on input change
   document.getElementById('co-form').addEventListener('input', updateWaLink);
+}
+
+// Load bundle checkout
+async function loadBundleCheckout(bundleId) {
+  try {
+    // Fetch bundles from API
+    const res = await fetch(`${MJ_API_BASE}/public/shop/mahjoy/bundles`);
+    if (!res.ok) throw new Error('Failed to fetch bundles');
+    
+    const data = await res.json();
+    const bundles = data.bundles || data || [];
+    const bundle = bundles.find(b => b.id == bundleId || b.id === parseInt(bundleId));
+    
+    if (!bundle) {
+      console.error('[Checkout] Bundle not found:', bundleId);
+      document.getElementById('co-loading').style.display = 'none';
+      document.getElementById('co-content').style.display = 'block';
+      document.getElementById('co-name').textContent = 'Bundle no encontrado';
+      document.getElementById('co-img-wrap').style.display = 'none';
+      return;
+    }
+    
+    console.log('[Checkout] Bundle loaded:', bundle.name);
+    
+    // Convert bundle to product-like object for checkout
+    const bundleProduct = {
+      id: bundle.id,
+      name: bundle.name,
+      sku: 'BUNDLE-' + bundle.id,
+      price: bundle.price || bundle.total_price,
+      primary_image_url: bundle.image,
+      images: bundle.image ? [bundle.image] : [],
+      category: 'Bundles',
+      description: bundle.description || '',
+      isBundle: true,
+      bundleItems: bundle.items || []
+    };
+    
+    currentProduct = bundleProduct;
+    window.MJCheckoutProduct = bundleProduct;
+    
+    // Update UI
+    const imgSrc = bundleProduct.primary_image_url || bundleProduct.images?.[0];
+    if (imgSrc) {
+      document.getElementById('co-img').src = imgSrc;
+      document.getElementById('co-img').alt = bundleProduct.name;
+    } else {
+      document.getElementById('co-img-wrap').innerHTML =
+        '<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:var(--blush);"><span style="font-size:3rem;opacity:.3;">✦</span></div>';
+    }
+    
+    document.getElementById('co-cat-badge').textContent = 'BUNDLE ✦';
+    document.getElementById('co-name').textContent = bundleProduct.name;
+    document.getElementById('co-sku').textContent = bundleProduct.sku;
+    document.getElementById('co-price').textContent = formatPrice(bundleProduct.price);
+    
+    updateTotals();
+    
+    // Show
+    document.getElementById('co-loading').style.display = 'none';
+    document.getElementById('co-content').style.display = 'block';
+    
+    document.getElementById('co-form').addEventListener('input', updateWaLink);
+    
+  } catch (e) {
+    console.error('[Checkout] Error loading bundle:', e);
+    document.getElementById('co-loading').style.display = 'none';
+    document.getElementById('co-content').style.display = 'block';
+    document.getElementById('co-name').textContent = 'Error cargando bundle';
+  }
 }
 
 // Form submit
