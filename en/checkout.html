@@ -179,7 +179,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
             <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:#888;">Shipping</span>
-            <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:var(--orchid-mid);font-weight:600;">To quote</span>
+            <span id="co-shipping-display" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:var(--orchid-mid);font-weight:600;">To quote</span>
           </div>
           <div style="border-top:1px solid #f0e4ec;padding-top:.75rem;display:flex;justify-content:space-between;align-items:center;">
             <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1rem;font-weight:700;color:var(--burgundy);">Estimated total</span>
@@ -213,7 +213,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           
           <div id="paypal-express-container"></div>
           <p style="text-align:center;font-size:.7rem;color:#666;margin-top:.5rem;">No need to fill the form</p>
-          <p style="text-align:center;font-size:.7rem;color:#003087;margin-top:.3rem;font-style:italic;">📦 Shipping calculated automatically from your PayPal address</p>
+          <p style="text-align:center;font-size:.7rem;color:#003087;margin-top:.3rem;font-style:italic;">📦 Includes estimated shipping ($25 USD) - adjusts with your address</p>
         </div>
         
         <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;">
@@ -440,6 +440,67 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   (function() {
     var US_SHIPPING_FLAT = 25; // $25 USD flat rate shipping to US
     
+    // Function to update summary with estimated shipping and discount
+    function updateExpressSummary(discountPct) {
+      var product = window.MJCheckoutProduct;
+      if (!product) return;
+      
+      var qty = parseInt(document.getElementById('co-qty')?.value) || 1;
+      // Use USD price if available
+      var price = parseFloat(product.price_usd) || parseFloat(product.price) || 0;
+      var subtotal = price * qty;
+      
+      // Apply discount
+      if (discountPct && discountPct > 0) {
+        subtotal = Math.round(subtotal * (1 - discountPct / 100) * 100) / 100;
+      }
+      
+      var total = subtotal + US_SHIPPING_FLAT;
+      
+      // Update displays
+      var shippingDisplay = document.getElementById('co-shipping-display');
+      var totalDisplay = document.getElementById('co-total');
+      var discountRow = document.getElementById('co-discount-row');
+      var discountAmount = document.getElementById('co-discount-amount');
+      
+      if (shippingDisplay) {
+        shippingDisplay.textContent = '$' + US_SHIPPING_FLAT.toFixed(2);
+        shippingDisplay.style.color = '#003087';
+      }
+      
+      if (totalDisplay) {
+        totalDisplay.textContent = '$' + total.toFixed(2);
+      }
+      
+      // Show discount row if applicable
+      if (discountPct && discountPct > 0 && discountRow && discountAmount) {
+        var originalPrice = parseFloat(product.price_usd) || parseFloat(product.price) || 0;
+        var discountValue = (originalPrice * qty) - subtotal;
+        discountRow.style.display = 'flex';
+        discountAmount.textContent = '-$' + discountValue.toFixed(2);
+      }
+    }
+    
+    // Initialize summary with shipping estimate on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        var shippingDisplay = document.getElementById('co-shipping-display');
+        var totalDisplay = document.getElementById('co-total');
+        var product = window.MJCheckoutProduct;
+        
+        if (shippingDisplay && product) {
+          shippingDisplay.textContent = '$' + US_SHIPPING_FLAT.toFixed(2);
+          shippingDisplay.style.color = '#003087';
+        }
+        if (totalDisplay && product) {
+          var qty = parseInt(document.getElementById('co-qty')?.value) || 1;
+          var price = parseFloat(product.price_usd) || parseFloat(product.price) || 0;
+          var total = (price * qty) + US_SHIPPING_FLAT;
+          totalDisplay.textContent = '$' + total.toFixed(2);
+        }
+      }, 1000);
+    });
+    
     // Express discount handler
     document.addEventListener('DOMContentLoaded', function() {
       var expressDiscInput = document.getElementById('co-express-discount');
@@ -482,6 +543,9 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
               expressDiscMsg.textContent = '✓ ' + data.discount_pct + '% discount applied';
               
               if (typeof updateTotals === 'function') updateTotals();
+              
+              // Update summary with discount and shipping
+              updateExpressSummary(data.discount_pct);
             }
           } catch(e) {
             expressDiscMsg.style.display = 'block';
