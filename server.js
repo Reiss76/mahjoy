@@ -151,7 +151,8 @@ app.post('/api/centumpay/checkout', async (req, res) => {
       shipping_state,
       shipping_cp,
       shipping_cost,
-      webSite 
+      webSite,
+      discount_code
     } = req.body;
     
     if (!cart.length) return res.status(400).json({ error: 'Cart vacío' });
@@ -207,7 +208,8 @@ app.post('/api/centumpay/checkout', async (req, res) => {
       shipping_cp,
       shipping_cost: Number(shipping_cost) || 0,
       status: 'checkout_started',
-      source: 'centumpay'
+      source: 'centumpay',
+      discount_code: discount_code || null
     };
     
     // Save to file (fallback)
@@ -532,10 +534,11 @@ async function saveOrderToDatabase(orderData) {
       INSERT INTO mahjoy_orders (
         order_id, customer_name, customer_lastname, customer_email, customer_phone,
         shipping_street, shipping_interior, shipping_neighborhood, shipping_city, 
-        shipping_state, shipping_cp, shipping_cost, cart, status, source
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        shipping_state, shipping_cp, shipping_cost, cart, status, source, discount_code
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
       ON CONFLICT (order_id) DO UPDATE SET
         status = EXCLUDED.status,
+        discount_code = COALESCE(EXCLUDED.discount_code, mahjoy_orders.discount_code),
         updated_at = CURRENT_TIMESTAMP
       RETURNING id
     `, [
@@ -553,9 +556,10 @@ async function saveOrderToDatabase(orderData) {
       orderData.shipping_cost || 0,
       JSON.stringify(orderData.cart || []),
       orderData.status || 'checkout_started',
-      orderData.source || 'web'
+      orderData.source || 'web',
+      orderData.discount_code || null
     ]);
-    console.log(`[db] Saved order ${orderData.orderId} (id: ${result.rows[0]?.id})`);
+    console.log(`[db] Saved order ${orderData.orderId} (id: ${result.rows[0]?.id})${orderData.discount_code ? ` Código: ${orderData.discount_code}` : ''}`);
     return true;
   } catch (err) {
     console.error('[db] Failed to save order:', err.message);
@@ -870,20 +874,22 @@ app.post('/api/orders/paypal-express', async (req, res) => {
         INSERT INTO mahjoy_orders (
           order_id, customer_name, customer_lastname, customer_email, customer_phone,
           shipping_street, shipping_interior, shipping_city, shipping_state, shipping_cp,
-          shipping_cost, cart, status, source
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+          shipping_cost, cart, status, source, discount_code
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
         ON CONFLICT (order_id) DO UPDATE SET
           status = EXCLUDED.status,
           shipping_cost = EXCLUDED.shipping_cost,
+          discount_code = EXCLUDED.discount_code,
           updated_at = CURRENT_TIMESTAMP
       `, [
         orderId, orderData.customer_name, orderData.customer_lastname,
         orderData.customer_email, orderData.customer_phone,
         orderData.shipping_street, orderData.shipping_interior,
         orderData.shipping_city, orderData.shipping_state, orderData.shipping_cp,
-        shippingCost, JSON.stringify(orderData.cart), 'paid', 'paypal_express'
+        shippingCost, JSON.stringify(orderData.cart), 'paid', 'paypal_express',
+        discount?.code || null
       ]);
-      console.log('[PayPal Express] Guardado en Neon:', orderId, 'Envío:', shippingCost);
+      console.log('[PayPal Express] Guardado en Neon:', orderId, 'Envío:', shippingCost, discount?.code ? `Código: ${discount.code}` : '');
     } catch (dbErr) {
       console.error('[PayPal Express] Error Neon:', dbErr.message);
     }

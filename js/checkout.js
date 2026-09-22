@@ -439,6 +439,7 @@ document.addEventListener('DOMContentLoaded', () => {
         shipping_cp: form.cp?.value?.trim() || '',
         shipping_cost: selectedShippingCost || 0,
         webSite: 'https://mahjoy-production.up.railway.app',
+        discount_code: appliedDiscount?.code || null,
       };
       
       // Call CentumPay proxy
