@@ -298,12 +298,48 @@ async function loadProduct() {
   // Stock - check if product is presale (not in IN_STOCK_SKUS)
   const stockEl = document.getElementById('pdp-stock');
   const isInStock = IN_STOCK_SKUS.includes(product.sku);
+  const isSoldOut = product.stock === 0 || product.soldOut === true;
   
-  if (product.stock === 0) {
-    // Out of stock or coming soon
+  if (isSoldOut) {
+    // SOLD OUT - add badge overlay and disable buttons
     stockEl.innerHTML = '<span class="mj-pdp-stock-badge out">' + T.outOfStock + '</span>';
     document.getElementById('pdp-order-btn').style.opacity = '0.4';
     document.getElementById('pdp-order-btn').style.pointerEvents = 'none';
+    document.getElementById('pdp-order-btn').title = 'Este producto está agotado';
+    
+    // Add SOLD OUT badge to image
+    const imgWrap = document.querySelector('.mj-pdp-main-img-wrap');
+    if (imgWrap) {
+      imgWrap.style.position = 'relative';
+      const mainImg = document.getElementById('pdp-main-img');
+      if (mainImg) mainImg.style.opacity = '0.7';
+      
+      const soldOutBadge = document.createElement('div');
+      soldOutBadge.className = 'mj-sold-out-badge';
+      soldOutBadge.innerHTML = 'SOLD<br>OUT';
+      soldOutBadge.style.cssText = `
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 65px;
+        height: 65px;
+        border-radius: 50%;
+        background: #7a2d47;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-weight: bold;
+        font-size: 11px;
+        text-align: center;
+        line-height: 1.2;
+        transform: rotate(-15deg);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        z-index: 10;
+      `;
+      imgWrap.appendChild(soldOutBadge);
+    }
   } else if (!isInStock) {
     // Has stock but not in IN_STOCK list = presale
     stockEl.innerHTML = '<span class="mj-pdp-stock-badge presale" style="color:var(--orchid);font-weight:700;">' + T.presale + '</span>';
@@ -360,6 +396,15 @@ async function loadProduct() {
       }, 2200);
     };
     ctaWrap.insertBefore(addBtn, ctaWrap.firstChild);
+    
+    // Disable Add to Cart if sold out
+    if (isSoldOut) {
+      addBtn.disabled = true;
+      addBtn.style.opacity = '0.4';
+      addBtn.style.cursor = 'not-allowed';
+      addBtn.style.pointerEvents = 'none';
+      addBtn.title = 'Este producto está agotado';
+    }
   }
 
   // Meta
