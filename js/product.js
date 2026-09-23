@@ -316,27 +316,29 @@ async function loadProduct() {
       
       const soldOutBadge = document.createElement('div');
       soldOutBadge.className = 'mj-sold-out-badge';
-      soldOutBadge.innerHTML = 'SOLD<br>OUT';
+      soldOutBadge.innerHTML = 'SOLD<br>OUT!';
       soldOutBadge.style.cssText = `
         position: absolute;
-        top: 10px;
-        right: 10px;
-        width: 65px;
-        height: 65px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-15deg);
+        width: 180px;
+        height: 180px;
         border-radius: 50%;
-        background: #7a2d47;
+        background: rgba(107, 15, 42, 0.85);
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        font-weight: bold;
-        font-size: 11px;
+        font-family: 'Playfair Display', Georgia, serif;
+        font-weight: 700;
+        font-style: italic;
+        font-size: 32px;
         text-align: center;
-        line-height: 1.2;
-        transform: rotate(-15deg);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        line-height: 1.1;
+        letter-spacing: 0.02em;
         z-index: 10;
+        box-shadow: 0 4px 20px rgba(107, 15, 42, 0.3);
       `;
       imgWrap.appendChild(soldOutBadge);
     }
