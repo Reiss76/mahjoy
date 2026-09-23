@@ -4,9 +4,9 @@
  */
 
 // Fetch en vivo desde Proax API — siempre sincronizado con el inventario
-const MJ_API_BASE = 'https://api-production-b888.up.railway.app';
-const MJ_API = MJ_API_BASE + '/public/shop/mahjoy/products';
-const MJ_BUNDLES_API = MJ_API_BASE + '/public/shop/mahjoy/bundles';
+const MJ_API_BASE = 'https://proax.app';
+const MJ_API = MJ_API_BASE + '/api/public/mahjoy/catalog/products';
+const MJ_BUNDLES_API = MJ_API_BASE + '/api/public/mahjoy/bundles';
 
 // Hidden products (SKUs to exclude from shop)
 const MJ_HIDDEN_SKUS = ['Rack-007', 'RACK-007'];
@@ -62,6 +62,7 @@ const isEnglishShop = window.location.pathname.includes('/en/');
 const TS = isEnglishShop ? {
   viewProduct: 'View Product',
   comingSoon: 'Coming Soon',
+  soldOut: 'Sold Out',
   lastFew: 'Only',
   lastFewSuffix: 'left',
   emptyTitle: 'Coming Soon',
@@ -72,6 +73,7 @@ const TS = isEnglishShop ? {
 } : {
   viewProduct: 'Ver producto',
   comingSoon: 'Coming Soon',
+  soldOut: 'Agotado',
   lastFew: 'Últimas',
   lastFewSuffix: '',
   emptyTitle: 'Próximamente',
@@ -105,25 +107,39 @@ function getProductCategory(product) {
 }
 
 function buildProductCard(product) {
-  const imgSrc = product.primary_image_url
-    ? (product.primary_image_url.startsWith('/api/public/media')
-        ? 'https://api-production-b888.up.railway.app' + product.primary_image_url.replace('/api/public/media', '/public/media')
-        : product.primary_image_url.startsWith('/public/media')
-          ? 'https://api-production-b888.up.railway.app' + product.primary_image_url
-          : product.primary_image_url)
-    : null;
+  // Handle image URLs - support both old Railway format and new Proax format
+  let imgSrc = product.image || product.primary_image_url;
+  if (imgSrc) {
+    if (imgSrc.startsWith('/api/public/media')) {
+      imgSrc = 'https://proax.app' + imgSrc;
+    } else if (imgSrc.startsWith('/public/media')) {
+      imgSrc = 'https://api-production-b888.up.railway.app' + imgSrc;
+    }
+    // else keep full URL as-is
+  }
 
   const isComingSoon = MJ_COMING_SOON_SKUS.includes(product.sku);
+  const isSoldOut = product.soldOut === true || product.stock <= 0;
+  const isDisabled = isComingSoon || isSoldOut;
+
+  // Badge priority: Sold Out > Coming Soon > Low Stock
+  let badgeHtml = '';
+  if (isSoldOut && !isComingSoon) {
+    badgeHtml = `<div class="mj-product-badge mj-sold-out-badge" style="background:#7a2d47;color:#fff;transform:rotate(-12deg);">${TS.soldOut}</div>`;
+  } else if (isComingSoon) {
+    badgeHtml = `<div class="mj-product-badge" style="background:var(--orchid);color:#fff;">${TS.comingSoon}</div>`;
+  } else if (product.stock <= 5 && product.stock > 0) {
+    badgeHtml = `<div class="mj-product-badge">${TS.lastFew} ${product.stock} ${TS.lastFewSuffix}</div>`;
+  }
 
   return `
-    <div class="mj-product-card" ${!isComingSoon ? `onclick="window.location='product.html#${product.id}'" style="cursor:pointer;"` : 'style="cursor:default;"'}>
+    <div class="mj-product-card" ${!isDisabled ? `onclick="window.location='product.html#${product.id}'" style="cursor:pointer;"` : 'style="cursor:default;"'}>
       <div class="mj-product-img-wrap">
         ${imgSrc
-          ? `<img src="${imgSrc}" alt="${product.name}" class="mj-product-img" loading="lazy"${isComingSoon ? ' style="opacity:0.7;"' : ''}>`
+          ? `<img src="${imgSrc}" alt="${product.name}" class="mj-product-img" loading="lazy"${isDisabled ? ' style="opacity:0.6;filter:grayscale(30%);"' : ''}>`
           : `<div class="mj-product-img-placeholder"><span>✦</span></div>`
         }
-        ${isComingSoon ? `<div class="mj-product-badge" style="background:var(--orchid);color:#fff;">${TS.comingSoon}</div>` : ''}
-        ${!isComingSoon && product.stock <= 5 && product.stock > 0 ? `<div class="mj-product-badge">${TS.lastFew} ${product.stock} ${TS.lastFewSuffix}</div>` : ''}
+        ${badgeHtml}
       </div>
       <div class="mj-product-info">
         ${product.sku ? `<div class="mj-product-sku">${product.sku}</div>` : ''}
@@ -131,9 +147,11 @@ function buildProductCard(product) {
         ${product.description ? `<div class="mj-product-desc">${product.description}</div>` : ''}
         <div class="mj-product-price">${getProductPrice(product)}</div>
       </div>
-      ${isComingSoon 
-        ? `<span class="mj-product-cta" style="opacity:0.5;cursor:default;">${TS.comingSoon}</span>`
-        : `<a href="javascript:void(0)" onclick="window.location='product.html#${product.id}'" class="mj-product-cta">${TS.viewProduct}</a>`
+      ${isSoldOut 
+        ? `<span class="mj-product-cta mj-sold-out-cta" style="opacity:0.5;cursor:not-allowed;background:#999;">${TS.soldOut}</span>`
+        : isComingSoon 
+          ? `<span class="mj-product-cta" style="opacity:0.5;cursor:default;">${TS.comingSoon}</span>`
+          : `<a href="javascript:void(0)" onclick="window.location='product.html#${product.id}'" class="mj-product-cta">${TS.viewProduct}</a>`
       }
     </div>
   `;
