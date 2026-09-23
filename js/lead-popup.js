@@ -99,7 +99,14 @@
     localStorage.setItem(KEY_SEEN, Date.now().toString());
     overlay.style.opacity = '0';
     overlay.style.transition = 'opacity .25s';
-    setTimeout(() => overlay.remove(), 300);
+    setTimeout(() => {
+      overlay.remove();
+      // Ensure nav overlay is hidden and body scroll is restored
+      document.body.style.overflow = '';
+      document.body.classList.remove('mj-nav-open', 'w-nav-open');
+      const navOverlay = document.querySelector('.overlay-menu');
+      if (navOverlay) navOverlay.style.display = 'none';
+    }, 300);
   }
 
   overlay.querySelector('#mj-lead-close').addEventListener('click', dismiss);
@@ -140,6 +147,9 @@
   });
 
   setTimeout(function () {
+    // Ensure nav overlay is hidden before showing popup
+    const navOverlay = document.querySelector('.overlay-menu');
+    if (navOverlay) navOverlay.style.display = 'none';
     document.body.appendChild(overlay);
   }, 3000);
 })();
