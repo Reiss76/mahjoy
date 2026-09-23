@@ -10,16 +10,18 @@ const MJ_API_BASE = 'https://api-production-b888.up.railway.app';
 const IN_STOCK_SKUS = [
   // Tiles
   'TILE-dina', 'TILE-heri', 'TILE-impe', 'TILE-Kale', 'TILE-mythos', 'TILE-sensu',
-  // Mats
-  'MAT-PIEL',
-  // Racks
-  'Rack-007',
+  // Mats (including Apres Ski, Apres Snow, Noel)
+  'MAT-PIEL', 'MAT-snow2', 'MAT-snow1', 'MAT-Merry',
+  // Racks (all except Golden Brown/Rack-brown)
+  'Rack-007', 'RACK-COSMIC', 'RACK-BLUE', 'RACK-fucsia', 'RACK-VERDE', 'RACK-002', 'RACK-PINK', 'RACK-RED',
+  // Rack Bags (all)
+  'RAKBAG-001', 'RAKBAG-002', 'RAKBAG-003', 'RAKBAG-004', 'RAKBAG-005', 'RACK-BAG006',
   // Mahjoy Bags
   'Bag-blue', 'Bag-fiucsa', 'BAG-lila', 'Bag-pink', 'Bag-rouge',
   // Card Holders
   'Folio-1', 'Folio-2',
-  // Tile Bags
-  'BAG-tilelila', 'BAG-tilepink',
+  // Tile Bags (including velvet)
+  'BAG-tilelila', 'BAG-tilepink', 'BAG-tile001', 'BAG-tile002', 'BAG-tile003',
   // Line Finders
   'LINE-001', 'LINE-002', 'LINE-003', 'LINE-005',
   // Shufflers
