@@ -294,7 +294,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   <script src="js/currency.js"></script>
   <script>
   (function(){
-    const API = 'https://api-production-b888.up.railway.app';
+    const API = 'https://proax.app/api';
 
     // Category config: id, previewEl, cardsEl, pricEl, SKU matcher
     const CATS = [
@@ -466,7 +466,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     document.getElementById('cta-mobile').addEventListener('click', addBundleToCart);
 
     // Load products
-    fetch(API + '/public/shop/mahjoy/products')
+    fetch(API + '/public/mahjoy/catalog/products')
       .then(r => r.json())
       .then(data => {
         const all = (data.products || data || []);

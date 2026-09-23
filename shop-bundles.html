@@ -147,7 +147,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   <script src="js/cart.js"></script><script src="js/vendor-ref.js"></script>
   <script src="js/currency.js"></script>
   <script>
-  var MJ_API='https://api-production-b888.up.railway.app';
+  var MJ_API='https://proax.app/api';
 
   // Format price in MXN
   function fmtPrice(price) {
@@ -157,7 +157,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   }
 
   // Load bundles from API
-  fetch(MJ_API+'/public/shop/mahjoy/bundles').then(function(r){
+  fetch(MJ_API+'/public/mahjoy/bundles').then(function(r){
     if(!r.ok)throw new Error(r.status);
     return r.json();
   }).then(function(data){

@@ -455,9 +455,9 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     </div>
     <script>
     (function(){
-      const API='https://api-production-b888.up.railway.app';
+      const API='https://proax.app/api';
       const cats={mats:'MAT-',tiles:'TILE-',racks:'RACK-'};
-      fetch(API+'/public/shop/mahjoy/products').then(r=>r.json()).then(data=>{
+      fetch(API+'/public/mahjoy/catalog/products').then(r=>r.json()).then(data=>{
         const prods=data.products||[];
         Object.keys(cats).forEach(cat=>{
           const prefix=cats[cat];
