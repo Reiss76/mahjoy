@@ -135,7 +135,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       if(!prods.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:32px;">Sin productos disponibles.</div>';return;}
       grid.innerHTML='';
       const PRESALE=[];  // Removed all presale badges
-      const COMING_SOON=['Rack-brown'];  // Golden Brown keeps Coming Soon badge
+      const COMING_SOON=[];  // Golden Brown keeps Coming Soon badge
       prods.forEach(p=>{
         const img=imgUrl(p);
         const price=(window.MJCurrency||{format:p=>p.price?'$'+Number(p.price).toFixed(2)+' MXN':''}).format(p.price||p.sale_price||p.cost||0);
