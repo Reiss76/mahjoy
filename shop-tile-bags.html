@@ -132,7 +132,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       prods.forEach(p=>{
         const img=imgUrl(p);
         const price=(window.MJCurrency||{format:p=>p.price?'$'+Number(p.price).toFixed(2)+' MXN':''}).format(p.price||p.sale_price||p.cost||0);
-        const IN_STOCK=['BAG-tilelila','BAG-tilepink'];
+        const IN_STOCK=['BAG-tilelila','BAG-tilepink','BAG-tile001','BAG-tile002','BAG-tile003'];
         const isInStock=IN_STOCK.some(s=>s.toLowerCase()===p.sku?.toLowerCase());
         const card=document.createElement('a');card.href='product.html#'+p.id;card.className='mj-prod-card'+(isInStock?'':' mj-presale')+(p.stock===0?' mj-coming-soon':'');
         card.innerHTML=(isInStock?'':'<span class="mj-coming-soon-badge" style="background:var(--orchid);">Pre venta · Envío Oct 10</span>')+(img?'<img src="'+img+'" alt="'+p.name+'" class="mj-prod-card-img" onerror="this.style.display=\'none\'">'
