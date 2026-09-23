@@ -12,7 +12,8 @@ const MJ_BUNDLES_API = MJ_API_BASE + '/api/public/mahjoy/bundles';
 const MJ_HIDDEN_SKUS = ['Rack-007', 'RACK-007'];
 
 // Coming Soon products (show with badge, no buy button)
-const MJ_COMING_SOON_SKUS = ['MAT-COWV', 'Rack-brown'];
+// Note: Sold Out products are now handled via soldOut field from API
+const MJ_COMING_SOON_SKUS = ['MAT-COWV'];
 
 // Category matching — SKU-prefix based (precise, no false positives)
 // SKU patterns: TILE-* | MAT-* | RACK-* | RAKBAG-* | RACK-BAG* | BAG-tile* | BAG-lila|pink|blue|rouge|fiucsa | LINE-* | SHUF-*
