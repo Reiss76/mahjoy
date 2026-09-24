@@ -123,11 +123,28 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     <div id="cart-summary" style="display:none;">
       <div class="mj-cart-summary">
         <div class="mj-cart-summary-row"><span>Subtotal</span><span id="cart-subtotal"></span></div>
-        <div class="mj-cart-summary-row"><span>Shipping</span><span style="color:var(--orchid-mid);font-weight:600;">A cotizar</span></div>
+        <div id="cart-discount-row" style="display:none;" class="mj-cart-summary-row"><span id="cart-discount-label" style="color:#16a34a;">Discount</span><span id="cart-discount-amount" style="color:#16a34a;font-weight:700;"></span></div>
+        <div class="mj-cart-summary-row"><span>Estimated Shipping</span><span id="cart-shipping" style="color:var(--orchid-mid);font-weight:600;">$25.00</span></div>
         <div class="mj-cart-summary-total"><span>Estimated Total</span><span id="cart-total"></span></div>
       </div>
+      
+      <!-- PayPal Express Checkout -->
+      <div style="background:#faf6f0;border:2px solid var(--orchid);border-radius:16px;padding:1.5rem;margin:1.5rem 0;">
+        <div style="text-align:center;font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:var(--burgundy);margin-bottom:.5rem;">Quick checkout with PayPal</div>
+        <p style="text-align:center;font-size:.75rem;color:#666;margin-bottom:1rem;">📦 Remember to add your shipping address correctly</p>
+        
+        <!-- Discount code -->
+        <div style="display:flex;gap:.5rem;margin-bottom:1rem;">
+          <input type="text" id="cart-discount-code" placeholder="Discount code" style="flex:1;padding:.65rem .8rem;border:1.5px solid #ddd;border-radius:8px;font-size:.85rem;">
+          <button id="cart-discount-btn" onclick="applyCartDiscount()" style="background:var(--burgundy);color:#fff;border:none;border-radius:8px;padding:.65rem 1rem;font-size:.8rem;font-weight:700;cursor:pointer;">Apply</button>
+        </div>
+        <div id="cart-discount-msg" style="display:none;font-size:.75rem;margin-bottom:.75rem;text-align:center;"></div>
+        
+        <!-- PayPal button container -->
+        <div id="paypal-cart-container"></div>
+      </div>
+      
       <div class="mj-cart-actions">
-        <button onclick="proceedToCheckout()" class="mj-cart-btn-primary">Pay with card →</button>
         <button onclick="proceedWhatsApp()" class="mj-cart-btn-secondary">Continue via WhatsApp</button>
         <a href="shop-mats.html" style="text-align:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;color:var(--orchid-mid);text-decoration:none;margin-top:.25rem;">← Continue Shopping</a>
       </div>
@@ -272,6 +289,184 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
 <script src="../js/lang-selector.js"></script>
 <script src="../js/mobile-nav.js"></script>
 <script>(function(){function updateCartBadge(){var count=window.MJCart?window.MJCart.cartCount():0;var badge=document.getElementById("header-cart-badge");var menuBadges=document.querySelectorAll(".mj-cart-badge");if(badge){badge.textContent=count;badge.style.display=count>0?"block":"none";}menuBadges.forEach(function(b){b.textContent=count;b.style.display=count>0?"flex":"none";});}document.addEventListener("DOMContentLoaded",updateCartBadge);window.updateCartBadge=updateCartBadge;})();</script><script src="../js/geo-banner.js"></script>
+
+<!-- PayPal SDK USD -->
+<script src="https://www.paypal.com/sdk/js?client-id=BAAbbz1L2qH_VMP2ACU9ua4HeR2A3NfU8Hp_v3POkGyYIuz4_ot1tihAmUP3h-KHzP9AiAjTRblKvZeKn4&currency=USD&locale=en_US"></script>
+<script>
+(function() {
+  var ESTIMATED_SHIPPING = 25; // $25 USD
+  var cartDiscount = null;
+  
+  // Apply discount code
+  window.applyCartDiscount = async function() {
+    var input = document.getElementById('cart-discount-code');
+    var btn = document.getElementById('cart-discount-btn');
+    var msg = document.getElementById('cart-discount-msg');
+    var code = input.value.trim().toUpperCase();
+    if (!code) return;
+    
+    btn.textContent = '...';
+    btn.disabled = true;
+    msg.style.display = 'none';
+    
+    try {
+      var res = await fetch('https://proax.app/api/public/vendors/discount/' + encodeURIComponent(code));
+      var data = await res.json();
+      
+      if (!res.ok || !data.valid) {
+        msg.style.display = 'block';
+        msg.style.color = '#dc2626';
+        msg.textContent = '✗ Invalid code';
+        btn.textContent = 'Apply';
+        btn.disabled = false;
+      } else {
+        cartDiscount = { code: code, pct: data.discount_pct, vendor: data.vendor_name };
+        btn.style.background = '#16a34a';
+        btn.textContent = '✓';
+        msg.style.display = 'block';
+        msg.style.color = '#16a34a';
+        msg.textContent = '✓ ' + data.discount_pct + '% discount applied';
+        updateCartTotals();
+      }
+    } catch(e) {
+      msg.style.display = 'block';
+      msg.style.color = '#dc2626';
+      msg.textContent = '✗ Error validating code';
+      btn.textContent = 'Apply';
+      btn.disabled = false;
+    }
+  };
+  
+  function updateCartTotals() {
+    var cart = window.MJCart ? window.MJCart.getCart() : [];
+    // Use USD prices
+    var subtotal = cart.reduce(function(acc, i) { 
+      var priceUSD = i.price_usd || (i.price / 18); // Convert MXN to USD if needed
+      return acc + (priceUSD * i.qty); 
+    }, 0);
+    var discountAmount = 0;
+    
+    if (cartDiscount && cartDiscount.pct > 0) {
+      discountAmount = subtotal * (cartDiscount.pct / 100);
+      subtotal = subtotal - discountAmount;
+      document.getElementById('cart-discount-row').style.display = 'flex';
+      document.getElementById('cart-discount-label').textContent = 'Discount (' + cartDiscount.pct + '%)';
+      document.getElementById('cart-discount-amount').textContent = '-$' + discountAmount.toFixed(2);
+    }
+    
+    var total = subtotal + ESTIMATED_SHIPPING;
+    document.getElementById('cart-shipping').textContent = '$' + ESTIMATED_SHIPPING.toFixed(2);
+    document.getElementById('cart-total').textContent = '$' + total.toFixed(2);
+  }
+  
+  // Initialize PayPal buttons
+  function initPayPalCart() {
+    var container = document.getElementById('paypal-cart-container');
+    if (!container || typeof paypal === 'undefined') {
+      setTimeout(initPayPalCart, 500);
+      return;
+    }
+    if (container.hasChildNodes()) return;
+    
+    paypal.Buttons({
+      style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal', height: 45 },
+      
+      createOrder: function(data, actions) {
+        var cart = window.MJCart ? window.MJCart.getCart() : [];
+        if (!cart.length) {
+          alert('Your cart is empty');
+          return;
+        }
+        
+        var subtotal = cart.reduce(function(acc, i) { 
+          var priceUSD = i.price_usd || (i.price / 18);
+          return acc + (priceUSD * i.qty); 
+        }, 0);
+        var discountPct = cartDiscount ? cartDiscount.pct : 0;
+        if (discountPct > 0) subtotal = Math.round(subtotal * (1 - discountPct / 100) * 100) / 100;
+        var total = subtotal + ESTIMATED_SHIPPING;
+        
+        return actions.order.create({
+          intent: 'CAPTURE',
+          purchase_units: [{
+            description: 'MAH JOY - Cart (' + cart.length + ' items)',
+            amount: {
+              currency_code: 'USD',
+              value: total.toFixed(2),
+              breakdown: {
+                item_total: { currency_code: 'USD', value: subtotal.toFixed(2) },
+                shipping: { currency_code: 'USD', value: ESTIMATED_SHIPPING.toFixed(2) }
+              }
+            }
+          }],
+          application_context: {
+            brand_name: 'MAH JOY',
+            shipping_preference: 'GET_FROM_FILE',
+            user_action: 'PAY_NOW'
+          }
+        });
+      },
+      
+      onApprove: async function(data, actions) {
+        try {
+          var orderData = await actions.order.capture();
+          var cart = window.MJCart ? window.MJCart.getCart() : [];
+          var shipping = orderData.purchase_units[0].shipping || {};
+          var address = shipping.address || {};
+          
+          // Save order to database
+          await fetch('/api/orders/paypal-express', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              order_id: orderData.id,
+              status: 'paid',
+              source: 'paypal_express_cart_en',
+              cart: cart.map(function(i) {
+                var priceUSD = i.price_usd || (i.price / 18);
+                return {
+                  sku: i.sku || '',
+                  name: i.name,
+                  qty: i.qty,
+                  price: cartDiscount ? Math.round(priceUSD * (1 - cartDiscount.pct / 100) * 100) / 100 : priceUSD,
+                  original_price: priceUSD,
+                  discount_pct: cartDiscount ? cartDiscount.pct : 0
+                };
+              }),
+              customer_email: orderData.payer.email_address,
+              customer_name: (orderData.payer.name.given_name || '') + ' ' + (orderData.payer.name.surname || ''),
+              shipping_street: address.address_line_1 || '',
+              shipping_city: address.admin_area_2 || '',
+              shipping_state: address.admin_area_1 || '',
+              shipping_cp: address.postal_code || '',
+              shipping_country: address.country_code || 'US',
+              shipping_cost: ESTIMATED_SHIPPING,
+              discount_code: cartDiscount ? cartDiscount.code : null,
+              discount_vendor: cartDiscount ? cartDiscount.vendor : null
+            })
+          });
+          
+          window.MJCart.clearCart();
+          window.location.href = 'thank-you.html?order=' + orderData.id;
+        } catch(e) {
+          console.error('PayPal capture error:', e);
+          alert('There was an error processing your payment. Please contact support.');
+        }
+      },
+      
+      onError: function(err) {
+        console.error('PayPal error:', err);
+        alert('PayPal error. Please try again or use WhatsApp.');
+      }
+    }).render('#paypal-cart-container');
+  }
+  
+  document.addEventListener('DOMContentLoaded', function() {
+    initPayPalCart();
+    updateCartTotals();
+  });
+})();
+</script>
 
 <script src="../js/whatsapp-bubble.js"></script></body>
 </html>
