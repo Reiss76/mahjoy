@@ -51,12 +51,15 @@ function addToCart(product, qty = 1) {
 }
 
 function removeFromCart(productId) {
-  saveCart(getCart().filter(i => i.id !== productId));
+  // Convert to string for comparison (IDs can be numbers or strings)
+  const idStr = String(productId);
+  saveCart(getCart().filter(i => String(i.id) !== idStr));
 }
 
 function updateQty(productId, qty) {
   const cart = getCart();
-  const idx = cart.findIndex(i => i.id === productId);
+  const idStr = String(productId);
+  const idx = cart.findIndex(i => String(i.id) === idStr);
   if (idx >= 0) {
     if (qty <= 0) cart.splice(idx, 1);
     else cart[idx].qty = qty;
