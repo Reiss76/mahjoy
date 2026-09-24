@@ -378,18 +378,38 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           return;
         }
         
-        var subtotal = cart.reduce(function(acc, i) { 
-          var priceUSD = i.price_usd || (i.price / 18);
-          return acc + (priceUSD * i.qty); 
-        }, 0);
         var discountPct = cartDiscount ? cartDiscount.pct : 0;
-        if (discountPct > 0) subtotal = Math.round(subtotal * (1 - discountPct / 100) * 100) / 100;
+        
+        // Build individual items for PayPal (USD)
+        var items = cart.map(function(item) {
+          var priceUSD = parseFloat(item.price_usd) || (parseFloat(item.price) / 18);
+          if (discountPct > 0) {
+            priceUSD = Math.round(priceUSD * (1 - discountPct / 100) * 100) / 100;
+          }
+          return {
+            name: (item.name || 'Product').substring(0, 127),
+            sku: item.sku || '',
+            unit_amount: {
+              currency_code: 'USD',
+              value: priceUSD.toFixed(2)
+            },
+            quantity: (item.qty || 1).toString()
+          };
+        });
+        
+        var subtotal = items.reduce(function(acc, i) {
+          return acc + (parseFloat(i.unit_amount.value) * parseInt(i.quantity));
+        }, 0);
         var total = subtotal + ESTIMATED_SHIPPING;
+        
+        // Build description with product names
+        var productNames = cart.map(function(i) { return i.name; }).join(', ');
+        var description = 'MAH JOY - ' + (productNames.length > 100 ? productNames.substring(0, 97) + '...' : productNames);
         
         return actions.order.create({
           intent: 'CAPTURE',
           purchase_units: [{
-            description: 'MAH JOY - Cart (' + cart.length + ' items)',
+            description: description,
             amount: {
               currency_code: 'USD',
               value: total.toFixed(2),
@@ -397,7 +417,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
                 item_total: { currency_code: 'USD', value: subtotal.toFixed(2) },
                 shipping: { currency_code: 'USD', value: ESTIMATED_SHIPPING.toFixed(2) }
               }
-            }
+            },
+            items: items
           }],
           application_context: {
             brand_name: 'MAH JOY',
