@@ -108,6 +108,31 @@ function processPayPalPayment() {
     console.warn('[PayPal] WARNING: Shipping cost is $0! Check if shipping was selected.');
   }
   
+  // Build items array for PayPal with individual products
+  var items = [{
+    name: currentProduct.name.substring(0, 127),
+    sku: currentProduct.sku || '',
+    unit_amount: {
+      currency_code: PAYPAL_CURRENCY,
+      value: discountedPrice.toFixed(2)
+    },
+    quantity: qty.toString()
+  }];
+  var itemTotal = productTotal;
+  
+  // Add shipping as item if present
+  if (shippingForPayPal > 0) {
+    items.push({
+      name: isEnCheckout ? 'Shipping' : 'Envío',
+      unit_amount: {
+        currency_code: PAYPAL_CURRENCY,
+        value: shippingForPayPal.toFixed(2)
+      },
+      quantity: '1'
+    });
+    itemTotal += shippingForPayPal;
+  }
+  
   // Create PayPal order
   paypal.Buttons({
     style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal', height: 45 },
@@ -118,8 +143,15 @@ function processPayPalPayment() {
           description: 'MAH JOY - ' + currentProduct.name,
           amount: {
             currency_code: PAYPAL_CURRENCY,
-            value: total.toFixed(2)
-          }
+            value: total.toFixed(2),
+            breakdown: {
+              item_total: {
+                currency_code: PAYPAL_CURRENCY,
+                value: itemTotal.toFixed(2)
+              }
+            }
+          },
+          items: items
         }],
         application_context: {
           brand_name: 'MAH JOY',
