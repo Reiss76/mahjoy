@@ -130,13 +130,46 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       grid.innerHTML='';
       prods.forEach(p=>{
         const img=imgUrl(p);
-        const price=p.price_usd?'$'+Number(p.price_usd).toFixed(2)+' USD':'Contact for price';
-        const IN_STOCK=['Folio-1','Folio-2'];
-        const isInStock=IN_STOCK.some(s=>s.toLowerCase()===p.sku?.toLowerCase());
-        const card=document.createElement('a');card.href='product.html#'+p.id;card.className='mj-prod-card'+(isInStock?'':' mj-presale');
-        card.innerHTML=(isInStock?'':'<span class="mj-coming-soon-badge" style="background:var(--orchid);">Pre sale · Ships Oct 10</span>')+(img?'<img src="'+img+'" alt="'+p.name+'" class="mj-prod-card-img" onerror="this.style.display=\'none\'">'
-          :'<div class="mj-prod-card-img" style="height:200px;display:flex;align-items:center;justify-content:center;"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C76BA4" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg></div>')
-          +'<div class="mj-prod-card-body"><div class="mj-prod-card-name" title="'+p.name+'">'+p.name+'</div><div class="mj-prod-card-price">'+price+'</div><span style="display:inline-block;margin-top:10px;background:var(--burgundy);color:#fff;font-family:Plus Jakarta Sans,sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:8px 18px;border-radius:999px;">View Product</span></div>';
+        const price=p.price_usd?'
+    }).catch(err=>{console.error('Mahjoy API Error:',err);document.getElementById('mj-prod-grid').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:32px;">Error loading products. <br><small style="color:#999;">'+err.message+'</small></div>';});
+    document.addEventListener('DOMContentLoaded',function(){var btn=document.querySelector('.w-nav-button'),menu=document.querySelector('.nav-menu'),overlay=document.querySelector('.overlay-menu');if(!btn||!menu)return;function closeNav(){menu.classList.remove('w--nav-menu-open');menu.style.display='none';btn.classList.remove('w--open');document.body.classList.remove('w-nav-open');if(overlay)overlay.style.display='none';}btn.addEventListener('click',function(e){e.stopPropagation();btn.classList.contains('w--open')?closeNav():(menu.classList.add('w--nav-menu-open'),btn.classList.add('w--open'),document.body.classList.add('w-nav-open'),overlay&&(overlay.style.display='block'));});if(overlay)overlay.addEventListener('click',closeNav);document.addEventListener('click',function(e){if(!menu.contains(e.target)&&!btn.contains(e.target))closeNav();});});
+  </script>
+  <script>
+    document.addEventListener("DOMContentLoaded",function(){
+      var btn=document.querySelector(".w-nav-button"),menu=document.querySelector(".nav-menu"),overlay=document.querySelector(".overlay-menu");
+      if(!btn||!menu)return;
+      function closeNav(){document.body.classList.remove("mj-nav-open","w-nav-open");btn.classList.remove("w--open");menu.style.display="";}
+      btn.addEventListener("click",function(e){e.stopPropagation();if(document.body.classList.contains("mj-nav-open")){closeNav();}else{document.body.classList.add("mj-nav-open","w-nav-open");btn.classList.add("w--open");}});
+      if(overlay)overlay.addEventListener("click",closeNav);
+      document.addEventListener("click",function(e){if(menu.contains(e.target)||btn.contains(e.target))return;closeNav();});
+    });
+  </script>
+  <script>
+    (function(){
+      // Inject cart icon + hamburger into cell-menu
+      var cellMenu = document.querySelector('.cell-menu');
+      if(cellMenu){
+        cellMenu.style.cssText = 'display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-end!important;gap:12px!important;';cellMenu.innerHTML = '<a href="cart.html" id="header-cart" style="position:relative;display:flex;align-items:center;padding:8px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FAF6F0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span id="header-cart-badge" style="display:none;position:absolute;top:0;right:0;background:var(--orchid);color:#fff;font-family:Plus Jakarta Sans,sans-serif;font-size:.55rem;font-weight:800;min-width:16px;height:16px;border-radius:50%;text-align:center;line-height:16px;">0</span></a><button id="mj-ham" style="background:none;border:none;padding:12px;cursor:pointer;display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:center;width:48px;height:48px;" aria-label="Menu"><span style="display:block;width:22px;height:2px;background:var(--orchid,#C76BA4);border-radius:2px;"></span><span style="display:block;width:22px;height:2px;background:var(--orchid,#C76BA4);border-radius:2px;"></span><span style="display:block;width:22px;height:2px;background:var(--orchid,#C76BA4);border-radius:2px;"></span></button>';
+      }
+      var btn=document.getElementById('mj-ham');
+      var menu=document.querySelector('.nav-menu');
+      var overlay=document.querySelector('.overlay-menu');
+      if(!btn||!menu)return;
+      function closeNav(){document.body.classList.remove('mj-nav-open','w-nav-open');menu.classList.remove('w--nav-menu-open');menu.style.display='';}
+      btn.addEventListener('click',function(e){e.stopPropagation();document.body.classList.contains('mj-nav-open')?closeNav():(document.body.classList.add('mj-nav-open','w-nav-open'),menu.classList.add('w--nav-menu-open'),menu.style.display='');});
+      if(overlay)overlay.addEventListener('click',closeNav);
+      document.addEventListener('click',function(e){if(menu.contains(e.target)||btn.contains(e.target))return;closeNav();});
+    })();
+  </script>
+<script src="../js/lang-selector.js"></script>
+<script src="../js/mobile-nav.js"></script>
+<script>(function(){function updateCartBadge(){var count=window.MJCart?window.MJCart.cartCount():0;var badge=document.getElementById("header-cart-badge");var menuBadges=document.querySelectorAll(".mj-cart-badge");if(badge){badge.textContent=count;badge.style.display=count>0?"block":"none";}menuBadges.forEach(function(b){b.textContent=count;b.style.display=count>0?"flex":"none";});}document.addEventListener("DOMContentLoaded",updateCartBadge);window.updateCartBadge=updateCartBadge;})();</script><script src="../js/geo-banner.js"></script><script src="../js/whatsapp-bubble.js"></script></body></html>
++Number(p.price_usd).toFixed(2)+' USD':'Contact for price';
+        const isSoldOut=p.stock===0||p.soldOut===true;
+        const soldOutBadge=isSoldOut?'<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-15deg);width:120px;height:120px;border-radius:50%;background:rgba(107,15,42,0.85);color:white;display:flex;align-items:center;justify-content:center;font-family:Playfair Display,Georgia,serif;font-weight:700;font-style:italic;font-size:22px;text-align:center;line-height:1.2;box-shadow:0 4px 20px rgba(107,15,42,0.3);z-index:10;">SOLD<br>OUT!</div>':'';
+        const imgStyle=isSoldOut?'opacity:0.7;':'';
+        const card=document.createElement('a');card.href=isSoldOut?'#':'product.html#'+p.id;card.className='mj-prod-card'+(isSoldOut?' mj-sold-out':'');
+        card.innerHTML='<div style="position:relative;">'+soldOutBadge+(img?'<img src="'+img+'" alt="'+p.name+'" class="mj-prod-card-img" style="'+imgStyle+'" onerror="this.style.display=\'none\'">':'<div class="mj-prod-card-img" style="height:200px;display:flex;align-items:center;justify-content:center;'+imgStyle+'"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C76BA4" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg></div>')+'</div>'+'<div class="mj-prod-card-body"><div class="mj-prod-card-name" title="'+p.name+'">'+p.name+'</div><div class="mj-prod-card-price">'+price+'</div>'+(isSoldOut?'':'<span style="display:inline-block;margin-top:10px;background:var(--burgundy);color:#fff;font-family:Plus Jakarta Sans,sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:8px 18px;border-radius:999px;">View Product</span>')+'</div>';
         grid.appendChild(card);
       });
     }).catch(err=>{console.error('Mahjoy API Error:',err);document.getElementById('mj-prod-grid').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:32px;">Error loading products. <br><small style="color:#999;">'+err.message+'</small></div>';});
