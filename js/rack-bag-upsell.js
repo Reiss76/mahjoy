@@ -132,15 +132,26 @@
     }
     
     .mj-upsell-product {
-      padding: 24px;
+      padding: 12px;
+      max-height: 45vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .mj-upsell-product-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
     }
     
     .mj-upsell-product-card {
       display: flex;
-      gap: 16px;
-      padding: 16px;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 10px;
       background: white;
-      border-radius: 16px;
+      border-radius: 12px;
       cursor: pointer;
       transition: all 0.2s;
       border: 2px solid transparent;
@@ -157,50 +168,52 @@
     }
     
     .mj-upsell-product-image {
-      width: 100px;
-      height: 100px;
-      border-radius: 12px;
+      width: 70px;
+      height: 70px;
+      border-radius: 10px;
       object-fit: cover;
-      flex-shrink: 0;
+      margin-bottom: 6px;
     }
     
     .mj-upsell-product-info {
-      flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      align-items: center;
     }
     
     .mj-upsell-product-name {
-      font-size: 16px;
+      font-size: 12px;
       font-weight: 600;
       color: ${COLORS.burgundy};
-      margin: 0 0 8px 0;
+      margin: 0 0 4px 0;
+      line-height: 1.2;
     }
     
     .mj-upsell-product-prices {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 4px;
+      flex-wrap: wrap;
+      justify-content: center;
     }
     
     .mj-upsell-price-original {
-      font-size: 14px;
+      font-size: 11px;
       color: #999;
       text-decoration: line-through;
     }
     
     .mj-upsell-price-discount {
-      font-size: 18px;
+      font-size: 14px;
       font-weight: 700;
       color: ${COLORS.burgundy};
     }
     
     .mj-upsell-savings {
-      font-size: 12px;
+      font-size: 10px;
       color: ${COLORS.orchid};
       font-weight: 600;
-      margin-top: 4px;
+      margin-top: 2px;
     }
     
     .mj-upsell-actions {
@@ -251,17 +264,43 @@
     @media (max-width: 480px) {
       .mj-upsell-popup {
         border-radius: 16px;
-      }
-      
-      .mj-upsell-product-card {
+        max-height: 85vh;
+        display: flex;
         flex-direction: column;
-        align-items: center;
-        text-align: center;
       }
       
-      .mj-upsell-product-image {
-        width: 120px;
-        height: 120px;
+      .mj-upsell-header {
+        padding: 16px;
+        flex-shrink: 0;
+      }
+      
+      .mj-upsell-title {
+        font-size: 18px;
+      }
+      
+      .mj-upsell-subtitle {
+        font-size: 12px;
+      }
+      
+      .mj-upsell-product {
+        flex: 1;
+        overflow-y: auto;
+        max-height: none;
+      }
+      
+      .mj-upsell-actions {
+        flex-shrink: 0;
+        padding: 12px;
+      }
+      
+      .mj-upsell-btn {
+        padding: 12px 16px;
+        font-size: 13px;
+      }
+      
+      .mj-upsell-footer {
+        padding: 10px;
+        flex-shrink: 0;
       }
     }
   `;
@@ -340,19 +379,21 @@
         </div>
         
         <div class="mj-upsell-product">
-          ${products.map((p, i) => `
-            <div class="mj-upsell-product-card ${i === 0 ? 'selected' : ''}" data-product-index="${i}">
-              <img class="mj-upsell-product-image" src="${p.image_url}" alt="${p.name}" />
-              <div class="mj-upsell-product-info">
-                <h3 class="mj-upsell-product-name">${p.name}</h3>
-                <div class="mj-upsell-product-prices">
-                  <span class="mj-upsell-price-original">${formatPrice(p.original_price)}</span>
-                  <span class="mj-upsell-price-discount">${formatPrice(p.discount_price)}</span>
+          <div class="mj-upsell-product-grid">
+            ${products.map((p, i) => `
+              <div class="mj-upsell-product-card ${i === 0 ? 'selected' : ''}" data-product-index="${i}">
+                <img class="mj-upsell-product-image" src="${p.image_url}" alt="${p.name}" />
+                <div class="mj-upsell-product-info">
+                  <h3 class="mj-upsell-product-name">${p.name}</h3>
+                  <div class="mj-upsell-product-prices">
+                    <span class="mj-upsell-price-original">${formatPrice(p.original_price)}</span>
+                    <span class="mj-upsell-price-discount">${formatPrice(p.discount_price)}</span>
+                  </div>
+                  <div class="mj-upsell-savings">¡Ahorras $80!</div>
                 </div>
-                <div class="mj-upsell-savings">¡Ahorras ${formatPrice(p.original_price - p.discount_price)}!</div>
               </div>
-            </div>
-          `).join('')}
+            `).join('')}
+          </div>
         </div>
         
         <div class="mj-upsell-actions">
