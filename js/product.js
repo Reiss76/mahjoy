@@ -3,7 +3,7 @@
  * Loads product from products.json by ?id= or ?sku= query param
  */
 
-const MJ_API_BASE = 'https://proax.app';
+const MJ_API_BASE = 'https://api-production-b888.up.railway.app';
 
 // Products that are actually IN STOCK (not presale)
 // If SKU is not in this list and stock > 0, show as "Pre venta"
