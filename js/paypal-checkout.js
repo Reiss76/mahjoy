@@ -79,7 +79,10 @@ function processPayPalPayment() {
   
   console.log('[PayPal] processPayPalPayment - shippingCost:', shippingCost, 'window.MJShippingCost:', window.MJShippingCost);
   
-  const basePrice = parseFloat(currentProduct.price) || 0;
+  // Use price_usd for EN checkout (USD), price for ES (MXN)
+  const basePrice = isEnCheckout 
+    ? (parseFloat(currentProduct.price_usd) || parseFloat(currentProduct.priceUsd) || parseFloat(currentProduct.price) || 0)
+    : (parseFloat(currentProduct.price) || 0);
   const discountedPrice = appliedDiscount && appliedDiscount.pct > 0
     ? Math.round(basePrice * (1 - appliedDiscount.pct / 100) * 100) / 100
     : basePrice;
@@ -266,8 +269,10 @@ function initPayPalButton() {
         return actions.reject();
       }
       
-      // Calculate price
-      const basePrice = parseFloat(currentProduct.price) || 0;
+      // Calculate price - use price_usd for EN checkout (USD), price for ES (MXN)
+      const basePrice = isEnCheckout 
+        ? (parseFloat(currentProduct.price_usd) || parseFloat(currentProduct.priceUsd) || parseFloat(currentProduct.price) || 0)
+        : (parseFloat(currentProduct.price) || 0);
       const discountedPrice = appliedDiscount && appliedDiscount.pct > 0
         ? Math.round(basePrice * (1 - appliedDiscount.pct / 100) * 100) / 100
         : basePrice;
@@ -369,8 +374,10 @@ async function savePayPalOrder(paypalDetails) {
   const appliedDiscount = window.MJAppliedDiscount || null;
   const shippingCost = window.MJShippingCost || 0;
   
-  // Calculate total
-  const basePrice = parseFloat(currentProduct?.price) || 0;
+  // Calculate total - use price_usd for EN checkout (USD), price for ES (MXN)
+  const basePrice = isEnCheckout 
+    ? (parseFloat(currentProduct?.price_usd) || parseFloat(currentProduct?.priceUsd) || parseFloat(currentProduct?.price) || 0)
+    : (parseFloat(currentProduct?.price) || 0);
   const discountedPrice = appliedDiscount && appliedDiscount.pct > 0
     ? Math.round(basePrice * (1 - appliedDiscount.pct / 100) * 100) / 100
     : basePrice;
