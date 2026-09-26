@@ -166,7 +166,7 @@ async function loadProduct() {
 
   let products;
   try {
-    const res = await fetch(MJ_API_BASE + '/api/public/shop/mahjoy/products');
+    const res = await fetch(MJ_API_BASE + '/public/shop/mahjoy/products');
     if (!res.ok) throw new Error('API error');
     const data = await res.json();
     products = (data.products || []).map(p => ({
