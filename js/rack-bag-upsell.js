@@ -28,6 +28,15 @@
   // ESTILOS DEL POPUP
   // ═══════════════════════════════════════════════════════════════════════════
   
+  // MAH JOY Brand Colors
+  const COLORS = {
+    burgundy: '#6B0F2A',
+    burgundyDark: '#4A0A1D',
+    orchid: '#C76BA4',
+    blush: '#F5E8F0',
+    cream: '#FAF6F0',
+  };
+
   const STYLES = `
     .mj-upsell-overlay {
       position: fixed;
@@ -35,7 +44,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(107, 15, 42, 0.4);
       backdrop-filter: blur(4px);
       z-index: 99999;
       display: flex;
@@ -51,14 +60,14 @@
     }
     
     .mj-upsell-popup {
-      background: white;
+      background: ${COLORS.cream};
       border-radius: 20px;
       max-width: 420px;
       width: 100%;
       overflow: hidden;
       transform: scale(0.9) translateY(20px);
       transition: transform 0.3s ease;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 25px 50px -12px rgba(107, 15, 42, 0.3);
     }
     
     .mj-upsell-overlay.visible .mj-upsell-popup {
@@ -66,7 +75,7 @@
     }
     
     .mj-upsell-header {
-      background: linear-gradient(135deg, #f8e6e0 0%, #fdf5f3 100%);
+      background: linear-gradient(135deg, ${COLORS.blush} 0%, ${COLORS.cream} 100%);
       padding: 24px;
       text-align: center;
       position: relative;
@@ -83,22 +92,22 @@
       border-radius: 50%;
       cursor: pointer;
       font-size: 18px;
-      color: #666;
+      color: ${COLORS.burgundy};
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.2s;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 8px rgba(107, 15, 42, 0.15);
     }
     
     .mj-upsell-close:hover {
-      background: #f5f5f5;
+      background: ${COLORS.blush};
       transform: scale(1.1);
     }
     
     .mj-upsell-badge {
       display: inline-block;
-      background: #b45309;
+      background: ${COLORS.burgundy};
       color: white;
       padding: 6px 16px;
       border-radius: 20px;
@@ -111,7 +120,7 @@
     .mj-upsell-title {
       font-size: 22px;
       font-weight: 700;
-      color: #1a1a1a;
+      color: ${COLORS.burgundy};
       margin: 0 0 8px 0;
       font-family: inherit;
     }
@@ -130,7 +139,7 @@
       display: flex;
       gap: 16px;
       padding: 16px;
-      background: #fafafa;
+      background: white;
       border-radius: 16px;
       cursor: pointer;
       transition: all 0.2s;
@@ -138,13 +147,13 @@
     }
     
     .mj-upsell-product-card:hover {
-      background: #f5f0ee;
-      border-color: #e8ddd8;
+      background: ${COLORS.blush};
+      border-color: ${COLORS.orchid};
     }
     
     .mj-upsell-product-card.selected {
-      background: #fdf5f3;
-      border-color: #b45309;
+      background: ${COLORS.blush};
+      border-color: ${COLORS.burgundy};
     }
     
     .mj-upsell-product-image {
@@ -165,7 +174,7 @@
     .mj-upsell-product-name {
       font-size: 16px;
       font-weight: 600;
-      color: #1a1a1a;
+      color: ${COLORS.burgundy};
       margin: 0 0 8px 0;
     }
     
@@ -184,13 +193,13 @@
     .mj-upsell-price-discount {
       font-size: 18px;
       font-weight: 700;
-      color: #b45309;
+      color: ${COLORS.burgundy};
     }
     
     .mj-upsell-savings {
       font-size: 12px;
-      color: #16a34a;
-      font-weight: 500;
+      color: ${COLORS.orchid};
+      font-weight: 600;
       margin-top: 4px;
     }
     
@@ -213,30 +222,30 @@
     }
     
     .mj-upsell-btn-secondary {
-      background: #f5f5f5;
-      color: #666;
+      background: ${COLORS.blush};
+      color: ${COLORS.burgundy};
     }
     
     .mj-upsell-btn-secondary:hover {
-      background: #e5e5e5;
+      background: #eddde6;
     }
     
     .mj-upsell-btn-primary {
-      background: linear-gradient(135deg, #b45309 0%, #92400e 100%);
+      background: linear-gradient(135deg, ${COLORS.burgundy} 0%, ${COLORS.burgundyDark} 100%);
       color: white;
     }
     
     .mj-upsell-btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(180, 83, 9, 0.3);
+      box-shadow: 0 4px 12px rgba(107, 15, 42, 0.4);
     }
     
     .mj-upsell-footer {
       padding: 16px 24px;
-      background: #fafafa;
+      background: ${COLORS.blush};
       text-align: center;
       font-size: 12px;
-      color: #888;
+      color: ${COLORS.orchid};
     }
     
     @media (max-width: 480px) {
