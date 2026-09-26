@@ -1,8 +1,8 @@
 /**
- * MAH JOY - Rack Bag Upsell Popup
+ * MAH JOY - Tile Bag Upsell Popup
  * 
- * Muestra un popup sugiriendo Rack Bags con 10% de descuento
- * cuando el usuario agrega Racks al carrito o hace compra directa.
+ * Muestra un popup sugiriendo Tile Bags con 10% de descuento
+ * cuando el usuario agrega Tiles al carrito o hace compra directa.
  * 
  * Funciona en ES y EN.
  */
@@ -17,8 +17,8 @@
   const CONFIG = {
     API_URL: 'https://api-production-b888.up.railway.app/public/shop/mahjoy/products',
     CART_KEY: 'mj_cart',
-    SHOWN_KEY: 'mj_rackbag_upsell_shown',
-    PROMO_CODE: 'RACKBAG10',
+    SHOWN_KEY: 'mj_tilebag_upsell_shown',
+    PROMO_CODE: 'TILEBAG10',
     DISCOUNT_PCT: 10,
   };
 
@@ -27,9 +27,9 @@
   
   const TEXTS = {
     badge: isEnglish ? 'SPECIAL OFFER' : 'OFERTA ESPECIAL',
-    title: isEnglish ? 'Protect your Racks' : 'Protege tus Racks',
+    title: isEnglish ? 'Protect your Tiles' : 'Protege tus Tiles',
     discount: '10% OFF',
-    subtitle: isEnglish ? 'on your Rack Bag when you add now' : 'en tu Rack Bag al agregar ahora',
+    subtitle: isEnglish ? 'on your Tile Bag when you add now' : 'en tu Tile Bag al agregar ahora',
     savings: isEnglish ? 'Save' : 'Ahorras',
     noThanks: isEnglish ? 'No, thanks' : 'No, gracias',
     addToCart: isEnglish ? 'Add to cart' : 'Agregar al carrito',
@@ -52,7 +52,7 @@
   const STYLES = `
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
     
-    .mj-rackbag-overlay {
+    .mj-tilebag-overlay {
       position: fixed;
       top: 0;
       left: 0;
@@ -70,11 +70,11 @@
       padding: 16px;
     }
     
-    .mj-rackbag-overlay.visible {
+    .mj-tilebag-overlay.visible {
       opacity: 1;
     }
     
-    .mj-rackbag-popup {
+    .mj-tilebag-popup {
       background: ${COLORS.cream};
       border-radius: 24px;
       max-width: 440px;
@@ -85,11 +85,11 @@
       box-shadow: 0 25px 60px -12px rgba(107, 15, 42, 0.35);
     }
     
-    .mj-rackbag-overlay.visible .mj-rackbag-popup {
+    .mj-tilebag-overlay.visible .mj-tilebag-popup {
       transform: scale(1) translateY(0);
     }
     
-    .mj-rackbag-header {
+    .mj-tilebag-header {
       background: linear-gradient(145deg, ${COLORS.blush} 0%, ${COLORS.cream} 100%);
       padding: 28px 24px;
       text-align: center;
@@ -97,7 +97,7 @@
       border-bottom: 1px solid rgba(199, 107, 164, 0.15);
     }
     
-    .mj-rackbag-close {
+    .mj-tilebag-close {
       position: absolute;
       top: 16px;
       right: 16px;
@@ -116,12 +116,12 @@
       box-shadow: 0 2px 12px rgba(107, 15, 42, 0.12);
     }
     
-    .mj-rackbag-close:hover {
+    .mj-tilebag-close:hover {
       background: ${COLORS.blush};
       transform: scale(1.1) rotate(90deg);
     }
     
-    .mj-rackbag-badge {
+    .mj-tilebag-badge {
       display: inline-block;
       background: ${COLORS.burgundy};
       color: white;
@@ -135,7 +135,7 @@
       margin-bottom: 16px;
     }
     
-    .mj-rackbag-title {
+    .mj-tilebag-title {
       font-family: 'Playfair Display', Georgia, serif;
       font-size: 28px;
       font-weight: 700;
@@ -145,7 +145,7 @@
       line-height: 1.2;
     }
     
-    .mj-rackbag-discount {
+    .mj-tilebag-discount {
       display: inline-block;
       background: linear-gradient(135deg, ${COLORS.burgundy} 0%, #8B1538 100%);
       color: white;
@@ -158,7 +158,7 @@
       letter-spacing: -0.02em;
     }
     
-    .mj-rackbag-subtitle {
+    .mj-tilebag-subtitle {
       font-family: 'Plus Jakarta Sans', sans-serif;
       font-size: 14px;
       color: #777;
@@ -166,20 +166,20 @@
       font-weight: 500;
     }
     
-    .mj-rackbag-products {
+    .mj-tilebag-products {
       padding: 16px;
       max-height: 42vh;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
     }
     
-    .mj-rackbag-grid {
+    .mj-tilebag-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 12px;
     }
     
-    .mj-rackbag-card {
+    .mj-tilebag-card {
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -193,19 +193,19 @@
       box-shadow: 0 2px 8px rgba(107, 15, 42, 0.06);
     }
     
-    .mj-rackbag-card:hover {
+    .mj-tilebag-card:hover {
       background: ${COLORS.blush};
       border-color: ${COLORS.orchid};
       transform: translateY(-2px);
     }
     
-    .mj-rackbag-card.selected {
+    .mj-tilebag-card.selected {
       background: ${COLORS.blush};
       border-color: ${COLORS.burgundy};
       box-shadow: 0 4px 16px rgba(107, 15, 42, 0.15);
     }
     
-    .mj-rackbag-img {
+    .mj-tilebag-img {
       width: 80px;
       height: 80px;
       border-radius: 12px;
@@ -214,7 +214,7 @@
       box-shadow: 0 4px 12px rgba(107, 15, 42, 0.1);
     }
     
-    .mj-rackbag-name {
+    .mj-tilebag-name {
       font-family: 'Plus Jakarta Sans', sans-serif;
       font-size: 13px;
       font-weight: 700;
@@ -223,7 +223,7 @@
       line-height: 1.3;
     }
     
-    .mj-rackbag-prices {
+    .mj-tilebag-prices {
       display: flex;
       align-items: center;
       gap: 6px;
@@ -231,21 +231,21 @@
       justify-content: center;
     }
     
-    .mj-rackbag-price-old {
+    .mj-tilebag-price-old {
       font-family: 'Plus Jakarta Sans', sans-serif;
       font-size: 12px;
       color: #aaa;
       text-decoration: line-through;
     }
     
-    .mj-rackbag-price-new {
+    .mj-tilebag-price-new {
       font-family: 'Plus Jakarta Sans', sans-serif;
       font-size: 16px;
       font-weight: 800;
       color: ${COLORS.burgundy};
     }
     
-    .mj-rackbag-savings {
+    .mj-tilebag-savings {
       font-family: 'Plus Jakarta Sans', sans-serif;
       font-size: 11px;
       color: ${COLORS.orchid};
@@ -253,13 +253,13 @@
       margin-top: 4px;
     }
     
-    .mj-rackbag-actions {
+    .mj-tilebag-actions {
       padding: 8px 24px 24px;
       display: flex;
       gap: 12px;
     }
     
-    .mj-rackbag-btn {
+    .mj-tilebag-btn {
       flex: 1;
       padding: 16px 24px;
       border-radius: 999px;
@@ -272,30 +272,30 @@
       letter-spacing: 0.02em;
     }
     
-    .mj-rackbag-btn-secondary {
+    .mj-tilebag-btn-secondary {
       background: white;
       color: ${COLORS.burgundy};
       border: 2px solid ${COLORS.blush};
     }
     
-    .mj-rackbag-btn-secondary:hover {
+    .mj-tilebag-btn-secondary:hover {
       background: ${COLORS.blush};
       border-color: ${COLORS.orchid};
     }
     
-    .mj-rackbag-btn-primary {
+    .mj-tilebag-btn-primary {
       background: ${COLORS.burgundy};
       color: white;
       box-shadow: 0 4px 16px rgba(107, 15, 42, 0.3);
     }
     
-    .mj-rackbag-btn-primary:hover {
+    .mj-tilebag-btn-primary:hover {
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(107, 15, 42, 0.4);
       background: #7A1230;
     }
     
-    .mj-rackbag-footer {
+    .mj-tilebag-footer {
       padding: 14px 24px;
       background: ${COLORS.blush};
       text-align: center;
@@ -306,56 +306,56 @@
     }
     
     @media (max-width: 480px) {
-      .mj-rackbag-popup {
+      .mj-tilebag-popup {
         border-radius: 20px;
         max-height: 90vh;
         display: flex;
         flex-direction: column;
       }
       
-      .mj-rackbag-header {
+      .mj-tilebag-header {
         padding: 20px 16px;
         flex-shrink: 0;
       }
       
-      .mj-rackbag-title {
+      .mj-tilebag-title {
         font-size: 24px;
       }
       
-      .mj-rackbag-discount {
+      .mj-tilebag-discount {
         font-size: 26px;
         padding: 6px 16px;
       }
       
-      .mj-rackbag-products {
+      .mj-tilebag-products {
         flex: 1;
         overflow-y: auto;
         max-height: none;
         padding: 12px;
       }
       
-      .mj-rackbag-grid {
+      .mj-tilebag-grid {
         gap: 10px;
       }
       
-      .mj-rackbag-img {
+      .mj-tilebag-img {
         width: 65px;
         height: 65px;
       }
       
-      .mj-rackbag-actions {
+      .mj-tilebag-actions {
         flex-shrink: 0;
         padding: 12px 16px 20px;
         flex-direction: column;
         gap: 10px;
       }
       
-      .mj-rackbag-btn {
+      .mj-tilebag-btn {
         padding: 14px 20px;
         font-size: 14px;
       }
       
-      .mj-rackbag-footer {
+      .mj-tilebag-footer {
         padding: 12px;
         flex-shrink: 0;
       }
@@ -381,14 +381,14 @@
     if (window.updateCartBadge) window.updateCartBadge();
   }
 
-  function hasRacks(cart) {
+  function hasTiles(cart) {
     return cart.some(item => 
-      /\brack[s]?\b/i.test(item.name || '') && !/bag/i.test(item.name || '')
+      /\btile[s]?\b/i.test(item.name || '') && !/bag/i.test(item.name || '')
     );
   }
 
-  function hasRackBags(cart) {
-    return cart.some(item => /rack bag/i.test(item.name || ''));
+  function hasTileBags(cart) {
+    return cart.some(item => /tile bag/i.test(item.name || ''));
   }
 
   function formatPrice(price) {
@@ -424,9 +424,9 @@
   let pendingCheckoutUrl = null;
 
   function injectStyles() {
-    if (document.getElementById('mj-rackbag-styles')) return;
+    if (document.getElementById('mj-tilebag-styles')) return;
     const style = document.createElement('style');
-    style.id = 'mj-rackbag-styles';
+    style.id = 'mj-tilebag-styles';
     style.textContent = STYLES;
     document.head.appendChild(style);
   }
@@ -438,56 +438,56 @@
     selectedProduct = products[0];
     
     const overlay = document.createElement('div');
-    overlay.className = 'mj-rackbag-overlay';
+    overlay.className = 'mj-tilebag-overlay';
     overlay.innerHTML = `
-      <div class="mj-rackbag-popup">
-        <div class="mj-rackbag-header">
-          <button class="mj-rackbag-close" aria-label="Cerrar">×</button>
-          <div class="mj-rackbag-badge">${TEXTS.badge}</div>
-          <h2 class="mj-rackbag-title">${TEXTS.title}</h2>
-          <div class="mj-rackbag-discount">${TEXTS.discount}</div>
-          <p class="mj-rackbag-subtitle">${TEXTS.subtitle}</p>
+      <div class="mj-tilebag-popup">
+        <div class="mj-tilebag-header">
+          <button class="mj-tilebag-close" aria-label="Cerrar">×</button>
+          <div class="mj-tilebag-badge">${TEXTS.badge}</div>
+          <h2 class="mj-tilebag-title">${TEXTS.title}</h2>
+          <div class="mj-tilebag-discount">${TEXTS.discount}</div>
+          <p class="mj-tilebag-subtitle">${TEXTS.subtitle}</p>
         </div>
         
-        <div class="mj-rackbag-products">
-          <div class="mj-rackbag-grid">
+        <div class="mj-tilebag-products">
+          <div class="mj-tilebag-grid">
             ${products.map((p, i) => `
-              <div class="mj-rackbag-card ${i === 0 ? 'selected' : ''}" data-index="${i}">
-                <img class="mj-rackbag-img" src="${p.image}" alt="${p.name}" />
-                <h3 class="mj-rackbag-name">${p.name}</h3>
-                <div class="mj-rackbag-prices">
-                  <span class="mj-rackbag-price-old">${formatPrice(p.original_price)}</span>
-                  <span class="mj-rackbag-price-new">${formatPrice(p.discount_price)}</span>
+              <div class="mj-tilebag-card ${i === 0 ? 'selected' : ''}" data-index="${i}">
+                <img class="mj-tilebag-img" src="${p.image}" alt="${p.name}" />
+                <h3 class="mj-tilebag-name">${p.name}</h3>
+                <div class="mj-tilebag-prices">
+                  <span class="mj-tilebag-price-old">${formatPrice(p.original_price)}</span>
+                  <span class="mj-tilebag-price-new">${formatPrice(p.discount_price)}</span>
                 </div>
-                <div class="mj-rackbag-savings">${TEXTS.savings} ${formatPrice(p.original_price - p.discount_price)}</div>
+                <div class="mj-tilebag-savings">${TEXTS.savings} ${formatPrice(p.original_price - p.discount_price)}</div>
               </div>
             `).join('')}
           </div>
         </div>
         
-        <div class="mj-rackbag-actions">
-          <button class="mj-rackbag-btn mj-rackbag-btn-secondary" data-action="skip">
+        <div class="mj-tilebag-actions">
+          <button class="mj-tilebag-btn mj-tilebag-btn-secondary" data-action="skip">
             ${TEXTS.noThanks}
           </button>
-          <button class="mj-rackbag-btn mj-rackbag-btn-primary" data-action="add">
+          <button class="mj-tilebag-btn mj-tilebag-btn-primary" data-action="add">
             ${TEXTS.addToCart}
           </button>
         </div>
         
-        <div class="mj-rackbag-footer">${TEXTS.footer}</div>
+        <div class="mj-tilebag-footer">${TEXTS.footer}</div>
       </div>
     `;
     
     // Event listeners
-    overlay.querySelector('.mj-rackbag-close').addEventListener('click', () => closePopup(false));
+    overlay.querySelector('.mj-tilebag-close').addEventListener('click', () => closePopup(false));
     overlay.querySelector('[data-action="skip"]').addEventListener('click', () => closePopup(true));
     overlay.querySelector('[data-action="add"]').addEventListener('click', () => addToCartAndClose(products));
     overlay.addEventListener('click', (e) => { if (e.target === overlay) closePopup(false); });
     
     // Product selection
-    overlay.querySelectorAll('.mj-rackbag-card').forEach(card => {
+    overlay.querySelectorAll('.mj-tilebag-card').forEach(card => {
       card.addEventListener('click', () => {
-        overlay.querySelectorAll('.mj-rackbag-card').forEach(c => c.classList.remove('selected'));
+        overlay.querySelectorAll('.mj-tilebag-card').forEach(c => c.classList.remove('selected'));
         card.classList.add('selected');
         selectedProduct = products[parseInt(card.dataset.index)];
       });
@@ -516,6 +516,7 @@
       popupElement.remove();
       popupElement = null;
       
+      // If user clicked "No, gracias" and there was a pending checkout, proceed
       if (proceedToCheckout && pendingCheckoutUrl) {
         window.location.href = pendingCheckoutUrl;
       }
@@ -549,6 +550,7 @@
     setCart(cart);
     showToast(`${selectedProduct.name} ${TEXTS.toast}`);
     
+    // If there was a pending checkout, proceed after adding
     const checkoutUrl = pendingCheckoutUrl;
     closePopup(false);
     
@@ -589,20 +591,21 @@
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // FETCH RACK BAGS
+  // FETCH TILE BAGS
   // ═══════════════════════════════════════════════════════════════════════════
   
-  async function fetchRackBags() {
+  async function fetchTileBags() {
     try {
       const res = await fetch(CONFIG.API_URL);
       if (!res.ok) throw new Error('API error');
       const data = await res.json();
       
-      const rackBags = (data.products || []).filter(p => 
-        /rack bag/i.test(p.name || '') || /bolsa.*rack/i.test(p.name || '')
+      // Filter to only Tile Bags
+      const tileBags = (data.products || []).filter(p => 
+        /tile bag/i.test(p.name || '') || /bolsa.*tile/i.test(p.name || '')
       );
       
-      return rackBags.map(p => {
+      return tileBags.map(p => {
         const price = parseFloat(p.price) || 0;
         return {
           id: p.id,
@@ -614,7 +617,7 @@
         };
       });
     } catch (e) {
-      console.error('[MJ RackBag Upsell] Error:', e);
+      console.error('[MJ TileBag Upsell] Error:', e);
       return [];
     }
   }
@@ -628,14 +631,17 @@
     
     const cart = getCart();
     
-    if (hasRacks(cart) && !hasRackBags(cart)) {
-      const products = await fetchRackBags();
+    // Only show if cart has Tiles but no Tile Bags
+    if (hasTiles(cart) && !hasTileBags(cart)) {
+      const products = await fetchTileBags();
       if (products.length > 0) {
         showPopup(products, checkoutUrl);
       } else if (checkoutUrl) {
+        // No tile bags available, proceed to checkout
         window.location.href = checkoutUrl;
       }
     } else if (checkoutUrl) {
+      // No tiles in cart, proceed to checkout
       window.location.href = checkoutUrl;
     }
   }
@@ -647,6 +653,7 @@
   let lastCartJson = localStorage.getItem(CONFIG.CART_KEY);
 
   function watchCart() {
+    // Watch for cart changes
     setInterval(() => {
       const currentJson = localStorage.getItem(CONFIG.CART_KEY);
       if (currentJson !== lastCartJson) {
@@ -664,17 +671,29 @@
   }
 
   function interceptBuyNow() {
+    // Intercept clicks on "Comprar ahora" / "Buy now" buttons
     document.addEventListener('click', (e) => {
       const link = e.target.closest('a[href*="checkout.html"]');
       if (!link) return;
       
+      // Check if this is a Tiles product page
       const productName = document.querySelector('#pdp-name, .product-name, h1')?.textContent || '';
-      const isRacksProduct = /\brack[s]?\b/i.test(productName) && !/bag/i.test(productName);
+      const isTilesProduct = /\btile[s]?\b/i.test(productName) && !/bag/i.test(productName);
       
-      if (isRacksProduct && !sessionStorage.getItem(CONFIG.SHOWN_KEY)) {
+      if (isTilesProduct && !sessionStorage.getItem(CONFIG.SHOWN_KEY)) {
         e.preventDefault();
         e.stopPropagation();
-        checkAndShowUpsell(link.href);
+        
+        // Add product to cart first (mimic add-to-cart behavior)
+        const cart = getCart();
+        const productId = window.location.hash.replace('#', '') || 
+                          new URLSearchParams(window.location.search).get('id');
+        
+        if (productId) {
+          // The product should already be in cart or will be handled by checkout
+          // Just show the upsell with the checkout URL as pending
+          checkAndShowUpsell(link.href);
+        }
       }
     }, true);
   }
@@ -684,7 +703,7 @@
   // ═══════════════════════════════════════════════════════════════════════════
   
   function init() {
-    console.log('[MJ RackBag Upsell] Initialized');
+    console.log('[MJ TileBag Upsell] Initialized');
     watchCart();
     interceptBuyNow();
     setTimeout(checkAndShowUpsell, 1000);
