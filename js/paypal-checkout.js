@@ -79,7 +79,9 @@ function processPayPalPayment() {
   
   console.log('[PayPal] processPayPalPayment - shippingCost:', shippingCost, 'window.MJShippingCost:', window.MJShippingCost);
   
-  // Use price_usd for EN checkout (USD), price for ES (MXN)
+  // ⚠️ CRITICAL: Use price_usd for EN checkout (USD), price for ES (MXN)
+  // ❌ DO NOT use currentProduct.price for USD - it will convert MXN to USD incorrectly!
+  // ✅ Always use price_usd field for USD transactions
   const basePrice = isEnCheckout 
     ? (parseFloat(currentProduct.price_usd) || parseFloat(currentProduct.priceUsd) || parseFloat(currentProduct.price) || 0)
     : (parseFloat(currentProduct.price) || 0);
@@ -269,7 +271,9 @@ function initPayPalButton() {
         return actions.reject();
       }
       
-      // Calculate price - use price_usd for EN checkout (USD), price for ES (MXN)
+      // ⚠️ CRITICAL: Use price_usd for EN checkout (USD), price for ES (MXN)
+      // ❌ DO NOT use currentProduct.price for USD - it will convert MXN to USD incorrectly!
+      // ✅ Always use price_usd field for USD transactions
       const basePrice = isEnCheckout 
         ? (parseFloat(currentProduct.price_usd) || parseFloat(currentProduct.priceUsd) || parseFloat(currentProduct.price) || 0)
         : (parseFloat(currentProduct.price) || 0);
@@ -374,7 +378,9 @@ async function savePayPalOrder(paypalDetails) {
   const appliedDiscount = window.MJAppliedDiscount || null;
   const shippingCost = window.MJShippingCost || 0;
   
-  // Calculate total - use price_usd for EN checkout (USD), price for ES (MXN)
+  // ⚠️ CRITICAL: Use price_usd for EN checkout (USD), price for ES (MXN)
+  // ❌ DO NOT use currentProduct.price for USD - it will convert MXN to USD incorrectly!
+  // ✅ Always use price_usd field for USD transactions
   const basePrice = isEnCheckout 
     ? (parseFloat(currentProduct?.price_usd) || parseFloat(currentProduct?.priceUsd) || parseFloat(currentProduct?.price) || 0)
     : (parseFloat(currentProduct?.price) || 0);
