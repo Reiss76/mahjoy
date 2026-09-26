@@ -382,11 +382,20 @@ async function loadProduct() {
         else { cart.push({ id: product.id, sku: product.sku, name: product.name,
           price: parseFloat(product.price) || 0, image: product.primary_image_url || null, qty: 1 }); }
         localStorage.setItem('mj_cart', JSON.stringify(cart));
-        // Update badge
+        // Update all cart badges (header + mobile menu)
         const total = cart.reduce((a, i) => a + i.qty, 0);
+        // Header badge
+        const headerBadge = document.getElementById('header-cart-badge');
+        if (headerBadge) {
+          headerBadge.textContent = total;
+          headerBadge.style.display = total > 0 ? 'block' : 'none';
+        }
+        // Mobile menu badges
         document.querySelectorAll('.mj-cart-badge').forEach(el => {
           el.textContent = total; el.style.display = total > 0 ? 'flex' : 'none';
         });
+        // Trigger global update if available
+        if (window.updateCartBadge) window.updateCartBadge();
       } catch(e) { console.error(e); }
       addBtn.textContent = T.added;
       addBtn.style.background = 'var(--burgundy)';
