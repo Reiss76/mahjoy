@@ -298,7 +298,9 @@ async function loadProduct() {
   // Stock - check if product is presale (not in IN_STOCK_SKUS)
   const stockEl = document.getElementById('pdp-stock');
   const isInStock = IN_STOCK_SKUS.includes(product.sku);
-  const isSoldOut = product.stock === 0 || product.soldOut === true;
+  // Use regional soldOut flag based on language
+  const regionalSoldOut = isEnglish ? product.soldOutEn : product.soldOutEs;
+  const isSoldOut = product.stock === 0 || regionalSoldOut === true;
   
   if (isSoldOut) {
     // SOLD OUT - add badge overlay and disable buttons

@@ -120,7 +120,9 @@ function buildProductCard(product) {
   }
 
   const isComingSoon = MJ_COMING_SOON_SKUS.includes(product.sku);
-  const isSoldOut = product.soldOut === true || product.stock <= 0;
+  // Use regional soldOut flag based on language
+  const regionalSoldOut = isEnglishShop ? product.soldOutEn : product.soldOutEs;
+  const isSoldOut = regionalSoldOut === true || product.stock <= 0;
   const isDisabled = isComingSoon || isSoldOut;
 
   // Badge priority: Sold Out > Coming Soon > Low Stock
