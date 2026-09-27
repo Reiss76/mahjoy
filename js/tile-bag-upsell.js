@@ -388,7 +388,7 @@
   }
 
   function hasTileBags(cart) {
-    return cart.some(item => /tile bag/i.test(item.name || ''));
+    return cart.some(item => /tile bag/i.test(item.name || '') || /tile case/i.test(item.name || ''));
   }
 
   function formatPrice(price) {
@@ -600,9 +600,9 @@
       if (!res.ok) throw new Error('API error');
       const data = await res.json();
       
-      // Filter to only Tile Bags
+      // Filter to Tile Bags AND Tile Cases
       const tileBags = (data.products || []).filter(p => 
-        /tile bag/i.test(p.name || '') || /bolsa.*tile/i.test(p.name || '')
+        /tile bag/i.test(p.name || '') || /tile case/i.test(p.name || '') || /bolsa.*tile/i.test(p.name || '')
       );
       
       return tileBags.map(p => {
