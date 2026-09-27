@@ -420,7 +420,25 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
                 shipping: { currency_code: 'MXN', value: ESTIMATED_SHIPPING.toFixed(2) }
               }
             },
-            items: items
+            items: items,
+            shipping: {
+              options: [
+                {
+                  id: 'standard',
+                  label: 'Envío Standard (2-3 días)',
+                  type: 'SHIPPING',
+                  selected: true,
+                  amount: { currency_code: 'MXN', value: ESTIMATED_SHIPPING.toFixed(2) }
+                },
+                {
+                  id: 'express',
+                  label: 'Envío Express (1 día)',
+                  type: 'SHIPPING',
+                  selected: false,
+                  amount: { currency_code: 'MXN', value: (ESTIMATED_SHIPPING * 2).toFixed(2) }
+                }
+              ]
+            }
           }],
           application_context: {
             brand_name: 'MAH JOY',
@@ -477,32 +495,69 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
             console.log('🚨 [PayPal] Cotización recibida:', quote);
             
             var quotes = quote.quotes || [];
-            var shippingCost = 250; // Default
             
-            if (quotes.length > 0) {
-              // Usar el MÁS CARO para margen
-              var sorted = quotes.sort(function(a, b) { return b.price - a.price; });
-              shippingCost = sorted[0].price;
-              console.log('🚨 [PayPal] Usando envío más caro:', shippingCost);
-            }
+            // Agrupar: Standard (2+ días) vs Express (1 día)
+            var standardQuotes = quotes.filter(function(q) {
+              return q.days && (q.days.includes('2') || q.days.includes('3') || q.days.includes('4') || q.days.includes('5'));
+            });
+            var expressQuotes = quotes.filter(function(q) {
+              return q.days && (q.days.includes('1') || q.days.toLowerCase().includes('siguiente') || q.days.toLowerCase().includes('same'));
+            });
             
+            if (expressQuotes.length === 0) expressQuotes = standardQuotes;
+            if (standardQuotes.length === 0) standardQuotes = quotes;
+            
+            // El MÁS CARO de cada categoría
+            var standardPrice = standardQuotes.length > 0 
+              ? standardQuotes.sort(function(a, b) { return b.price - a.price; })[0].price 
+              : 250;
+            var expressPrice = expressQuotes.length > 0 
+              ? expressQuotes.sort(function(a, b) { return b.price - a.price; })[0].price 
+              : standardPrice * 1.5;
+            
+            // Usar el seleccionado o Standard por defecto
+            var selectedOption = data.selected_shipping_option?.id || 'standard';
+            var shippingCost = selectedOption === 'express' ? expressPrice : standardPrice;
             var total = subtotal + shippingCost;
             
-            console.log('🚨 [PayPal] Haciendo PATCH con shipping:', shippingCost, 'total:', total);
+            console.log('🚨 [PayPal] Standard:', standardPrice, 'Express:', expressPrice, 'Selected:', selectedOption);
             
-            return actions.order.patch([{
-              op: 'replace',
-              path: '/purchase_units/@reference_id==\'default\'/amount',
-              value: {
-                currency_code: currency,
-                value: total.toFixed(2),
-                breakdown: {
-                  item_total: { currency_code: currency, value: subtotal.toFixed(2) },
-                  shipping: { currency_code: currency, value: shippingCost.toFixed(2) }
+            // Patch shipping options Y amount
+            return actions.order.patch([
+              {
+                op: 'replace',
+                path: '/purchase_units/@reference_id==\'default\'/shipping/options',
+                value: [
+                  {
+                    id: 'standard',
+                    label: 'Envío Standard (2-3 días)',
+                    type: 'SHIPPING',
+                    selected: selectedOption === 'standard',
+                    amount: { currency_code: currency, value: standardPrice.toFixed(2) }
+                  },
+                  {
+                    id: 'express',
+                    label: 'Envío Express (1 día)',
+                    type: 'SHIPPING',
+                    selected: selectedOption === 'express',
+                    amount: { currency_code: currency, value: expressPrice.toFixed(2) }
+                  }
+                ]
+              },
+              {
+                op: 'replace',
+                path: '/purchase_units/@reference_id==\'default\'/amount',
+                value: {
+                  currency_code: currency,
+                  value: total.toFixed(2),
+                  breakdown: {
+                    item_total: { currency_code: currency, value: subtotal.toFixed(2) },
+                    shipping: { currency_code: currency, value: shippingCost.toFixed(2) }
+                  }
                 }
               }
-            }]).then(function() {
-              console.log('🚨 [PayPal] PATCH exitoso!');
+            ]).then(function() {
+              console.log('🚨 [PayPal] PATCH exitoso! Standard:', standardPrice, 'Express:', expressPrice);
             }).catch(function(patchErr) {
               console.error('🚨 [PayPal] PATCH ERROR:', patchErr);
             });
