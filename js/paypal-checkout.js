@@ -423,20 +423,22 @@ async function savePayPalOrder(paypalDetails) {
     vendor_code: window.MJVendor?.getCode() || null
   };
   
-  try {
-    // Save to Proax
-    const res = await fetch(MJ_PAYPAL_API + '/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(orderData)
-    });
-    
-    const result = await res.json();
-    console.log('Order saved:', result);
-  } catch (err) {
-    console.error('Error saving order:', err);
-    // Don't block user — payment already captured
-  }
+  // ⚠️ DISABLED: Order is now created by PayPal webhook (more reliable)
+  // The webhook receives PAYMENT.CAPTURE.COMPLETED with full payer/shipping data
+  // Keeping this commented to avoid duplicate orders
+  // 
+  // try {
+  //   const res = await fetch(MJ_PAYPAL_API + '/orders', {
+  //     method: 'POST',
+  //     headers: { 'Content-Type': 'application/json' },
+  //     body: JSON.stringify(orderData)
+  //   });
+  //   const result = await res.json();
+  //   console.log('Order saved:', result);
+  // } catch (err) {
+  //   console.error('Error saving order:', err);
+  // }
+  console.log('Order will be created by PayPal webhook');
   
   // Show success
   showPaymentSuccess(paypalDetails);
