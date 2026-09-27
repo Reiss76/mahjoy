@@ -387,11 +387,13 @@ app.post('/api/shipping/quote', async (req, res) => {
     return res.status(500).json({ error: 'Shipping not configured' });
   }
 
-  const { destination, country, items } = req.body;
+  // Accept both 'destination' and 'destination_postal_code' for compatibility
+  const { destination, destination_postal_code, country, items } = req.body;
+  const postalCode = destination || destination_postal_code;
   const destCountry = (country || 'MX').toUpperCase();
   
   // Validate postal code length (5 for both MX and US)
-  if (!destination || destination.length !== 5) {
+  if (!postalCode || postalCode.length !== 5) {
     return res.status(400).json({ error: 'Invalid postal code' });
   }
   
@@ -405,11 +407,15 @@ app.post('/api/shipping/quote', async (req, res) => {
     let weight = 0.5; // minimum weight
     if (items && items.length > 0) {
       weight = items.reduce((sum, item) => {
-        const itemWeight = item.weight || getProductWeight(item.name || item.sku || '');
+        let itemWeight = item.weight || getProductWeight(item.name || item.sku || '');
+        // Round to 1kg if weight is >= 0.80kg
+        if (itemWeight >= 0.80 && itemWeight < 1) itemWeight = 1;
         return sum + (itemWeight * (item.qty || 1));
       }, 0);
     }
     weight = Math.max(weight, 0.5); // Ensure minimum 500g
+    // Round total weight to 1kg if >= 0.80kg
+    if (weight >= 0.80 && weight < 1) weight = 1;
     
     // Select origin based on destination country (ship from same country)
     const origin = ORIGINS[destCountry];
@@ -426,7 +432,7 @@ app.post('/api/shipping/quote', async (req, res) => {
         city: 'City',
         state: destCountry === 'US' ? 'TX' : 'MX', // Will be determined from CP
         country: destCountry,
-        postalCode: destination
+        postalCode: postalCode
       },
       packages: [{
         content: 'Mahjong Set',
@@ -505,9 +511,19 @@ app.post('/api/shipping/quote', async (req, res) => {
     }
     
     if (quotes.length > 0) {
-      res.json({ quotes, currency: displayCurrency });
+      // Return quotes plus cheapest rate for easy access
+      const cheapest = quotes[0]; // Already sorted by price
+      res.json({ 
+        quotes, 
+        currency: displayCurrency,
+        cheapest_rate: cheapest.price,
+        shipping_cost: cheapest.price,
+        cheapest_carrier: cheapest.carrier,
+        cheapest_service: cheapest.service,
+        cheapest_days: cheapest.days
+      });
     } else {
-      res.json({ error: 'No shipping options available' });
+      res.json({ error: 'No shipping options available', quotes: [] });
     }
   } catch (err) {
     console.error('Envia.com API error:', err);

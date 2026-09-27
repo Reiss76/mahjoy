@@ -933,20 +933,22 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           var city = address.city || '';
           var country = address.country_code || 'MX';
           
-          // Solo cotizar para México
-          if (country !== 'MX') {
+          // Soportamos México y USA
+          if (!['MX', 'US'].includes(country)) {
             console.log('[PayPal Express] País no soportado:', country);
             return actions.reject();
           }
+          
+          // Determinar moneda según país
+          var currency = country === 'US' ? 'USD' : 'MXN';
           
           // Cotizar envío con nuestra API
           return fetch('/api/shipping/quote', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              destination_postal_code: cp,
-              destination_state: state,
-              destination_city: city,
+              destination: cp,
+              country: country,
               items: [{
                 sku: window.MJCheckoutProduct?.sku,
                 name: window.MJCheckoutProduct?.name,
@@ -958,23 +960,28 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           .then(function(quote) {
             console.log('[PayPal Express] Cotización de envío:', quote);
             
+            // Usar moneda de la respuesta o del país
+            var quoteCurrency = quote.currency || currency || 'MXN';
+            var defaultShipping = country === 'US' ? 25 : 180;
+            
             if (!quote.cheapest_rate && !quote.shipping_cost) {
               console.error('[PayPal Express] No se pudo cotizar envío');
-              // Usar envío estimado de $180 si no hay cotización
-              expressShippingCost = 180;
+              expressShippingCost = defaultShipping;
             } else {
-              expressShippingCost = parseFloat(quote.cheapest_rate || quote.shipping_cost) || 180;
+              expressShippingCost = parseFloat(quote.cheapest_rate || quote.shipping_cost) || defaultShipping;
             }
             
-            // Recalcular totales
+            // Para USA, usar precio USD; para MX, usar precio del producto
             var qty = parseInt(document.getElementById('co-qty')?.value) || 1;
-            var price = parseFloat(window.MJCheckoutProduct?.price) || 0;
+            var price = country === 'US' 
+              ? parseFloat(window.MJCheckoutProduct?.price_usd || window.MJCheckoutProduct?.priceUsd || (window.MJCheckoutProduct?.price / 18)) || 0
+              : parseFloat(window.MJCheckoutProduct?.price) || 0;
             var discount = window.MJAppliedDiscount;
             if (discount && discount.pct > 0) price = Math.round(price * (1 - discount.pct / 100) * 100) / 100;
             var subtotal = price * qty;
             var total = subtotal + expressShippingCost;
             
-            console.log('[PayPal Express] Actualizando total:', { subtotal, shipping: expressShippingCost, total });
+            console.log('[PayPal Express] Actualizando total:', { subtotal, shipping: expressShippingCost, total, currency: quoteCurrency });
             
             // Actualizar el monto de la orden con el envío incluido
             return actions.order.patch([
@@ -982,11 +989,11 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
                 op: 'replace',
                 path: '/purchase_units/@reference_id==\'default\'/amount',
                 value: {
-                  currency_code: 'MXN',
+                  currency_code: quoteCurrency,
                   value: total.toFixed(2),
                   breakdown: {
-                    item_total: { currency_code: 'MXN', value: subtotal.toFixed(2) },
-                    shipping: { currency_code: 'MXN', value: expressShippingCost.toFixed(2) }
+                    item_total: { currency_code: quoteCurrency, value: subtotal.toFixed(2) },
+                    shipping: { currency_code: quoteCurrency, value: expressShippingCost.toFixed(2) }
                   }
                 }
               }
@@ -994,10 +1001,13 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           })
           .catch(function(err) {
             console.error('[PayPal Express] Error cotizando envío:', err);
-            // En caso de error, usar envío estimado
-            expressShippingCost = 180;
+            // En caso de error, usar envío estimado según país
+            var defaultShipping = country === 'US' ? 25 : 180;
+            expressShippingCost = defaultShipping;
             var qty = parseInt(document.getElementById('co-qty')?.value) || 1;
-            var price = parseFloat(window.MJCheckoutProduct?.price) || 0;
+            var price = country === 'US' 
+              ? parseFloat(window.MJCheckoutProduct?.price_usd || (window.MJCheckoutProduct?.price / 18)) || 0
+              : parseFloat(window.MJCheckoutProduct?.price) || 0;
             var total = (price * qty) + expressShippingCost;
             
             return actions.order.patch([
@@ -1005,11 +1015,11 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
                 op: 'replace',
                 path: '/purchase_units/@reference_id==\'default\'/amount',
                 value: {
-                  currency_code: 'MXN',
+                  currency_code: currency,
                   value: total.toFixed(2),
                   breakdown: {
-                    item_total: { currency_code: 'MXN', value: (price * qty).toFixed(2) },
-                    shipping: { currency_code: 'MXN', value: expressShippingCost.toFixed(2) }
+                    item_total: { currency_code: currency, value: (price * qty).toFixed(2) },
+                    shipping: { currency_code: currency, value: expressShippingCost.toFixed(2) }
                   }
                 }
               }
