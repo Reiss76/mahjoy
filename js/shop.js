@@ -123,6 +123,10 @@ function buildProductCard(product) {
   // Use regional soldOut flag based on language
   const regionalSoldOut = isEnglishShop ? product.soldOutEn : product.soldOutEs;
   const isSoldOut = regionalSoldOut === true || product.stock <= 0;
+  // DEBUG: Log Kaleido Tile sold out status
+  if (product.sku === 'TILE-Kale') {
+    console.log('[DEBUG Kaleido]', { isEnglishShop, soldOut: product.soldOut, soldOutEs: product.soldOutEs, soldOutEn: product.soldOutEn, regionalSoldOut, isSoldOut, stock: product.stock });
+  }
   const isDisabled = isComingSoon || isSoldOut;
 
   // Badge priority: Sold Out > Coming Soon > Low Stock
