@@ -286,7 +286,7 @@ app.listen(PORT, () => {
 // ─── Envia.com Shipping API ──────────────────────────────────────────────────
 
 const ENVIA_API_KEY = process.env.ENVIA_API_KEY || 'c541f5b32442e1505448fbdcf85f6cc4ac132a273f148242b8159234fa34432c';
-const ENVIA_ORIGIN_CP_MX = process.env.ENVIA_ORIGIN_CP || '66278'; // Mexico: Monterrey
+const ENVIA_ORIGIN_CP_MX = process.env.ENVIA_ORIGIN_CP || '66260'; // Mexico: San Pedro Garza García
 const ENVIA_ORIGIN_CP_US = '78852'; // USA: Eagle Pass, TX
 const ENVIA_API_URL = 'https://api.envia.com/ship/rate/';
 
@@ -309,20 +309,63 @@ async function getMXNtoUSDRate() {
   return cachedExchangeRate.rate;
 }
 
+// Product weights in kg (for shipping calculations)
+const PRODUCT_WEIGHTS = {
+  // Main products
+  'tiles': 2.39,
+  'tile': 2.39,
+  'sensu': 2.39,
+  'mystic': 2.39,
+  'cosmic': 2.39,
+  // Racks
+  'rack': 0.55,
+  'racks': 0.55,
+  // Mats
+  'mat': 0.81,
+  // Bags
+  'big bag': 0.97,
+  'bigbag': 0.97,
+  'velvet tile bag': 0.13,
+  'tile bag velvet': 0.13,
+  'tile bag piel': 0.31,
+  'tile case': 0.31,
+  'rack bag': 0.12,
+  // Accessories
+  'shuffler': 0.05,
+  'line reader': 0.04,
+  'folio': 0.11,
+  // Default for unknown
+  'default': 0.5,
+};
+
+// Get weight for a product by name
+function getProductWeight(productName) {
+  if (!productName) return PRODUCT_WEIGHTS.default;
+  const name = productName.toLowerCase();
+  
+  // Check for exact matches first
+  for (const [key, weight] of Object.entries(PRODUCT_WEIGHTS)) {
+    if (key === 'default') continue;
+    if (name.includes(key)) return weight;
+  }
+  return PRODUCT_WEIGHTS.default;
+}
+
 // Origin addresses for each country
 const ORIGINS = {
   MX: {
     name: 'Mah Joy',
-    company: 'Mah Joy',
+    company: 'Play Mahjoy',
     email: 'info@playmahjoy.com',
     phone: '5530395891',
-    street: 'Av. Vasconcelos',
-    number: '1000',
-    district: 'Del Valle',
+    street: 'Av. Lázaro Cárdenas',
+    number: '2225 PB Local 1-B',
+    district: 'Valle Oriente',
     city: 'San Pedro Garza García',
     state: 'NL',
     country: 'MX',
-    postalCode: ENVIA_ORIGIN_CP_MX
+    postalCode: ENVIA_ORIGIN_CP_MX,
+    reference: 'Torre Latitud'
   },
   US: {
     name: 'Play Mahjoy',
@@ -358,9 +401,15 @@ app.post('/api/shipping/quote', async (req, res) => {
   }
 
   try {
-    // Calculate package dimensions based on items
-    // Default: medium box for mahjong sets
-    const weight = items?.reduce((sum, i) => sum + (i.weight || 2), 0) || 2;
+    // Calculate package weight based on cart items
+    let weight = 0.5; // minimum weight
+    if (items && items.length > 0) {
+      weight = items.reduce((sum, item) => {
+        const itemWeight = item.weight || getProductWeight(item.name || item.sku || '');
+        return sum + (itemWeight * (item.qty || 1));
+      }, 0);
+    }
+    weight = Math.max(weight, 0.5); // Ensure minimum 500g
     
     // Select origin based on destination country (ship from same country)
     const origin = ORIGINS[destCountry];
