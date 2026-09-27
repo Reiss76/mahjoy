@@ -141,7 +141,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         const price=(window.MJCurrency||{format:p=>p.price?'$'+Number(p.price).toFixed(2)+' MXN':''}).format(p.price||p.sale_price||p.cost||0);
         const isPS=p.presale===true;
         const isCS=COMING_SOON.includes(p.sku);
-        const isSoldOut=p.stock===0||p.soldOutEs===true;
+        const isSoldOut=p.soldOutEs===true;
         const soldOutBadge=isSoldOut?'<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-15deg);width:120px;height:120px;border-radius:50%;background:rgba(107,15,42,0.85);color:white;display:flex;align-items:center;justify-content:center;font-family:Playfair Display,Georgia,serif;font-weight:700;font-style:italic;font-size:22px;text-align:center;line-height:1.2;box-shadow:0 4px 20px rgba(107,15,42,0.3);z-index:10;">SOLD<br>OUT!</div>':'';
         const imgStyle=isSoldOut?'opacity:0.7;':'';
         const card=document.createElement('a');card.href=(isCS||isSoldOut)?'#':'product.html#'+p.id;card.className='mj-prod-card'+(isSoldOut?' mj-sold-out':'')+(isCS?' mj-coming-soon':'')+(isPS?' mj-presale':'');
