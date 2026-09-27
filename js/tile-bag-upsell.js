@@ -497,7 +497,11 @@
   }
 
   function showPopup(products, checkoutUrl = null) {
-    if (sessionStorage.getItem(CONFIG.SHOWN_KEY)) return;
+    // Only skip if user explicitly clicked "No, gracias" this session
+    if (sessionStorage.getItem(CONFIG.SHOWN_KEY + '_declined')) return;
+    
+    // Don't show if popup is already open
+    if (popupElement) return;
     
     popupElement = createPopup(products);
     if (!popupElement) return;
@@ -505,11 +509,15 @@
     pendingCheckoutUrl = checkoutUrl;
     document.body.appendChild(popupElement);
     requestAnimationFrame(() => popupElement.classList.add('visible'));
-    sessionStorage.setItem(CONFIG.SHOWN_KEY, 'true');
   }
 
   function closePopup(proceedToCheckout = false) {
     if (!popupElement) return;
+    
+    // If user clicked "No, gracias", remember for this session
+    if (proceedToCheckout) {
+      sessionStorage.setItem(CONFIG.SHOWN_KEY + '_declined', 'true');
+    }
     
     popupElement.classList.remove('visible');
     setTimeout(() => {
@@ -646,7 +654,8 @@
   // ═══════════════════════════════════════════════════════════════════════════
   
   async function checkAndShowUpsell(checkoutUrl = null) {
-    if (sessionStorage.getItem(CONFIG.SHOWN_KEY)) return;
+    // Only skip if user explicitly declined this session
+    if (sessionStorage.getItem(CONFIG.SHOWN_KEY + '_declined')) return;
     
     const cart = getCart();
     
@@ -695,8 +704,8 @@
       const link = e.target.closest('a[href*="checkout.html"]');
       if (!link) return;
       
-      // Already shown this session? Skip
-      if (sessionStorage.getItem(CONFIG.SHOWN_KEY)) return;
+      // Only skip if user explicitly declined this session
+      if (sessionStorage.getItem(CONFIG.SHOWN_KEY + '_declined')) return;
       
       // Check if this is a Tiles product page
       const productName = document.querySelector('#pdp-name, .product-name, h1')?.textContent || '';
