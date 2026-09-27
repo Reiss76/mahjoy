@@ -424,14 +424,14 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
               options: [
                 {
                   id: 'standard',
-                  label: 'Envío Standard (2-3 días)',
+                  label: 'Envío Standard (3-5 días)',
                   type: 'SHIPPING',
                   selected: true,
                   amount: { currency_code: 'MXN', value: ESTIMATED_SHIPPING.toFixed(2) }
                 },
                 {
                   id: 'express',
-                  label: 'Envío Express (1 día)',
+                  label: 'Envío Express (1-2 días)',
                   type: 'SHIPPING',
                   selected: false,
                   amount: { currency_code: 'MXN', value: (ESTIMATED_SHIPPING * 2).toFixed(2) }
@@ -495,7 +495,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
             
             var quotes = quote.quotes || [];
             
-            // Agrupar: Standard (2+ días) vs Express (1 día)
+            // Agrupar: Standard (2+ días) vs Express (1-2 días)
             var standardQuotes = quotes.filter(function(q) {
               return q.days && (q.days.includes('2') || q.days.includes('3') || q.days.includes('4') || q.days.includes('5'));
             });
@@ -529,14 +529,14 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
                 value: [
                   {
                     id: 'standard',
-                    label: 'Envío Standard (2-3 días)',
+                    label: 'Envío Standard (3-5 días)',
                     type: 'SHIPPING',
                     selected: selectedOption === 'standard',
                     amount: { currency_code: currency, value: standardPrice.toFixed(2) }
                   },
                   {
                     id: 'express',
-                    label: 'Envío Express (1 día)',
+                    label: 'Envío Express (1-2 días)',
                     type: 'SHIPPING',
                     selected: selectedOption === 'express',
                     amount: { currency_code: currency, value: expressPrice.toFixed(2) }
