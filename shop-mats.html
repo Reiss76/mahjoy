@@ -139,7 +139,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         const isCS=COMING_SOON.includes(p.sku);
         const isInStock=IN_STOCK.includes(p.sku);
         const isPS=!isCS&&!isInStock;
-        const isSoldOut=p.stock===0||p.soldOut===true;
+        const isSoldOut=p.stock===0||p.soldOutEs===true||p.soldOut===true;
         const card=document.createElement('a');
         card.href=(isCS||isSoldOut)?'#':'product.html#'+p.id;
         card.className='mj-prod-card'+(isSoldOut?' mj-sold-out':'')+(isCS?' mj-coming-soon':'')+(isPS?' mj-presale':'');
