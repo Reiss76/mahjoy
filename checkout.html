@@ -984,7 +984,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
               }]);
             }
             
-            // Agrupar: Standard (2+ días) vs Express (1 día)
+            // Agrupar: Standard (2+ días) vs Express (1-2 días)
             var standardQuotes = quotes.filter(function(q) {
               return q.days && (q.days.includes('2') || q.days.includes('3') || q.days.includes('4') || q.days.includes('5'));
             });
@@ -1005,7 +1005,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
             if (standardOption) {
               shippingOptions.push({
                 id: 'standard',
-                label: 'Envío Standard (2-3 días)',
+                label: 'Envío Standard (3-5 días)',
                 type: 'SHIPPING',
                 selected: true,
                 amount: { currency_code: currency, value: parseFloat(standardOption.price).toFixed(2) }
@@ -1014,7 +1014,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
             if (expressOption && expressOption.id !== standardOption?.id) {
               shippingOptions.push({
                 id: 'express',
-                label: 'Envío Express (1 día)',
+                label: 'Envío Express (1-2 días)',
                 type: 'SHIPPING',
                 selected: false,
                 amount: { currency_code: currency, value: parseFloat(expressOption.price).toFixed(2) }
