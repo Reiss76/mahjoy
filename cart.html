@@ -431,9 +431,138 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       },
       
       onShippingChange: function(data, actions) {
-        // Here you could calculate real shipping based on address
-        // For now, we keep the estimated shipping
-        return actions.resolve();
+        console.log('[PayPal Cart] Dirección seleccionada:', data.shipping_address);
+        
+        var address = data.shipping_address || {};
+        var cp = address.postal_code || '';
+        var country = address.country_code || 'MX';
+        
+        // Solo MX y US
+        if (!['MX', 'US'].includes(country)) {
+          console.log('[PayPal Cart] País no soportado:', country);
+          return actions.reject();
+        }
+        
+        var currency = country === 'US' ? 'USD' : 'MXN';
+        var cart = window.MJCart ? window.MJCart.getCart() : [];
+        var discountPct = cartDiscount ? cartDiscount.pct : 0;
+        
+        // Calcular subtotal
+        var subtotal = cart.reduce(function(acc, item) {
+          var price = parseFloat(item.price) || 0;
+          if (discountPct > 0) price = Math.round(price * (1 - discountPct / 100) * 100) / 100;
+          return acc + (price * (item.qty || 1));
+        }, 0);
+        
+        // Cotizar con Envia
+        var items = cart.map(function(item) {
+          return { sku: item.sku, name: item.name, qty: item.qty || 1 };
+        });
+        
+        return fetch('/api/shipping/quote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ destination: cp, country: country, items: items })
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(quote) {
+          console.log('[PayPal Cart] Cotización Envia:', quote);
+          
+          var quotes = quote.quotes || [];
+          if (quotes.length === 0) {
+            var defaultShipping = country === 'US' ? 25 : 250;
+            var total = subtotal + defaultShipping;
+            return actions.order.patch([{
+              op: 'replace',
+              path: '/purchase_units/@reference_id==\'default\'/amount',
+              value: {
+                currency_code: currency,
+                value: total.toFixed(2),
+                breakdown: {
+                  item_total: { currency_code: currency, value: subtotal.toFixed(2) },
+                  shipping: { currency_code: currency, value: defaultShipping.toFixed(2) }
+                }
+              }
+            }]);
+          }
+          
+          // Agrupar: Standard (2+ días) vs Express (1 día)
+          var standardQuotes = quotes.filter(function(q) {
+            return q.days && (q.days.includes('2') || q.days.includes('3') || q.days.includes('4') || q.days.includes('5'));
+          });
+          var expressQuotes = quotes.filter(function(q) {
+            return q.days && (q.days.includes('1') || q.days.toLowerCase().includes('siguiente') || q.days.toLowerCase().includes('same'));
+          });
+          
+          if (expressQuotes.length === 0) expressQuotes = standardQuotes;
+          if (standardQuotes.length === 0) standardQuotes = quotes;
+          
+          // Elegir el MÁS CARO (más margen)
+          var standardOption = standardQuotes.sort(function(a, b) { return b.price - a.price; })[0];
+          var expressOption = expressQuotes.sort(function(a, b) { return b.price - a.price; })[0];
+          
+          var shippingOptions = [];
+          if (standardOption) {
+            shippingOptions.push({
+              id: 'standard',
+              label: 'Envío Standard (2-3 días)',
+              type: 'SHIPPING',
+              selected: true,
+              amount: { currency_code: currency, value: parseFloat(standardOption.price).toFixed(2) }
+            });
+          }
+          if (expressOption && expressOption.id !== standardOption?.id) {
+            shippingOptions.push({
+              id: 'express',
+              label: 'Envío Express (1 día)',
+              type: 'SHIPPING',
+              selected: false,
+              amount: { currency_code: currency, value: parseFloat(expressOption.price).toFixed(2) }
+            });
+          }
+          
+          var selectedShipping = parseFloat(standardOption?.price || expressOption?.price || 250);
+          var total = subtotal + selectedShipping;
+          
+          console.log('[PayPal Cart] Opciones:', shippingOptions);
+          
+          return actions.order.patch([
+            {
+              op: 'replace',
+              path: '/purchase_units/@reference_id==\'default\'/amount',
+              value: {
+                currency_code: currency,
+                value: total.toFixed(2),
+                breakdown: {
+                  item_total: { currency_code: currency, value: subtotal.toFixed(2) },
+                  shipping: { currency_code: currency, value: selectedShipping.toFixed(2) }
+                }
+              }
+            },
+            {
+              op: 'replace',
+              path: '/purchase_units/@reference_id==\'default\'/shipping/options',
+              value: shippingOptions
+            }
+          ]);
+        })
+        .catch(function(err) {
+          console.error('[PayPal Cart] Error:', err);
+          var defaultShipping = country === 'US' ? 25 : 250;
+          var total = subtotal + defaultShipping;
+          return actions.order.patch([{
+            op: 'replace',
+            path: '/purchase_units/@reference_id==\'default\'/amount',
+            value: {
+              currency_code: currency,
+              value: total.toFixed(2),
+              breakdown: {
+                item_total: { currency_code: currency, value: subtotal.toFixed(2) },
+                shipping: { currency_code: currency, value: defaultShipping.toFixed(2) }
+              }
+            }
+          }]);
+        });
       },
       
       onApprove: async function(data, actions) {
