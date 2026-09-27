@@ -672,27 +672,28 @@
 
   function interceptBuyNow() {
     // Intercept clicks on "Comprar ahora" / "Buy now" buttons
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', async (e) => {
       const link = e.target.closest('a[href*="checkout.html"]');
       if (!link) return;
       
+      // Already shown this session? Skip
+      if (sessionStorage.getItem(CONFIG.SHOWN_KEY)) return;
+      
       // Check if this is a Tiles product page
       const productName = document.querySelector('#pdp-name, .product-name, h1')?.textContent || '';
-      const isTilesProduct = /\btile[s]?\b/i.test(productName) && !/bag/i.test(productName);
+      const isTilesProduct = /\btile[s]?\b/i.test(productName) && !/bag/i.test(productName) && !/case/i.test(productName);
       
-      if (isTilesProduct && !sessionStorage.getItem(CONFIG.SHOWN_KEY)) {
+      if (isTilesProduct) {
         e.preventDefault();
         e.stopPropagation();
         
-        // Add product to cart first (mimic add-to-cart behavior)
-        const cart = getCart();
-        const productId = window.location.hash.replace('#', '') || 
-                          new URLSearchParams(window.location.search).get('id');
-        
-        if (productId) {
-          // The product should already be in cart or will be handled by checkout
-          // Just show the upsell with the checkout URL as pending
-          checkAndShowUpsell(link.href);
+        // Fetch tile bags and show popup directly (don't check cart)
+        const products = await fetchTileBags();
+        if (products.length > 0) {
+          showPopup(products, link.href);
+        } else {
+          // No tile bags available, proceed to checkout
+          window.location.href = link.href;
         }
       }
     }, true);

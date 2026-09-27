@@ -664,17 +664,28 @@
   }
 
   function interceptBuyNow() {
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', async (e) => {
       const link = e.target.closest('a[href*="checkout.html"]');
       if (!link) return;
+      
+      // Already shown this session? Skip
+      if (sessionStorage.getItem(CONFIG.SHOWN_KEY)) return;
       
       const productName = document.querySelector('#pdp-name, .product-name, h1')?.textContent || '';
       const isRacksProduct = /\brack[s]?\b/i.test(productName) && !/bag/i.test(productName);
       
-      if (isRacksProduct && !sessionStorage.getItem(CONFIG.SHOWN_KEY)) {
+      if (isRacksProduct) {
         e.preventDefault();
         e.stopPropagation();
-        checkAndShowUpsell(link.href);
+        
+        // Fetch rack bags and show popup directly (don't check cart)
+        const products = await fetchRackBags();
+        if (products.length > 0) {
+          showPopup(products, link.href);
+        } else {
+          // No rack bags available, proceed to checkout
+          window.location.href = link.href;
+        }
       }
     }, true);
   }
