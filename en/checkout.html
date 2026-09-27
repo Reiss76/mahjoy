@@ -607,12 +607,58 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         },
         
         onShippingChange: function(data, actions) {
-          // For US, just verify it's a US address
-          var country = data.shipping_address?.country_code || '';
-          if (country !== 'US') {
-            return actions.reject(); // Only ship to US from EN checkout
+          var address = data.shipping_address || {};
+          var country = address.country_code || '';
+          var cp = address.postal_code || '';
+          
+          // Support US and MX from EN checkout
+          if (!['US', 'MX'].includes(country)) {
+            return actions.reject();
           }
-          return actions.resolve(); // Accept US addresses with flat rate
+          
+          // Quote shipping with Envia API
+          return fetch('/api/shipping/quote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              destination: cp,
+              country: country,
+              items: [{
+                sku: window.MJCheckoutProduct?.sku,
+                name: window.MJCheckoutProduct?.name,
+                qty: parseInt(document.getElementById('co-qty')?.value) || 1
+              }]
+            })
+          })
+          .then(function(res) { return res.json(); })
+          .then(function(quote) {
+            console.log('[PayPal EN] Shipping quote:', quote);
+            
+            var shippingCost = parseFloat(quote.cheapest_rate || quote.shipping_cost) || US_SHIPPING_FLAT;
+            var qty = parseInt(document.getElementById('co-qty')?.value) || 1;
+            var price = parseFloat(window.MJCheckoutProduct?.price_usd || window.MJCheckoutProduct?.priceUsd) || 0;
+            var subtotal = price * qty;
+            var total = subtotal + shippingCost;
+            
+            return actions.order.patch([
+              {
+                op: 'replace',
+                path: '/purchase_units/@reference_id==\'default\'/amount',
+                value: {
+                  currency_code: 'USD',
+                  value: total.toFixed(2),
+                  breakdown: {
+                    item_total: { currency_code: 'USD', value: subtotal.toFixed(2) },
+                    shipping: { currency_code: 'USD', value: shippingCost.toFixed(2) }
+                  }
+                }
+              }
+            ]);
+          })
+          .catch(function(err) {
+            console.error('[PayPal EN] Quote error:', err);
+            return actions.resolve(); // Use flat rate on error
+          });
         },
         
         onApprove: function(data, actions) {
