@@ -529,6 +529,28 @@
     if (!selectedProduct) return;
     
     const cart = getCart();
+    
+    // If coming from "Buy Now", also add the main product to cart
+    if (pendingCheckoutUrl) {
+      const productId = pendingCheckoutUrl.split('#')[1] || new URLSearchParams(pendingCheckoutUrl.split('?')[1]).get('id');
+      const mainProductName = document.querySelector('#pdp-name, .product-name, h1')?.textContent || '';
+      const mainProductPrice = document.querySelector('#pdp-price, .product-price')?.textContent?.replace(/[^0-9.]/g, '') || '0';
+      const mainProductImg = document.querySelector('#pdp-main-img, .product-image img')?.src || '';
+      const mainProductSku = document.querySelector('#pdp-meta-sku')?.textContent || '';
+      
+      if (productId && !cart.some(item => String(item.id) === String(productId))) {
+        cart.push({
+          id: parseInt(productId),
+          sku: mainProductSku,
+          name: mainProductName,
+          price: parseFloat(mainProductPrice) || 0,
+          image: mainProductImg,
+          qty: 1,
+        });
+      }
+    }
+    
+    // Add the upsell product
     const newItem = {
       id: selectedProduct.id,
       sku: selectedProduct.sku,
@@ -549,14 +571,11 @@
     
     setCart(cart);
     showToast(`${selectedProduct.name} ${TEXTS.toast}`);
-    
-    // If there was a pending checkout, proceed after adding
-    const checkoutUrl = pendingCheckoutUrl;
     closePopup(false);
     
-    if (checkoutUrl) {
-      setTimeout(() => { window.location.href = checkoutUrl; }, 500);
-    }
+    // Redirect to cart page to show all items
+    const cartUrl = isEnglish ? '/en/cart.html' : '/cart.html';
+    setTimeout(() => { window.location.href = cartUrl; }, 500);
   }
 
   function showToast(message) {
