@@ -31,6 +31,7 @@ function addToCart(product, qty = 1) {
       sku: product.sku,
       name: product.name,
       price: parseFloat(product.price) || 0,
+      price_usd: parseFloat(product.priceUsd || product.price_usd) || null,
       image: product.primary_image_url || null,
       qty,
     });

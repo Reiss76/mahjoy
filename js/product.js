@@ -382,7 +382,8 @@ async function loadProduct() {
         const idx = cart.findIndex(i => i.id === product.id);
         if (idx >= 0) { cart[idx].qty += 1; }
         else { cart.push({ id: product.id, sku: product.sku, name: product.name,
-          price: parseFloat(product.price) || 0, image: product.primary_image_url || null, qty: 1 }); }
+          price: parseFloat(product.price) || 0, price_usd: parseFloat(product.priceUsd || product.price_usd) || null,
+          image: product.primary_image_url || null, qty: 1 }); }
         localStorage.setItem('mj_cart', JSON.stringify(cart));
         // Update all cart badges (header + mobile menu)
         const total = cart.reduce((a, i) => a + i.qty, 0);
