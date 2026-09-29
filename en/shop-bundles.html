@@ -192,7 +192,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       // Calculate savings if products have individual prices
       var originalTotal = 0;
       if (b.products && b.products.length) {
-        b.products.forEach(function(p) { originalTotal += parseFloat(p.price_usd || 0) * (p.quantity || 1); });
+        b.products.forEach(function(p) { originalTotal += parseFloat(p.priceUsd || 0) * (p.quantity || 1); });
       }
       var bundlePrice = parseFloat(b.price_usd || 0);
       var savings = originalTotal > bundlePrice ? originalTotal - bundlePrice : 0;

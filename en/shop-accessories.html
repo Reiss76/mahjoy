@@ -130,7 +130,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       grid.innerHTML='';
       prods.forEach(p=>{
         const img=imgUrl(p);
-        const price=p.price_usd?'$'+Number(p.price_usd).toFixed(2)+' USD':'Contact for price';
+        const price=p.priceUsd?'$'+Number(p.priceUsd).toFixed(2)+' USD':'Contact for price';
         const IN_STOCK=['Bag-blue','Bag-fiucsa','BAG-lila','Bag-pink','Bag-rouge','Folio-1','Folio-2','BAG-tilelila','BAG-tilepink','LINE-001','LINE-002','LINE-003','LINE-005','SHUF-001','SHUF-002','SHUF-003','SHUF-004'];
         const isInStock=IN_STOCK.some(s=>s.toLowerCase()===p.sku?.toLowerCase());
         const isSoldOut=p.soldOutEn===true;const isComingSoon=p.comingSoonEn===true;

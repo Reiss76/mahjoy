@@ -137,7 +137,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       const COMING_SOON=['Rack-brown'];
       prods.forEach(p=>{
         const img=imgUrl(p);
-        const price=p.price_usd?'$'+Number(p.price_usd).toFixed(2)+' USD':'Contact for price';
+        const price=p.priceUsd?'$'+Number(p.priceUsd).toFixed(2)+' USD':'Contact for price';
         const isPS=PRESALE.includes(p.sku);
         const isCS=COMING_SOON.includes(p.sku);
         const isSoldOut=p.soldOutEn===true;const isComingSoon=p.comingSoonEn===true;
