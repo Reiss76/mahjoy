@@ -188,11 +188,12 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
 
       emptyEl.style.display = 'none';
       summaryEl.style.display = 'block';
-      const total = window.MJCart.cartTotal();
+      // 🔒 CANDADO: Calcular total en USD directamente (no usar cartTotal que usa MXN)
+      const totalUSD = cart.reduce((acc, i) => acc + ((parseFloat(i.price_usd) || 0) * i.qty), 0);
       const count = window.MJCart.cartCount();
-      subtitleEl.textContent = `${count} producto${count > 1 ? 's' : ''}`;
-      document.getElementById('cart-subtotal').textContent = fmt(total);
-      document.getElementById('cart-total').textContent = fmt(total);
+      subtitleEl.textContent = `${count} product${count > 1 ? 's' : ''}`;
+      document.getElementById('cart-subtotal').textContent = fmt(totalUSD);
+      document.getElementById('cart-total').textContent = fmt(totalUSD);
 
       itemsEl.innerHTML = cart.map(item => {
         const img = resolveImg(item.image);
@@ -204,7 +205,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
             <div>
               <div class="mj-cart-item-name">${item.name}</div>
               ${item.sku ? `<div class="mj-cart-item-sku">${item.sku}</div>` : ''}
-              <div class="mj-cart-item-price">${item.price > 0 ? fmt(item.price) : 'Contact for price'}</div>
+              <div class="mj-cart-item-price">${item.price_usd > 0 ? fmt(item.price_usd) : 'Contact for price'}</div>
               <div class="mj-cart-qty">
                 <button onclick="changeItemQty('${item.id}', ${item.qty - 1})">−</button>
                 <span>${item.qty}</span>
@@ -230,7 +231,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            cart: cart.map(i => ({ name: i.name, price: i.price, qty: i.qty })),
+            // 🔒 Usar price_usd para checkout EN
+            cart: cart.map(i => ({ name: i.name, price: i.price_usd || 0, qty: i.qty })),
             orderId: `mahjoy-${Date.now()}`,
           }),
         });
@@ -250,8 +252,9 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
 
     function proceedWhatsApp() {
       const cart = window.MJCart.getCart();
-      const lines = cart.map(i => `• ${i.name} x${i.qty}${i.price > 0 ? ' = ' + fmt(i.price * i.qty) : ''}`);
-      const total = window.MJCart.cartTotal();
+      // 🔒 Usar price_usd para WhatsApp EN
+      const lines = cart.map(i => `• ${i.name} x${i.qty}${i.price_usd > 0 ? ' = ' + fmt(i.price_usd * i.qty) : ''}`);
+      const total = cart.reduce((acc, i) => acc + ((parseFloat(i.price_usd) || 0) * i.qty), 0);
       const msg = `Hi MAH JOY! 🀄\n\nI'd like to order:\n${lines.join('\n')}\n\n${total > 0 ? 'Approx total: ' + fmt(total) : ''}`;
       window.open(`https://wa.me/${MJ_WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
     }
