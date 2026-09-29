@@ -439,8 +439,10 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       if (!product) return;
       
       var qty = parseInt(document.getElementById('co-qty')?.value) || 1;
-      // Use USD price if available
-      var price = parseFloat(product.price_usd) || parseFloat(product.price) || 0;
+      // 🔒 CANDADO: SIEMPRE usar precio USD - NUNCA MXN
+      // API devuelve priceUsd (camelCase), también aceptamos price_usd
+      var price = parseFloat(product.priceUsd || product.price_usd) || 0;
+      if (!price) console.error('🚨 [CRITICAL] Missing USD price for:', product.name);
       var subtotal = price * qty;
       
       // Apply discount
@@ -467,7 +469,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       
       // Show discount row if applicable
       if (discountPct && discountPct > 0 && discountRow && discountAmount) {
-        var originalPrice = parseFloat(product.price_usd) || parseFloat(product.price) || 0;
+        var originalPrice = parseFloat(product.priceUsd || product.price_usd) || 0;
         var discountValue = (originalPrice * qty) - subtotal;
         discountRow.style.display = 'flex';
         discountAmount.textContent = '-$' + discountValue.toFixed(2);
@@ -487,7 +489,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         }
         if (totalDisplay && product) {
           var qty = parseInt(document.getElementById('co-qty')?.value) || 1;
-          var price = parseFloat(product.price_usd) || parseFloat(product.price) || 0;
+          var price = parseFloat(product.priceUsd || product.price_usd) || 0;
           var total = (price * qty) + US_SHIPPING_FLAT;
           totalDisplay.textContent = '$' + total.toFixed(2);
         }
@@ -572,7 +574,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         createOrder: function(data, actions) {
           var qty = parseInt(document.getElementById('co-qty')?.value) || 1;
           // Use USD price if available, otherwise fall back to MXN price
-          var price = parseFloat(product.price_usd) || parseFloat(product.price) || 0;
+          var price = parseFloat(product.priceUsd || product.price_usd) || 0;
           console.log('[PayPal Express EN] price:', price, 'price_usd:', product.price_usd, 'price:', product.price);
           var discount = window.MJAppliedDiscount;
           if (discount && discount.pct > 0) price = Math.round(price * (1 - discount.pct / 100) * 100) / 100;
@@ -636,7 +638,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
             
             var shippingCost = parseFloat(quote.cheapest_rate || quote.shipping_cost) || US_SHIPPING_FLAT;
             var qty = parseInt(document.getElementById('co-qty')?.value) || 1;
-            var price = parseFloat(window.MJCheckoutProduct?.price_usd || window.MJCheckoutProduct?.priceUsd) || 0;
+            // 🔒 CANDADO: USD price directo
+            var price = parseFloat(window.MJCheckoutProduct?.priceUsd || window.MJCheckoutProduct?.price_usd) || 0;
             var subtotal = price * qty;
             var total = subtotal + shippingCost;
             

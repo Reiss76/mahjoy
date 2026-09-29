@@ -339,9 +339,14 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   
   function updateCartTotals() {
     var cart = window.MJCart ? window.MJCart.getCart() : [];
-    // Use USD prices
+    // 🔒 CANDADO: SIEMPRE usar price_usd - NUNCA convertir de MXN
     var subtotal = cart.reduce(function(acc, i) { 
-      var priceUSD = i.price_usd || (i.price / 18); // Convert MXN to USD if needed
+      // ⚠️ CRITICAL: price_usd es OBLIGATORIO para checkout USD
+      // Si no existe, el producto se agregó antes del fix - usuario debe re-agregar
+      if (!i.price_usd && i.price_usd !== 0) {
+        console.error('🚨 [USD PRICE MISSING] Product:', i.name, '- Usuario debe vaciar carrito y re-agregar productos');
+      }
+      var priceUSD = parseFloat(i.price_usd) || 0; // NO fallback a MXN/18
       return acc + (priceUSD * i.qty); 
     }, 0);
     var discountAmount = 0;
@@ -380,9 +385,16 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         
         var discountPct = cartDiscount ? cartDiscount.pct : 0;
         
-        // Build individual items for PayPal (USD)
+        // 🔒 CANDADO: Build individual items for PayPal (USD) - SIEMPRE usar price_usd
         var items = cart.map(function(item) {
-          var priceUSD = parseFloat(item.price_usd) || (parseFloat(item.price) / 18);
+          // ⚠️ CRITICAL: EN checkout DEBE usar price_usd directamente
+          // ❌ NUNCA convertir price (MXN) a USD
+          // ✅ SIEMPRE usar price_usd para transacciones USD
+          if (!item.price_usd && item.price_usd !== 0) {
+            console.error('🚨 [CRITICAL] Missing price_usd for:', item.name);
+            alert('Error: El producto "' + item.name + '" no tiene precio USD. Por favor vacía tu carrito y vuelve a agregar los productos.');
+          }
+          var priceUSD = parseFloat(item.price_usd) || 0; // 🔒 NO FALLBACK
           if (discountPct > 0) {
             priceUSD = Math.round(priceUSD * (1 - discountPct / 100) * 100) / 100;
           }
@@ -443,8 +455,9 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
               order_id: orderData.id,
               status: 'paid',
               source: 'paypal_express_cart_en',
+              // 🔒 CANDADO: cart items con precio USD real
               cart: cart.map(function(i) {
-                var priceUSD = i.price_usd || (i.price / 18);
+                var priceUSD = parseFloat(i.price_usd) || 0; // 🔒 NO FALLBACK a MXN/18
                 return {
                   sku: i.sku || '',
                   name: i.name,
