@@ -125,14 +125,20 @@ function buildProductCard(product) {
   // Use regional soldOut flag based on language
   const regionalSoldOut = isEnglishShop ? product.soldOutEn : product.soldOutEs;
   const isSoldOut = regionalSoldOut === true || product.stock <= 0;
-  const isDisabled = isComingSoon || isSoldOut;
+  // Coming Soon is NOT disabled - only Sold Out
+  const isDisabled = isSoldOut;
 
-  // Badge priority: Sold Out > Coming Soon > Low Stock
+  // Format coming soon date
+  const csDateStr = product.comingSoonDate 
+    ? new Date(product.comingSoonDate).toLocaleDateString(isEnglishShop ? 'en-US' : 'es-MX', {month: 'short', day: 'numeric'}).toUpperCase()
+    : '';
+
+  // Badge priority: Sold Out > Coming Soon (with date) > Low Stock
   let badgeHtml = '';
   if (isSoldOut && !isComingSoon) {
     badgeHtml = `<div class="mj-product-badge mj-sold-out-badge" style="background:#7a2d47;color:#fff;transform:rotate(-12deg);">${TS.soldOut}</div>`;
   } else if (isComingSoon) {
-    badgeHtml = `<div class="mj-product-badge" style="background:var(--orchid);color:#fff;">${TS.comingSoon}</div>`;
+    badgeHtml = `<div class="mj-product-badge" style="background:var(--orchid);color:#fff;">${TS.comingSoon}${csDateStr ? ' · ' + csDateStr : ''}</div>`;
   } else if (product.stock <= 5 && product.stock > 0) {
     badgeHtml = `<div class="mj-product-badge">${TS.lastFew} ${product.stock} ${TS.lastFewSuffix}</div>`;
   }
@@ -154,9 +160,7 @@ function buildProductCard(product) {
       </div>
       ${isSoldOut 
         ? `<span class="mj-product-cta mj-sold-out-cta" style="opacity:0.5;cursor:not-allowed;background:#999;">${TS.soldOut}</span>`
-        : isComingSoon 
-          ? `<span class="mj-product-cta" style="opacity:0.5;cursor:default;">${TS.comingSoon}</span>`
-          : `<a href="javascript:void(0)" onclick="window.location='product.html#${product.id}'" class="mj-product-cta">${TS.viewProduct}</a>`
+        : `<a href="javascript:void(0)" onclick="window.location='product.html#${product.id}'" class="mj-product-cta">${TS.viewProduct}</a>`
       }
     </div>
   `;
