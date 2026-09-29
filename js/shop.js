@@ -119,7 +119,9 @@ function buildProductCard(product) {
     // else keep full URL as-is
   }
 
-  const isComingSoon = MJ_COMING_SOON_SKUS.includes(product.sku);
+  // Check coming soon from both hardcoded SKU list AND API fields
+  const apiComingSoon = isEnglishShop ? product.comingSoonEn : product.comingSoonEs;
+  const isComingSoon = MJ_COMING_SOON_SKUS.includes(product.sku) || apiComingSoon === true;
   // Use regional soldOut flag based on language
   const regionalSoldOut = isEnglishShop ? product.soldOutEn : product.soldOutEs;
   const isSoldOut = regionalSoldOut === true || product.stock <= 0;
