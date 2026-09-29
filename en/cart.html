@@ -124,8 +124,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       <div class="mj-cart-summary">
         <div class="mj-cart-summary-row"><span>Subtotal</span><span id="cart-subtotal"></span></div>
         <div id="cart-discount-row" style="display:none;" class="mj-cart-summary-row"><span id="cart-discount-label" style="color:#16a34a;">Discount</span><span id="cart-discount-amount" style="color:#16a34a;font-weight:700;"></span></div>
-        <div class="mj-cart-summary-row"><span>Estimated Shipping</span><span id="cart-shipping" style="color:var(--orchid-mid);font-weight:600;">$25.00</span></div>
-        <div class="mj-cart-summary-total"><span>Estimated Total</span><span id="cart-total"></span></div>
+        <div class="mj-cart-summary-row"><span>Shipping</span><span id="cart-shipping" style="color:var(--orchid-mid);font-weight:600;font-size:.85rem;">Calculated at checkout</span></div>
+        <div class="mj-cart-summary-total"><span>Total (excl. shipping)</span><span id="cart-total"></span></div>
       </div>
       
       <!-- PayPal Express Checkout -->
@@ -362,8 +362,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       document.getElementById('cart-discount-amount').textContent = '-$' + discountAmount.toFixed(2);
     }
     
-    var total = subtotal + ESTIMATED_SHIPPING;
-    document.getElementById('cart-shipping').textContent = '$' + ESTIMATED_SHIPPING.toFixed(2);
+    document.getElementById('cart-shipping').textContent = 'Calculated at checkout';
     document.getElementById('cart-total').textContent = '$' + total.toFixed(2);
   }
   
