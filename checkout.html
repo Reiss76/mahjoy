@@ -1276,6 +1276,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   const quoteDiv = document.getElementById('co-shipping-quote');
   const shippingRow = document.querySelector('[style*="Envío"]')?.parentElement;
   let selectedShipping = 0;
+  let selectedShippingCurrency = 'MXN';
   let debounceTimer;
 
   if (!cpInput) return;
@@ -1289,7 +1290,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     } else {
       quoteDiv.style.display = 'none';
       selectedShipping = 0;
-      updateTotal();
+      syncShippingToCheckout();
     }
   });
 
@@ -1342,7 +1343,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     
     const html = sorted.map((q, i) => `
       <label style="display:flex;align-items:center;gap:.75rem;padding:.9rem 1rem;margin:.5rem 0;background:#fff;border:2px solid ${i===0?'var(--orchid)':'#eee'};border-radius:10px;cursor:pointer;transition:border .2s;">
-        <input type="radio" name="shipping_option" value="${q.id}" data-price="${q.price}" ${i===0?'checked':''} style="accent-color:var(--orchid);width:18px;height:18px;">
+        <input type="radio" name="shipping_option" value="${q.id}" data-price="${q.price}" data-currency="${q.currency || currency}" ${i===0?'checked':''} style="accent-color:var(--orchid);width:18px;height:18px;">
         <div style="flex:1;">
           <div style="font-weight:700;color:var(--burgundy);font-size:.9rem;">${q.carrier}</div>
           <div style="color:#888;font-size:.75rem;">${q.days || '2-5'} ${daysText}</div>
@@ -1356,12 +1357,14 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     
     // Select first option by default
     selectedShipping = sorted[0].price;
+    selectedShippingCurrency = sorted[0].currency || currency;
     syncShippingToCheckout();
     
     // Listen for option changes
     quoteDiv.querySelectorAll('input[name="shipping_option"]').forEach(radio => {
       radio.addEventListener('change', function() {
         selectedShipping = parseFloat(this.dataset.price);
+        selectedShippingCurrency = this.dataset.currency || currency;
         syncShippingToCheckout();
         // Update border colors
         quoteDiv.querySelectorAll('label').forEach(l => l.style.borderColor = '#eee');
@@ -1374,14 +1377,14 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     // Update shipping display in the order summary
     const shippingEl = document.querySelector('#co-content span[style*="A cotizar"]');
     if (shippingEl && selectedShipping > 0) {
-      shippingEl.textContent = '$' + selectedShipping.toFixed(2) + ' MXN';
+      shippingEl.textContent = '$' + window.MJPayPalPricing.shippingPrice(selectedShipping, selectedShippingCurrency, 'MXN', window.cachedExchangeRate || 19.5).toFixed(2) + ' MXN';
       shippingEl.style.color = 'var(--burgundy)';
       shippingEl.style.fontWeight = '600';
     }
     
     // Sync with checkout.js for total calculation
     if (window.MJCheckout && window.MJCheckout.setShippingCost) {
-      window.MJCheckout.setShippingCost(selectedShipping);
+      window.MJCheckout.setShippingCost(selectedShipping, selectedShippingCurrency);
     }
   }
 })();

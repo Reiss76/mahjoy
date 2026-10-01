@@ -143,9 +143,11 @@ function updateTotals() {
 
 // Expose for shipping script integration
 window.MJCheckout = {
-  setShippingCost: function(cost) {
-    selectedShippingCost = cost;
-    window.MJShippingCost = cost; // CRITICAL: Update for PayPal
+  setShippingCost: function(cost, currency = isEN ? 'USD' : 'MXN') {
+    const checkoutCurrency = isEN ? 'USD' : 'MXN';
+    selectedShippingCost = window.MJPayPalPricing.shippingPrice(cost, currency, checkoutCurrency, cachedExchangeRate);
+    window.MJShippingCurrency = checkoutCurrency;
+    window.MJShippingCost = selectedShippingCost; // CRITICAL: Update for PayPal
     console.log('[Checkout] Shipping cost set:', cost, '→ window.MJShippingCost:', window.MJShippingCost);
     updateTotals();
   },
@@ -413,9 +415,9 @@ document.addEventListener('DOMContentLoaded', () => {
       ? [{ name: currentProduct.name, price: priceForPayment, qty: data.qty, currency: 'MXN' }]
       : [];
     
-    // Add shipping cost (already in MXN from Envia API for both MX and US)
+    // CentumPay requires shipping in MXN, just like the products.
     if (selectedShippingCost > 0) {
-      cart.push({ name: 'Envio', price: selectedShippingCost, qty: 1, currency: 'MXN' });
+      cart.push({ name: 'Envio', price: window.MJPayPalPricing.shippingPrice(selectedShippingCost, window.MJShippingCurrency, 'MXN', cachedExchangeRate), qty: 1, currency: 'MXN' });
     }
 
     // Include vendor ref in order ID
@@ -619,6 +621,7 @@ document.addEventListener('DOMContentLoaded', () => {
 window.MJCheckoutProduct = null;
 window.MJAppliedDiscount = null;
 window.MJShippingCost = 0;
+window.MJShippingCurrency = isEN ? 'USD' : 'MXN';
 
 // Update exposed variables when checkout loads
 const _origLoadCheckout = window.loadCheckout || loadCheckout;

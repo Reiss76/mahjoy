@@ -83,3 +83,24 @@ test('server quotes use the catalog and validate the coupon, ignoring caller-sup
   assert.equal(res.body.items[1].unit_price,63);assert.equal(res.body.items[1].price_usd,70);
   assert(paths.some(p=>p.includes('/discount/VALID')));
 });
+test('shipping already quoted in USD stays USD; MXN is converted exactly once',()=>{
+  const pricing=browser().window.MJPayPalPricing;
+  assert.equal(pricing.shippingPrice(60,'USD','USD',19.5),60);
+  assert.equal(pricing.shippingPrice(25,'USD','USD',19.5),25);
+  assert.equal(pricing.shippingPrice(1170,'MXN','USD',19.5),60);
+  assert.equal(pricing.shippingPrice(60,'USD','MXN',19.5),1170);
+  assert.throws(()=>pricing.shippingPrice(60,'MXN','USD',0),/exchange rate/);
+});
+test('the USD checkout callback retains a USD60 shipping quote instead of reducing it to USD3',async()=>{
+  const ctx=browser();let options,created;
+  ctx.window.location={pathname:'/en/checkout.html'};
+  ctx.window.MJCheckoutProduct={...products[0],price_usd:380};
+  ctx.window.MJShippingCost=60;ctx.window.MJShippingCurrency='USD';ctx.window.cachedExchangeRate=19.5;
+  const container={innerHTML:''};
+  ctx.document={readyState:'loading',addEventListener(){},getElementById:id=>id==='co-form'?{qty:{value:'1'}}:container};
+  ctx.paypal={Buttons:o=>{options=o;return {render:()=>Promise.resolve()};}};
+  vm.runInContext(fs.readFileSync('js/paypal-checkout.js','utf8'),ctx);
+  ctx.window.MJPayPal.init();
+  await options.createOrder({}, {order:{create:p=>{created=p;return 'SIMULATED';}}});
+  const unit=created.purchase_units[0];assert.equal(unit.items[1].unit_amount.value,'60.00');assert.equal(unit.amount.value,'440.00');
+});

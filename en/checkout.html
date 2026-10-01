@@ -847,6 +847,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   const cpInput = document.getElementById('co-cp');
   const quoteDiv = document.getElementById('co-shipping-quote');
   let selectedShipping = 0;
+  let selectedShippingCurrency = 'USD';
   let debounceTimer;
 
   if (!cpInput) return;
@@ -860,7 +861,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     } else {
       quoteDiv.style.display = 'none';
       selectedShipping = 0;
-      updateTotal();
+      syncShippingToCheckout();
     }
   });
 
@@ -906,7 +907,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     
     const html = sorted.map((q, i) => `
       <label style="display:flex;align-items:center;gap:.75rem;padding:.75rem;margin:.5rem 0;background:#fff;border:2px solid ${i===0?'var(--orchid)':'#eee'};border-radius:8px;cursor:pointer;transition:border .2s;">
-        <input type="radio" name="shipping_option" value="${q.id}" data-price="${q.price}" ${i===0?'checked':''} style="accent-color:var(--orchid);">
+        <input type="radio" name="shipping_option" value="${q.id}" data-price="${q.price}" data-currency="${q.currency || currency}" ${i===0?'checked':''} style="accent-color:var(--orchid);">
         <div style="flex:1;">
           <div style="font-weight:700;color:var(--burgundy);font-size:.85rem;">${q.carrier}</div>
           <div style="color:#888;font-size:.75rem;">${q.days || '2-5'} business days</div>
@@ -919,11 +920,13 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     quoteDiv.style.display = 'block';
     
     selectedShipping = sorted[0].price;
+    selectedShippingCurrency = sorted[0].currency || currency;
     syncShippingToCheckout();
     
     quoteDiv.querySelectorAll('input[name="shipping_option"]').forEach(radio => {
       radio.addEventListener('change', function() {
         selectedShipping = parseFloat(this.dataset.price);
+        selectedShippingCurrency = this.dataset.currency || currency;
         syncShippingToCheckout();
         quoteDiv.querySelectorAll('label').forEach(l => l.style.borderColor = '#eee');
         this.closest('label').style.borderColor = 'var(--orchid)';
@@ -935,9 +938,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     // Update shipping display in the order summary
     const shippingEl = document.querySelector('#co-content span[style*="To be quoted"], #co-content span[style*="To quote"]');
     const currency = 'USD';
-    // Convert MXN shipping to USD for display (Envia returns MXN)
-    const usdRate = window.cachedExchangeRate || 19.5;
-    const shippingDisplay = selectedShipping / usdRate;
+    // The shipping quote API already returns USD for US destinations.
+    const shippingDisplay = window.MJPayPalPricing.shippingPrice(selectedShipping, selectedShippingCurrency, 'USD', window.cachedExchangeRate || 19.5);
     
     if (shippingEl && selectedShipping > 0) {
       shippingEl.textContent = '$' + shippingDisplay.toFixed(2) + ' ' + currency;
@@ -947,7 +949,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     
     // Sync with checkout.js for total calculation
     if (window.MJCheckout && window.MJCheckout.setShippingCost) {
-      window.MJCheckout.setShippingCost(selectedShipping);
+      window.MJCheckout.setShippingCost(selectedShipping, selectedShippingCurrency);
     }
   }
 })();

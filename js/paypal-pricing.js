@@ -50,5 +50,13 @@
       || Math.round(Number(unit.amount.value) * 100) !== cents + Math.round(shipping * 100)) throw new Error('Invalid checkout total. Please refresh the page.');
     return actions.order.create(payload);
   }
-  window.MJPayPalPricing = { quote, refreshCart, create };
+  function shippingPrice(cost, sourceCurrency, targetCurrency, rate) {
+    const value = Number(cost);
+    if (!Number.isFinite(value) || value < 0) throw new Error('Invalid shipping price');
+    if (!['MXN','USD'].includes(sourceCurrency) || !['MXN','USD'].includes(targetCurrency)) throw new Error('Invalid shipping currency');
+    if (sourceCurrency===targetCurrency) return Math.round(value*100)/100;
+    if (!Number.isFinite(Number(rate)) || Number(rate)<=0) throw new Error('Shipping exchange rate unavailable');
+    return Math.round((targetCurrency==='USD'?value/Number(rate):value*Number(rate))*100)/100;
+  }
+  window.MJPayPalPricing = { quote, refreshCart, create, shippingPrice };
 })();

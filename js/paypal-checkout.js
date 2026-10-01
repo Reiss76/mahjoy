@@ -90,11 +90,7 @@ function processPayPalPayment() {
     : basePrice;
   
   const productTotal = discountedPrice * qty;
-  let shippingForPayPal = shippingCost;
-  if (isEnCheckout && shippingCost > 0) {
-    const rate = window.cachedExchangeRate || 19.5;
-    shippingForPayPal = Math.round((shippingCost / rate) * 100) / 100;
-  }
+  const shippingForPayPal = window.MJPayPalPricing.shippingPrice(shippingCost, window.MJShippingCurrency || (isEnCheckout ? 'USD' : 'MXN'), PAYPAL_CURRENCY, window.cachedExchangeRate || 19.5);
   const total = productTotal + shippingForPayPal;
   
   console.log('[PayPal] FINAL VALUES:', {
@@ -297,11 +293,7 @@ function initPayPalButton() {
       
       // Add shipping as item if present
       // For EN checkout, shipping from Envia is MXN - need to convert to USD
-      let shippingForPayPal = shippingCost;
-      if (isEnCheckout && shippingCost > 0) {
-        const rate = window.cachedExchangeRate || 19.5;
-        shippingForPayPal = Math.round((shippingCost / rate) * 100) / 100;
-      }
+      const shippingForPayPal = window.MJPayPalPricing.shippingPrice(shippingCost, window.MJShippingCurrency || (isEnCheckout ? 'USD' : 'MXN'), PAYPAL_CURRENCY, window.cachedExchangeRate || 19.5);
       
       if (shippingForPayPal > 0) {
         items.push({
