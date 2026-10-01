@@ -134,7 +134,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         const isMXN=localStorage.getItem('mj_currency')!=='USD';
         const price=rawPrice?(isMXN?'$'+rawPrice.toFixed(2)+' MXN':'$'+(rawPrice/18).toFixed(2)+' USD'):'';
         const COMING_SOON=['MAT-COWV'];
-        const IN_STOCK=['MAT-PIEL','MAT-snow2','MAT-snow1','MAT-Merry'];
+        const IN_STOCK=['MAT-010','MAT-PIEL','MAT-snow2','MAT-snow1','MAT-Merry'];
         const isCS=COMING_SOON.includes(p.sku);
         const isInStock=IN_STOCK.includes(p.sku);
         const isPS=!isCS&&!isInStock;

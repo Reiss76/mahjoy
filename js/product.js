@@ -11,7 +11,7 @@ const IN_STOCK_SKUS = [
   // Tiles
   'TILE-dina', 'TILE-heri', 'TILE-impe', 'TILE-Kale', 'TILE-mythos', 'TILE-sensu',
   // Mats (including Apres Ski, Apres Snow, Noel)
-  'MAT-PIEL', 'MAT-snow2', 'MAT-snow1', 'MAT-Merry',
+  'MAT-010', 'MAT-PIEL', 'MAT-snow2', 'MAT-snow1', 'MAT-Merry',
   // Racks (all except Golden Brown/Rack-brown)
   'Rack-007', 'RACK-COSMIC', 'RACK-BLUE', 'RACK-fucsia', 'RACK-VERDE', 'RACK-002', 'RACK-PINK', 'RACK-RED',
   // Rack Bags (all)
