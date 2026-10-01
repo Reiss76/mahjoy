@@ -627,6 +627,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
             body: JSON.stringify({
               destination: cp,
               country: country,
+              currency: 'USD',
               items: [{
                 sku: window.MJCheckoutProduct?.sku,
                 name: window.MJCheckoutProduct?.name,
@@ -638,10 +639,12 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           .then(function(quote) {
             console.log('[PayPal EN] Shipping quote:', quote);
             
-            var shippingCost = parseFloat(quote.cheapest_rate || quote.shipping_cost) || US_SHIPPING_FLAT;
+            var shippingCost = quote.currency === 'USD' ? (parseFloat(quote.cheapest_rate || quote.shipping_cost) || US_SHIPPING_FLAT) : US_SHIPPING_FLAT;
             var qty = parseInt(document.getElementById('co-qty')?.value) || 1;
             // 🔒 CANDADO: USD price directo
             var price = parseFloat(window.MJCheckoutProduct?.priceUsd || window.MJCheckoutProduct?.price_usd) || 0;
+            var discount = window.MJAppliedDiscount;
+            if (discount && discount.pct > 0) price = Math.round(price * (1 - discount.pct / 100) * 100) / 100;
             var subtotal = price * qty;
             var total = subtotal + shippingCost;
             
@@ -868,7 +871,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   async function fetchShippingQuote(cp) {
     const country = window.getSelectedCountry ? window.getSelectedCountry() : 'US';
     const isUS = country === 'US';
-    const currency = isUS ? 'USD' : 'MXN';
+    const currency = 'USD';
     
     quoteDiv.innerHTML = '<div style="color:var(--orchid);"><span style="animation:pulse 1s infinite">✦</span> Getting shipping rates...</div>';
     quoteDiv.style.display = 'block';
@@ -877,11 +880,12 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       const res = await fetch('/api/shipping/quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ destination: cp, country: country, items: [{ weight: 2 }] })
+        body: JSON.stringify({ destination: cp, country: country, currency: 'USD', items: [{ weight: 2 }] })
       });
       
       const data = await res.json();
       
+      if (data.quotes) data.quotes = data.quotes.filter(q => q.currency === 'USD');
       if (data.quotes && data.quotes.length > 0) {
         renderQuotes(data.quotes, currency);
       } else {
@@ -939,7 +943,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     const shippingEl = document.getElementById('co-shipping-display');
     const currency = 'USD';
     // The shipping quote API already returns USD for US destinations.
-    const shippingDisplay = window.MJPayPalPricing.shippingPrice(selectedShipping, selectedShippingCurrency, 'USD', window.cachedExchangeRate || 19.5);
+    const shippingDisplay = window.MJPayPalPricing.shippingPrice(selectedShipping, selectedShippingCurrency, 'USD');
     
     if (shippingEl && selectedShipping > 0) {
       shippingEl.textContent = '$' + shippingDisplay.toFixed(2) + ' ' + currency;

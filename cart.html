@@ -491,7 +491,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           return fetch('/api/shipping/quote', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ destination: cp, country: country, items: items })
+            body: JSON.stringify({ destination: cp, country: country, currency: 'MXN', items: items })
           })
           .then(function(res) { 
             console.log('🚨 [PayPal] API Response status:', res.status);
@@ -500,7 +500,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           .then(function(quote) {
             console.log('🚨 [PayPal] Cotización recibida:', quote);
             
-            var quotes = quote.quotes || [];
+            var quotes = (quote.quotes || []).filter(q => q.currency === 'MXN');
             
             // Agrupar: Standard (2+ días) vs Express (1-2 días)
             var standardQuotes = quotes.filter(function(q) {

@@ -90,7 +90,7 @@ function processPayPalPayment() {
     : basePrice;
   
   const productTotal = discountedPrice * qty;
-  const shippingForPayPal = window.MJPayPalPricing.shippingPrice(shippingCost, window.MJShippingCurrency || (isEnCheckout ? 'USD' : 'MXN'), PAYPAL_CURRENCY, window.cachedExchangeRate || 19.5);
+  const shippingForPayPal = window.MJPayPalPricing.shippingPrice(shippingCost, window.MJShippingCurrency || (isEnCheckout ? 'USD' : 'MXN'), PAYPAL_CURRENCY);
   const total = productTotal + shippingForPayPal;
   
   console.log('[PayPal] FINAL VALUES:', {
@@ -292,8 +292,8 @@ function initPayPalButton() {
       }];
       
       // Add shipping as item if present
-      // Preserve the quote currency; convert only when the payment currency differs.
-      const shippingForPayPal = window.MJPayPalPricing.shippingPrice(shippingCost, window.MJShippingCurrency || (isEnCheckout ? 'USD' : 'MXN'), PAYPAL_CURRENCY, window.cachedExchangeRate || 19.5);
+      // Shipping must already be quoted in the market currency.
+      const shippingForPayPal = window.MJPayPalPricing.shippingPrice(shippingCost, window.MJShippingCurrency || (isEnCheckout ? 'USD' : 'MXN'), PAYPAL_CURRENCY);
       
       if (shippingForPayPal > 0) {
         items.push({
@@ -306,7 +306,7 @@ function initPayPalButton() {
         });
       }
       
-      // Calculate final total with converted shipping
+      // Calculate final total using the quoted shipping price
       const finalTotal = productTotal + shippingForPayPal;
       
       return window.MJPayPalPricing.create(actions, {

@@ -290,25 +290,6 @@ const ENVIA_ORIGIN_CP_MX = process.env.ENVIA_ORIGIN_CP || '66260'; // Mexico: Sa
 const ENVIA_ORIGIN_CP_US = '78852'; // USA: Eagle Pass, TX
 const ENVIA_API_URL = 'https://api.envia.com/ship/rate/';
 
-// Cache exchange rate (refresh every hour)
-let cachedExchangeRate = { rate: 19.5, timestamp: 0 };
-async function getMXNtoUSDRate() {
-  const now = Date.now();
-  // Refresh rate every hour
-  if (now - cachedExchangeRate.timestamp > 3600000) {
-    try {
-      const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-      const data = await res.json();
-      if (data.rates && data.rates.MXN) {
-        cachedExchangeRate = { rate: data.rates.MXN, timestamp: now };
-      }
-    } catch (e) {
-      console.error('Exchange rate fetch failed, using cached:', e.message);
-    }
-  }
-  return cachedExchangeRate.rate;
-}
-
 // Product weights in kg (for shipping calculations)
 const PRODUCT_WEIGHTS = {
   // Main products
@@ -388,9 +369,11 @@ app.post('/api/shipping/quote', async (req, res) => {
   }
 
   // Accept both 'destination' and 'destination_postal_code' for compatibility
-  const { destination, destination_postal_code, country, items } = req.body;
+  const { destination, destination_postal_code, country, items, currency } = req.body;
   const postalCode = destination || destination_postal_code;
   const destCountry = (country || 'MX').toUpperCase();
+  const displayCurrency = currency || (destCountry === 'US' ? 'USD' : 'MXN');
+  if (!['MXN', 'USD'].includes(displayCurrency)) return res.status(400).json({ error: 'Invalid shipping currency' });
   
   // Validate postal code length (5 for both MX and US)
   if (!postalCode || postalCode.length !== 5) {
@@ -449,6 +432,7 @@ app.post('/api/shipping/quote', async (req, res) => {
           height: 15
         }
       }],
+      settings: { currency: displayCurrency },
       shipment: {
         type: 1
       }
@@ -475,7 +459,7 @@ app.post('/api/shipping/quote', async (req, res) => {
         if (Array.isArray(rates)) {
           return rates.map(q => {
             const rawPrice = parseFloat(q.total_price || q.totalPrice || q.amount || q.price || 0);
-            const currency = q.currency || 'MXN';
+            const currency = q.currency;
             
             return {
               id: q.carrier_service_code || q.serviceCode || `${carrier}-${q.service}`,
@@ -485,7 +469,7 @@ app.post('/api/shipping/quote', async (req, res) => {
               price: rawPrice,
               currency: currency
             };
-          }).filter(q => q.price > 0);
+          }).filter(q => q.price > 0 && q.currency === displayCurrency);
         }
         return [];
       } catch (e) {
@@ -497,19 +481,7 @@ app.post('/api/shipping/quote', async (req, res) => {
     const allQuotes = await Promise.all(carriers.map(fetchCarrierQuotes));
     let quotes = allQuotes.flat().sort((a, b) => a.price - b.price);
     
-    // Determine display currency based on destination
-    const displayCurrency = destCountry === 'US' ? 'USD' : 'MXN';
-    
-    // Convert MXN to USD for US destinations using live exchange rate
-    if (destCountry === 'US') {
-      const exchangeRate = await getMXNtoUSDRate();
-      quotes = quotes.map(q => ({
-        ...q,
-        price: q.currency === 'MXN' ? Math.round((q.price / exchangeRate) * 100) / 100 : q.price,
-        currency: 'USD'
-      }));
-    }
-    
+    // The carrier quotes the requested market currency. Never convert or relabel it.
     if (quotes.length > 0) {
       // Return quotes plus cheapest rate for easy access
       const cheapest = quotes[0]; // Already sorted by price

@@ -47,7 +47,7 @@
   }
   function price(product, english) {
     const usd = product.priceUsd ?? product.price_usd;
-    const currency = english || (window.MJCurrency && window.MJCurrency.get() === 'USD') ? 'USD' : 'MXN';
+    const currency = english ? 'USD' : 'MXN';
     const raw = Number(currency === 'USD' ? usd : product.price);
     return Number.isFinite(raw) && raw > 0 ? '$' + raw.toFixed(2) + ' ' + currency : '';
   }

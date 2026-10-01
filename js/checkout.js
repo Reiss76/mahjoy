@@ -46,20 +46,6 @@ let currentProduct = null;
 let qty = 1;
 let appliedDiscount = null; // { code, vendorCode, vendorName, pct }
 let selectedShippingCost = 0; // Set by shipping quote script
-let cachedExchangeRate = 19.5; // Default rate, will be fetched
-window.cachedExchangeRate = cachedExchangeRate; // Expose globally for shipping script
-
-// Fetch exchange rate for USD→MXN conversion (CentumPay only accepts MXN)
-fetch('https://api.exchangerate-api.com/v4/latest/USD')
-  .then(r => r.json())
-  .then(data => { 
-    if (data.rates?.MXN) {
-      cachedExchangeRate = data.rates.MXN;
-      window.cachedExchangeRate = cachedExchangeRate;
-    }
-  })
-  .catch(() => {});
-
 function getDiscountedTotal() {
   if (!currentProduct) return 0;
   const sub = getProductPrice(currentProduct) * qty;
@@ -145,7 +131,7 @@ function updateTotals() {
 window.MJCheckout = {
   setShippingCost: function(cost, currency = isEN ? 'USD' : 'MXN') {
     const checkoutCurrency = isEN ? 'USD' : 'MXN';
-    selectedShippingCost = window.MJPayPalPricing.shippingPrice(cost, currency, checkoutCurrency, cachedExchangeRate);
+    selectedShippingCost = window.MJPayPalPricing.shippingPrice(cost, currency, checkoutCurrency);
     window.MJShippingCurrency = checkoutCurrency;
     window.MJShippingCost = selectedShippingCost; // CRITICAL: Update for PayPal
     console.log('[Checkout] Shipping cost set:', cost, '→ window.MJShippingCost:', window.MJShippingCost);
@@ -361,6 +347,8 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     const form = e.target;
     const btn = document.getElementById('co-submit');
+    // CentumPay supports MXN only. USD orders must stay in USD through PayPal.
+    if (isEN) { alert('Please use PayPal to pay the published USD price.'); return; }
 
     // Email validation - must match
     const email = form.email.value.trim();
@@ -409,15 +397,15 @@ document.addEventListener('DOMContentLoaded', () => {
       ? Math.round(basePrice * (1 - appliedDiscount.pct / 100) * 100) / 100
       : basePrice;
     
-    // CentumPay only accepts MXN — convert USD product prices to MXN
-    const priceForPayment = isEN ? Math.round(discountedPrice * cachedExchangeRate * 100) / 100 : discountedPrice;
+    // The Mexico payment form uses its published MXN price.
+    const priceForPayment = discountedPrice;
     const cart = currentProduct
       ? [{ name: currentProduct.name, price: priceForPayment, qty: data.qty, currency: 'MXN' }]
       : [];
     
     // CentumPay requires shipping in MXN, just like the products.
     if (selectedShippingCost > 0) {
-      cart.push({ name: 'Envio', price: window.MJPayPalPricing.shippingPrice(selectedShippingCost, window.MJShippingCurrency, 'MXN', cachedExchangeRate), qty: 1, currency: 'MXN' });
+      cart.push({ name: 'Envio', price: window.MJPayPalPricing.shippingPrice(selectedShippingCost, window.MJShippingCurrency, 'MXN'), qty: 1, currency: 'MXN' });
     }
 
     // Include vendor ref in order ID

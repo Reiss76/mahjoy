@@ -85,7 +85,7 @@ const T = isEnglish ? {
 };
 
 function formatPrice(price, priceUsd) {
-  if (isEnglish && priceUsd) {
+  if (isEnglish) {
     const num = parseFloat(priceUsd);
     if (!num || num === 0) return 'Contact for price';
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);

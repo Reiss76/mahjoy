@@ -45,18 +45,18 @@
       cents += Math.round(value * 100) * qty;
     }
     const breakdown = unit.amount.breakdown || {};
+    if (Object.values(breakdown).some(amount => amount.currency_code !== currency)) throw new Error('Mixed checkout currencies are not allowed.');
     const shipping = Number(breakdown.shipping && breakdown.shipping.value || 0);
     if (Math.round(Number(breakdown.item_total && breakdown.item_total.value) * 100) !== cents || !Number.isFinite(shipping) || shipping < 0
       || Math.round(Number(unit.amount.value) * 100) !== cents + Math.round(shipping * 100)) throw new Error('Invalid checkout total. Please refresh the page.');
     return actions.order.create(payload);
   }
-  function shippingPrice(cost, sourceCurrency, targetCurrency, rate) {
+  function shippingPrice(cost, sourceCurrency, targetCurrency) {
     const value = Number(cost);
     if (!Number.isFinite(value) || value < 0) throw new Error('Invalid shipping price');
     if (!['MXN','USD'].includes(sourceCurrency) || !['MXN','USD'].includes(targetCurrency)) throw new Error('Invalid shipping currency');
-    if (sourceCurrency===targetCurrency) return Math.round(value*100)/100;
-    if (!Number.isFinite(Number(rate)) || Number(rate)<=0) throw new Error('Shipping exchange rate unavailable');
-    return Math.round((targetCurrency==='USD'?value/Number(rate):value*Number(rate))*100)/100;
+    if (sourceCurrency !== targetCurrency) throw new Error('Shipping must be quoted in the checkout currency. No currency conversion is allowed.');
+    return Math.round(value*100)/100;
   }
   window.MJPayPalPricing = { quote, refreshCart, create, shippingPrice };
 })();

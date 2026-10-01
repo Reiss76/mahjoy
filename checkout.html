@@ -939,11 +939,9 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
             return actions.reject();
           }
           
-          var currency = country === 'US' ? 'USD' : 'MXN';
+          var currency = 'MXN';
           var qty = parseInt(document.getElementById('co-qty')?.value) || 1;
-          var price = country === 'US' 
-            ? Number(window.MJCheckoutProduct?.priceUsd ?? window.MJCheckoutProduct?.price_usd) || 0
-            : parseFloat(window.MJCheckoutProduct?.price) || 0;
+          var price = parseFloat(window.MJCheckoutProduct?.price) || 0;
           var discount = window.MJAppliedDiscount;
           if (discount && discount.pct > 0) price = Math.round(price * (1 - discount.pct / 100) * 100) / 100;
           var subtotal = price * qty;
@@ -955,6 +953,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
             body: JSON.stringify({
               destination: cp,
               country: country,
+              currency: 'MXN',
               items: [{
                 sku: window.MJCheckoutProduct?.sku,
                 name: window.MJCheckoutProduct?.name,
@@ -966,10 +965,10 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           .then(function(quote) {
             console.log('[PayPal Express] Cotización Envia:', quote);
             
-            var quotes = quote.quotes || [];
+            var quotes = (quote.quotes || []).filter(q => q.currency === 'MXN');
             if (quotes.length === 0) {
               // Sin cotizaciones, usar precio estimado
-              var defaultShipping = country === 'US' ? 25 : 250;
+              var defaultShipping = 250;
               expressShippingCost = defaultShipping;
               var total = subtotal + defaultShipping;
               return actions.order.patch([{
@@ -1053,7 +1052,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           })
           .catch(function(err) {
             console.error('[PayPal Express] Error cotizando:', err);
-            var defaultShipping = country === 'US' ? 25 : 250;
+            var defaultShipping = 250;
             expressShippingCost = defaultShipping;
             var total = subtotal + defaultShipping;
             return actions.order.patch([{
@@ -1297,7 +1296,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   async function fetchShippingQuote(cp) {
     const country = window.getSelectedCountry ? window.getSelectedCountry() : 'MX';
     const isUS = country === 'US';
-    const currency = isUS ? 'USD' : 'MXN';
+    const currency = 'MXN';
     
     quoteDiv.innerHTML = '<div style="color:var(--orchid);"><span style="animation:pulse 1s infinite">✦</span> ' + (isUS ? 'Getting shipping rates...' : 'Cotizando envío...') + '</div>';
     quoteDiv.style.display = 'block';
@@ -1306,11 +1305,12 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       const res = await fetch('/api/shipping/quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ destination: cp, country: country, items: [{ weight: 2 }] })
+        body: JSON.stringify({ destination: cp, country: country, currency: 'MXN', items: [{ weight: 2 }] })
       });
       
       const data = await res.json();
       
+      if (data.quotes) data.quotes = data.quotes.filter(q => q.currency === 'MXN');
       if (data.quotes && data.quotes.length > 0) {
         renderQuotes(data.quotes);
       } else {
@@ -1325,7 +1325,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   function renderQuotes(quotes) {
     const country = window.getSelectedCountry ? window.getSelectedCountry() : 'MX';
     const isUS = country === 'US';
-    const currency = isUS ? 'USD' : 'MXN';
+    const currency = 'MXN';
     const daysText = isUS ? 'business days' : 'días hábiles';
     const headerText = isUS ? 'Shipping options' : 'Opciones de envío';
     
@@ -1377,7 +1377,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     // Update shipping display in the order summary
     const shippingEl = document.getElementById('co-shipping-display');
     if (shippingEl && selectedShipping > 0) {
-      shippingEl.textContent = '$' + window.MJPayPalPricing.shippingPrice(selectedShipping, selectedShippingCurrency, 'MXN', window.cachedExchangeRate || 19.5).toFixed(2) + ' MXN';
+      shippingEl.textContent = '$' + window.MJPayPalPricing.shippingPrice(selectedShipping, selectedShippingCurrency, 'MXN').toFixed(2) + ' MXN';
       shippingEl.style.color = 'var(--burgundy)';
       shippingEl.style.fontWeight = '600';
     }

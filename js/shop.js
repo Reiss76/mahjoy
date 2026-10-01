@@ -85,7 +85,7 @@ const TS = isEnglishShop ? {
 };
 
 function formatPrice(price, priceUsd) {
-  if (isEnglishShop && priceUsd) {
+  if (isEnglishShop) {
     const num = parseFloat(priceUsd);
     if (!num || num === 0) return TS.contactPrice;
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
@@ -178,15 +178,7 @@ function buildBundleCard(bundle) {
         : MJ_API_BASE + '/public/media?key=' + encodeURIComponent(imgSrc);
   }
 
-  // Calculate bundle price - use price_usd for English, price for Spanish
-  // If price is 0 or null, fallback to price_usd
-  const priceMXN = parseFloat(bundle.price) || 0;
-  const priceUSD = parseFloat(bundle.price_usd) || 0;
-  const displayPrice = isEnglishShop
-    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(priceUSD)
-    : (priceMXN > 0 
-        ? new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(priceMXN)
-        : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(priceUSD));
+  const displayPrice = formatPrice(bundle.price, bundle.price_usd);
 
   return `
     <div class="mj-product-card mj-bundle-card" onclick="window.location='bundle.html#${bundle.id}'" style="cursor:pointer;">
