@@ -165,8 +165,8 @@ function processPayPalPayment() {
       });
     },
     onApprove: function(data, actions) {
-      return actions.order.capture().then(function(details) {
-        savePayPalOrder(details);
+      return actions.order.capture().then(async function(details) {
+        await savePayPalOrder(details);
       });
     },
     onError: function(err) {
@@ -345,11 +345,11 @@ function initPayPalButton() {
       const container = document.getElementById('paypal-button-container');
       container.innerHTML = '<p style="text-align:center;color:var(--burgundy);font-family:Plus Jakarta Sans,sans-serif;font-weight:600;">Procesando pago...</p>';
       
-      return actions.order.capture().then(function(details) {
+      return actions.order.capture().then(async function(details) {
         console.log('PayPal payment captured:', details);
         
         // Save order to our system
-        savePayPalOrder(details);
+        await savePayPalOrder(details);
       });
     },
     
@@ -423,22 +423,7 @@ async function savePayPalOrder(paypalDetails) {
     vendor_code: window.MJVendor?.getCode() || null
   };
   
-  // ⚠️ DISABLED: Order is now created by PayPal webhook (more reliable)
-  // The webhook receives PAYMENT.CAPTURE.COMPLETED with full payer/shipping data
-  // Keeping this commented to avoid duplicate orders
-  // 
-  // try {
-  //   const res = await fetch(MJ_PAYPAL_API + '/orders', {
-  //     method: 'POST',
-  //     headers: { 'Content-Type': 'application/json' },
-  //     body: JSON.stringify(orderData)
-  //   });
-  //   const result = await res.json();
-  //   console.log('Order saved:', result);
-  // } catch (err) {
-  //   console.error('Error saving order:', err);
-  // }
-  console.log('Order will be created by PayPal webhook');
+  await window.MJPayPalSync.save(paypalDetails, orderData);
   
   // Show success
   showPaymentSuccess(paypalDetails);

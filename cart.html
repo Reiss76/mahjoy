@@ -297,6 +297,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
 <script>(function(){function updateCartBadge(){var count=window.MJCart?window.MJCart.cartCount():0;var badge=document.getElementById("header-cart-badge");var menuBadges=document.querySelectorAll(".mj-cart-badge");if(badge){badge.textContent=count;badge.style.display=count>0?"block":"none";}menuBadges.forEach(function(b){b.textContent=count;b.style.display=count>0?"flex":"none";});}document.addEventListener("DOMContentLoaded",updateCartBadge);window.updateCartBadge=updateCartBadge;})();</script>
 
 <!-- PayPal SDK -->
+<script src="js/paypal-sync.js"></script>
 <script src="https://www.paypal.com/sdk/js?client-id=BAAbbz1L2qH_VMP2ACU9ua4HeR2A3NfU8Hp_v3POkGyYIuz4_ot1tihAmUP3h-KHzP9AiAjTRblKvZeKn4&currency=MXN&locale=es_MX"></script>
 <script>
 (function() {
@@ -580,35 +581,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           var address = shipping.address || {};
           
           // Save order to database
-          await fetch('/api/orders/paypal-express', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              order_id: orderData.id,
-              status: 'paid',
-              source: 'paypal_express_cart',
-              cart: cart.map(function(i) {
-                return {
-                  sku: i.sku || '',
-                  name: i.name,
-                  qty: i.qty,
-                  price: cartDiscount ? Math.round(i.price * (1 - cartDiscount.pct / 100) * 100) / 100 : i.price,
-                  original_price: i.price,
-                  discount_pct: cartDiscount ? cartDiscount.pct : 0
-                };
-              }),
-              customer_email: orderData.payer.email_address,
-              customer_name: (orderData.payer.name.given_name || '') + ' ' + (orderData.payer.name.surname || ''),
-              shipping_street: address.address_line_1 || '',
-              shipping_city: address.admin_area_2 || '',
-              shipping_state: address.admin_area_1 || '',
-              shipping_cp: address.postal_code || '',
-              shipping_country: address.country_code || 'MX',
-              shipping_cost: ESTIMATED_SHIPPING,
-              discount_code: cartDiscount ? cartDiscount.code : null,
-              discount_vendor: cartDiscount ? cartDiscount.vendor : null
-            })
-          });
+          await window.MJPayPalSync.save(orderData, {discount_code: cartDiscount ? cartDiscount.code : null});
           
           window.MJCart.clearCart();
           window.location.href = 'gracias.html?order=' + orderData.id;
