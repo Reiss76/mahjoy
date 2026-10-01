@@ -28,3 +28,11 @@ test('failed Proax delivery is saved for retry and never records a paid local or
  assert.equal(res.code,202);assert.equal(paid,0);assert(calls.some(c=>c.q.includes('last_error=$2')));assert(calls.some(c=>c.q.includes('INSERT INTO mahjoy_paypal_sync_jobs')));
  }finally{global.fetch=fetchBefore;if(secretBefore==null)delete process.env.PROAX_PAYPAL_SYNC_SECRET;else process.env.PROAX_PAYPAL_SYNC_SECRET=secretBefore;}
 });
+test('repeated synced receipts acknowledge completion without another delivery',async()=>{
+ const calls=[];const pool={query:async(q)=>{calls.push(q);return {rows:q.startsWith('INSERT INTO mahjoy_paypal_sync_jobs')?[{status:'synced'}]:[]}}};let handler,paid=0;
+ registerPayPalSync({post:(url,fn)=>handler=fn},pool,'https://proax.example',async()=>paid++);
+ const res={status(n){this.code=n;return this},json(v){this.body=v;return this}};
+ await handler({body:{order_id:'AAAABBBBCCCC1'}},res);
+ assert.equal(res.code,200);assert.equal(res.body.sync,'synced');assert.equal(paid,0);
+ assert(!calls.some(q=>q.startsWith('UPDATE mahjoy_paypal_sync_jobs SET next_attempt_at')));
+});
