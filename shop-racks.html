@@ -134,7 +134,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       const grid=document.getElementById('mj-prod-grid');
       if(!prods.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:32px;">Sin productos disponibles.</div>';return;}
       grid.innerHTML='';
-      prods.forEach(p=>{
+      MJCatalog.prioritize(prods, false).forEach(p=>{
         grid.appendChild(MJCatalog.card(p, imgUrl(p), MJCatalog.price(p, false), false));
       });
     }).catch(err=>{console.error('Mahjoy API Error:',err);document.getElementById('mj-prod-grid').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:32px;">Error cargando productos. <br><small style="color:#999;">'+err.message+'</small></div>';});

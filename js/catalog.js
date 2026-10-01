@@ -22,6 +22,15 @@
     }
     return {soldOut, comingSoon, presale, label};
   }
+  function prioritize(products, english) {
+    function rank(product) {
+      const state = status(product, english);
+      if (state.soldOut) return 2;
+      return state.presale || state.comingSoon ? 1 : 0;
+    }
+    // Stable sorting preserves the existing order within each availability group.
+    return [...products].sort((a, b) => rank(a) - rank(b));
+  }
   function escape(value) {
     return String(value == null ? '' : value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   }
@@ -42,5 +51,5 @@
     const raw = Number(currency === 'USD' ? usd : product.price);
     return Number.isFinite(raw) && raw > 0 ? '$' + raw.toFixed(2) + ' ' + currency : '';
   }
-  window.MJCatalog = {dateLabel, status, card, price};
+  window.MJCatalog = {dateLabel, status, prioritize, card, price};
 })();

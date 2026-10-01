@@ -416,9 +416,9 @@ async function loadProduct() {
   // Related products (same category, exclude current) — optional section
   const relatedEl = document.getElementById('pdp-related');
   if (relatedEl) {
-    const related = products
-      .filter(p => p.id !== product.id && guessCategory(p) === cat)
-      .slice(0, 4);
+    const related = MJCatalog.prioritize(
+      products.filter(p => p.id !== product.id && guessCategory(p) === cat), isEnglish
+    ).slice(0, 4);
     if (related.length > 0) {
       relatedEl.innerHTML = related.map(buildRelatedCard).join('');
     } else {
