@@ -58,6 +58,8 @@ const CENTUMPAY_API_HASH   = process.env.CENTUMPAY_API_HASH;
 const CENTUMPAY_ENV        = (process.env.CENTUMPAY_ENV || 'prod').toLowerCase();
 
 app.use(express.json());
+app.disable('x-powered-by');
+app.use(require('./lib/web-security').operationsGuard);
 
 // ─── Geo-redirect: USA→English, Mexico→Spanish ───────────────────────────────
 
@@ -265,6 +267,10 @@ app.get('/pedidos', (req, res) => res.sendFile(path.join(__dirname, 'mis-pedidos
 
 // ─── Static files ─────────────────────────────────────────────────────────────
 
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/') || require('./lib/web-security').publicAsset(req.path)) return next();
+  res.status(404).end();
+});
 app.use(express.static(path.join(__dirname), {
   extensions: ['html'],
   index: 'index.html',
@@ -1327,79 +1333,10 @@ app.post('/api/shipping/create', async (req, res) => {
 
 // ─── CentumPay Webhook ───────────────────────────────────────────────────────
 
-app.post('/api/centumpay/webhook', async (req, res) => {
-  try {
-    console.log('[webhook] CentumPay notification received:', JSON.stringify(req.body, null, 2));
-    
-    const { status, order_id, my_id, amount, reference } = req.body;
-    const orderId = my_id || order_id || reference;
-    
-    // Verify payment was successful
-    if (status === 'approved' || status === 'success' || status === 'completed') {
-      console.log(`[webhook] Payment confirmed for order ${orderId}`);
-      
-      // Get saved order
-      const order = pendingOrders.get(orderId);
-      
-      if (order) {
-        order.status = 'paid';
-        order.paidAt = new Date().toISOString();
-        pendingOrders.set(orderId, order);
-        
-        // Auto-create shipment if we have all the data
-        if (order.shipping && order.carrier) {
-          console.log(`[webhook] Auto-creating shipment for ${orderId}...`);
-          
-          try {
-            // Call our own shipping create endpoint
-            const shipRes = await fetch(`http://localhost:${PORT}/api/shipping/create`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                orderId: orderId,
-                carrier: order.carrier,
-                destination: {
-                  name: order.customer?.name || order.shipping?.name,
-                  email: order.customer?.email,
-                  phone: order.shipping?.phone || order.customer?.phone,
-                  street: order.shipping?.street,
-                  neighborhood: order.shipping?.neighborhood,
-                  city: order.shipping?.city,
-                  state: order.shipping?.state,
-                  postalCode: order.shipping?.cp || order.shipping?.postalCode
-                }
-              })
-            });
-            
-            const shipData = await shipRes.json();
-            
-            if (shipData.ok) {
-              console.log(`[webhook] Shipment created! Tracking: ${shipData.trackingNumber}`);
-              
-              // TODO: Send notification to customer via WhatsApp/Email
-              // For now, just log it
-              console.log(`[webhook] Would notify customer: ${order.customer?.email || order.customer?.phone}`);
-            } else {
-              console.error(`[webhook] Shipment creation failed:`, shipData);
-            }
-          } catch (shipErr) {
-            console.error(`[webhook] Shipment error:`, shipErr);
-          }
-        }
-        
-        return res.json({ ok: true, message: 'Payment processed' });
-      } else {
-        console.log(`[webhook] Order ${orderId} not found in pending orders`);
-        return res.json({ ok: true, message: 'Payment received but order not found' });
-      }
-    } else {
-      console.log(`[webhook] Payment status: ${status} (not confirmed)`);
-      return res.json({ ok: true, message: 'Notification received' });
-    }
-  } catch (err) {
-    console.error('[webhook] Error:', err);
-    res.status(500).json({ error: 'Webhook processing failed' });
-  }
+app.post('/api/centumpay/webhook', (_req, res) => {
+  // The existing authenticated polling worker verifies payments with CentumPay.
+  // Unauthenticated notifications are advisory only and cannot change payment state.
+  res.status(202).json({ok:true,status:'verification_pending'});
 });
 
 // Get order status
@@ -1557,7 +1494,7 @@ async function pollCentumPayTransactions() {
             
             const shipRes = await fetch(`http://localhost:${PORT}/api/shipping/create`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 'Content-Type': 'application/json', 'x-mahjoy-admin-key': process.env.MAHJOY_OPERATIONS_SECRET || process.env.PROAX_PAYPAL_SYNC_SECRET || '' },
               body: JSON.stringify({
                 orderId: orderId,
                 carrier: order.carrier,
