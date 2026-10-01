@@ -119,6 +119,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   <script src="js/webflow.js" type="text/javascript"></script>
   <script src="js/cart.js"></script><script src="js/vendor-ref.js"></script>
   <script src="js/currency.js"></script>
+  <script src="js/catalog.js"></script>
   <script>
     const MJ_API='https://proax.app/api';
     function imgUrl(p){let k=null;if(p.primary_image_url)k=p.primary_image_url;else if(p.published_image_urls&&p.published_image_urls.length)k=p.published_image_urls[0];else if(p.images&&p.images.length)k=p.images[0];if(!k)return null;if(k.startsWith('/api/public/media'))k=k.replace('/api/public/media','/public/media');return k.startsWith('/public/media')?MJ_API+k:(k.startsWith('http')?k:MJ_API+'/public/media?key='+encodeURIComponent(k));}
@@ -133,22 +134,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       const grid=document.getElementById('mj-prod-grid');
       if(!prods.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:32px;">Sin productos disponibles.</div>';return;}
       grid.innerHTML='';
-      const PRESALE=[];  // Removed all presale badges
-      const COMING_SOON=[];  // Golden Brown keeps Coming Soon badge
       prods.forEach(p=>{
-        const img=imgUrl(p);
-        const price=(window.MJCurrency||{format:p=>p.price?'$'+Number(p.price).toFixed(2)+' MXN':''}).format(p.price||p.sale_price||p.cost||0);
-        const isPS=p.presale===true;
-        const isCS=COMING_SOON.includes(p.sku);
-        const isSoldOut=p.soldOutEs===true;const isComingSoon=p.comingSoonEs===true;
-        const soldOutBadge=isSoldOut?'<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-15deg);width:120px;height:120px;border-radius:50%;background:rgba(107,15,42,0.85);color:white;display:flex;align-items:center;justify-content:center;font-family:Playfair Display,Georgia,serif;font-weight:700;font-style:italic;font-size:22px;text-align:center;line-height:1.2;box-shadow:0 4px 20px rgba(107,15,42,0.3);z-index:10;">SOLD<br>OUT!</div>':'';const csDate=p.comingSoonDate?new Date(p.comingSoonDate).toLocaleDateString('es-MX',{month:'short',day:'numeric'}).toUpperCase():'';const comingSoonBadge=isComingSoon?'<span class="mj-coming-soon-badge" style="position:absolute;top:8px;left:8px;background:var(--orchid);color:white;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;z-index:10;">COMING SOON'+(csDate?' · '+csDate:'')+'</span>':'';
-        const imgStyle=isSoldOut?'opacity:0.7;':'';
-        const card=document.createElement('a');card.href=(isCS||isSoldOut)?'#':'product.html#'+p.id;card.className='mj-prod-card'+(isSoldOut?' mj-sold-out':'')+(isCS?' mj-coming-soon':'')+(isPS?' mj-presale':'');
-        card.innerHTML=(isPS?'<span class="mj-coming-soon-badge" style="background:var(--orchid);">'+(p.presaleDate?'Pre venta · Envío '+new Date(p.presaleDate+'T12:00:00').toLocaleDateString('es-MX',{month:'short',day:'numeric'}).toUpperCase():'Pre venta')+'</span>':(isCS?'<span class="mj-coming-soon-badge">Coming Soon</span>':''))
-          +'<div style="position:relative;">'+(soldOutBadge||comingSoonBadge)+(img?'<img src="'+img+'" alt="'+p.name+'" class="mj-prod-card-img" style="'+imgStyle+'" onerror="this.style.display=\'none\'">'
-          :'<div class="mj-prod-card-img" style="height:200px;display:flex;align-items:center;justify-content:center;'+imgStyle+'"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C76BA4" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg></div>')
-          +'</div>'+'<div class="mj-prod-card-body"><div class="mj-prod-card-name" title="'+p.name+'">'+p.name+'</div><div class="mj-prod-card-price">'+price+'</div>'+((isCS||isSoldOut)?'':'<span style="display:inline-block;margin-top:10px;background:var(--burgundy);color:#fff;font-family:Plus Jakarta Sans,sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:8px 18px;border-radius:999px;">Ver producto</span>')+'</div>';
-        grid.appendChild(card);
+        grid.appendChild(MJCatalog.card(p, imgUrl(p), MJCatalog.price(p, false), false));
       });
     }).catch(err=>{console.error('Mahjoy API Error:',err);document.getElementById('mj-prod-grid').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:32px;">Error cargando productos. <br><small style="color:#999;">'+err.message+'</small></div>';});
     document.addEventListener('DOMContentLoaded',function(){var btn=document.querySelector('.w-nav-button'),menu=document.querySelector('.nav-menu'),overlay=document.querySelector('.overlay-menu');if(!btn||!menu)return;function closeNav(){menu.classList.remove('w--nav-menu-open');menu.style.display='none';btn.classList.remove('w--open');document.body.classList.remove('w-nav-open');if(overlay)overlay.style.display='none';}btn.addEventListener('click',function(e){e.stopPropagation();btn.classList.contains('w--open')?closeNav():(menu.classList.add('w--nav-menu-open'),btn.classList.add('w--open'),document.body.classList.add('w-nav-open'),overlay&&(overlay.style.display='block'));});if(overlay)overlay.addEventListener('click',closeNav);document.addEventListener('click',function(e){if(!menu.contains(e.target)&&!btn.contains(e.target))closeNav();});});

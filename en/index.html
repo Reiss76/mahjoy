@@ -406,13 +406,13 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     (function(){
       const API='https://proax.app/api';
       const cats={mats:'MAT-',tiles:'TILE-',racks:'RACK-'};
-      fetch(API+'/public/shop/mahjoy/products').then(r=>r.json()).then(data=>{
+      fetch(API+'/public/mahjoy/catalog/products').then(r=>r.json()).then(data=>{
         const prods=data.products||[];
         Object.keys(cats).forEach(cat=>{
           const prefix=cats[cat];
-          const items=prods.filter(p=>p.sku&&p.sku.toUpperCase().startsWith(prefix)&&!p.sku.toUpperCase().includes('BAG')&&p.price_usd);
+          const items=prods.filter(p=>p.sku&&p.sku.toUpperCase().startsWith(prefix)&&!p.sku.toUpperCase().includes('BAG')&&p.priceUsd);
           if(items.length){
-            const min=Math.min(...items.map(p=>parseFloat(p.price_usd)));
+            const min=Math.min(...items.map(p=>parseFloat(p.priceUsd)));
             const el=document.getElementById('price-'+cat);
             if(el)el.textContent='From $'+min.toFixed(0)+' USD';
           }

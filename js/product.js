@@ -5,29 +5,6 @@
 
 const MJ_API_BASE = 'https://proax.app/api';
 
-// Products that are actually IN STOCK (not presale)
-// If SKU is not in this list and stock > 0, show as "Pre venta"
-const IN_STOCK_SKUS = [
-  // Tiles
-  'TILE-dina', 'TILE-heri', 'TILE-impe', 'TILE-Kale', 'TILE-mythos', 'TILE-sensu',
-  // Mats (including Apres Ski, Apres Snow, Noel)
-  'MAT-010', 'MAT-PIEL', 'MAT-snow2', 'MAT-snow1', 'MAT-Merry',
-  // Racks (all except Golden Brown/Rack-brown)
-  'Rack-007', 'RACK-COSMIC', 'RACK-BLUE', 'RACK-fucsia', 'RACK-VERDE', 'RACK-002', 'RACK-PINK', 'RACK-RED',
-  // Rack Bags (all)
-  'RAKBAG-001', 'RAKBAG-002', 'RAKBAG-003', 'RAKBAG-004', 'RAKBAG-005', 'RACK-BAG006',
-  // Mahjoy Bags
-  'Bag-blue', 'Bag-fiucsa', 'BAG-lila', 'Bag-pink', 'Bag-rouge',
-  // Card Holders
-  'Folio-1', 'Folio-2',
-  // Tile Bags (including velvet)
-  'BAG-tilelila', 'BAG-tilepink', 'BAG-tile001', 'BAG-tile002', 'BAG-tile003',
-  // Line Finders
-  'LINE-001', 'LINE-002', 'LINE-003', 'LINE-005',
-  // Shufflers
-  'SHUF-001', 'SHUF-002', 'SHUF-003', 'SHUF-004',
-];
-
 const CATEGORY_LABELS = {
   'tiles': 'Tiles',
   'mats': 'Mats',
@@ -107,16 +84,6 @@ const T = isEnglish ? {
   contactPrice: 'Consultar precio'
 };
 
-function presaleLabel(product) {
-  const rawDate = product.presaleDate || product.comingSoonDate;
-  const calendarDate = typeof rawDate === 'string' && rawDate.match(/^\d{4}-\d{2}-\d{2}/);
-  const date = calendarDate ? new Date(calendarDate[0] + 'T12:00:00Z') : null;
-  const formatted = date && !Number.isNaN(date.getTime())
-    ? date.toLocaleDateString(isEnglish ? 'en-US' : 'es-MX', { day: 'numeric', month: 'short', timeZone: 'UTC' })
-    : '';
-  return T.presale + (formatted ? ' · ' + T.ships + ' ' + formatted : '');
-}
-
 function formatPrice(price, priceUsd) {
   if (isEnglish && priceUsd) {
     const num = parseFloat(priceUsd);
@@ -129,7 +96,7 @@ function formatPrice(price, priceUsd) {
 }
 
 function getProductPrice(product) {
-  return formatPrice(product.price, product.price_usd);
+  return formatPrice(product.price, product.priceUsd ?? product.price_usd);
 }
 
 function guessCategory(product) {
@@ -307,13 +274,11 @@ async function loadProduct() {
     descEl.style.display = 'none';
   }
 
-  // Stock - check if product is presale (not in IN_STOCK_SKUS)
+  // Availability comes from the regional Proax catalog flags.
   const stockEl = document.getElementById('pdp-stock');
-  const isInStock = IN_STOCK_SKUS.includes(product.sku);
-  // Use regional soldOut flag based on language
-  const regionalSoldOut = isEnglish ? product.soldOutEn : product.soldOutEs;
-  const isSoldOut = product.stock === 0 || regionalSoldOut === true;
-  
+  const availability = MJCatalog.status(product, isEnglish);
+  const isSoldOut = availability.soldOut;
+
   if (isSoldOut) {
     // SOLD OUT - add badge overlay and disable buttons
     stockEl.innerHTML = '<span class="mj-pdp-stock-badge out">' + T.outOfStock + '</span>';
@@ -356,9 +321,9 @@ async function loadProduct() {
       `;
       imgWrap.appendChild(soldOutBadge);
     }
-  } else if (product.presale === true || (isEnglish ? product.comingSoonEn : product.comingSoonEs) === true || !isInStock) {
-    // Has stock but not in IN_STOCK list = presale
-    stockEl.innerHTML = '<span class="mj-pdp-stock-badge presale" style="color:var(--orchid);font-weight:700;">' + presaleLabel(product) + '</span>';
+  } else if (availability.presale || availability.comingSoon) {
+    // Show the status and calendar date configured in Proax.
+    stockEl.innerHTML = '<span class="mj-pdp-stock-badge presale" style="color:var(--orchid);font-weight:700;">' + '● ' + availability.label + '</span>';
   } else if (product.stock > 5) {
     stockEl.innerHTML = '<span class="mj-pdp-stock-badge in">' + T.inStock + '</span>';
   } else {
@@ -385,6 +350,8 @@ async function loadProduct() {
       'transition:all .2s','margin-bottom:0',
     ].join(';');
     addBtn.textContent = T.addToCart;
+    addBtn.disabled = isSoldOut;
+    if (isSoldOut) addBtn.style.opacity = '0.4';
     addBtn.onmouseenter = () => { addBtn.style.background='var(--burgundy)'; addBtn.style.color='#fff'; };
     addBtn.onmouseleave = () => { addBtn.style.background='transparent'; addBtn.style.color='var(--burgundy)'; };
     addBtn.onclick = () => {
@@ -417,6 +384,8 @@ async function loadProduct() {
       addBtn.style.color = '#fff';
       setTimeout(() => {
         addBtn.textContent = T.addToCart;
+    addBtn.disabled = isSoldOut;
+    if (isSoldOut) addBtn.style.opacity = '0.4';
         addBtn.style.background = 'transparent';
         addBtn.style.color = 'var(--burgundy)';
       }, 2200);
@@ -437,7 +406,7 @@ async function loadProduct() {
   document.getElementById('pdp-meta-cat').textContent = catLabel;
   document.getElementById('pdp-meta-sku').textContent = product.sku || '—';
   document.getElementById('pdp-meta-stock').textContent =
-    product.stock > 0 ? 'Disponible' : 'Sin stock';
+    availability.label || (isEnglish ? 'In Stock' : 'Disponible');
 
   // WhatsApp share
   const waText = `Hola! Me interesa este producto de MAH JOY:\n*${product.name}*\n${window.location.href}`;
