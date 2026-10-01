@@ -691,7 +691,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
                   container.style.display = 'none';
                 },
                 onError: function(err) { 
-                  alert('Error de PayPal: ' + err.message);
+                  alert(window.MJPayPalSync.errorMessage(err, 'Error de PayPal: ' + err.message));
                   staticBtn.style.display = 'flex';
                   if (tagline && tagline.tagName === 'P') tagline.style.display = 'block';
                   container.style.display = 'none';
@@ -1135,7 +1135,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         
         onError: function(err) {
           console.error('[PayPal Express] Error:', err);
-          alert('Error al procesar PayPal. Por favor intenta de nuevo.');
+          alert(window.MJPayPalSync.errorMessage(err, 'Error al procesar PayPal. Por favor intenta de nuevo.'));
         }
       }).render('#paypal-express-container');
     }

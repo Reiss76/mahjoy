@@ -400,7 +400,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
                   container.style.display = 'none';
                 },
                 onError: function(err) { 
-                  alert('PayPal error: ' + err.message);
+                  alert(window.MJPayPalSync.errorMessage(err, 'PayPal error: ' + err.message));
                   staticBtn.style.display = 'flex';
                   if (tagline && tagline.tagName === 'P') tagline.style.display = 'block';
                   container.style.display = 'none';
@@ -718,7 +718,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         },
         
         onError: function(err) {
-          alert('PayPal error. Please try again or use Pay with Card.');
+          alert(window.MJPayPalSync.errorMessage(err, 'PayPal error. Please try again or use Pay with Card.'));
         }
       }).render('#paypal-express-container');
     }

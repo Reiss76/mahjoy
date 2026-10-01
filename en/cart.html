@@ -457,13 +457,13 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           window.location.href = 'thank-you.html?order=' + orderData.id;
         } catch(e) {
           console.error('PayPal capture error:', e);
-          alert('There was an error processing your payment. Please contact support.');
+          alert(window.MJPayPalSync.errorMessage(e, 'There was an error processing your payment. Please contact support.'));
         }
       },
       
       onError: function(err) {
         console.error('PayPal error:', err);
-        alert('PayPal error. Please try again or use WhatsApp.');
+        alert(window.MJPayPalSync.errorMessage(err, 'PayPal error. Please try again or use WhatsApp.'));
       }
     }).render('#paypal-cart-container');
   }

@@ -171,7 +171,7 @@ function processPayPalPayment() {
     },
     onError: function(err) {
       console.error('PayPal error:', err);
-      alert('Error de PayPal. Por favor intenta de nuevo o usa "Pagar con tarjeta".');
+      alert(window.MJPayPalSync.errorMessage(err, 'Error de PayPal. Por favor intenta de nuevo o usa "Pagar con tarjeta".'));
     }
   }).render('#paypal-button-container').then(function() {
     // Trigger click on the rendered PayPal button
@@ -359,7 +359,7 @@ function initPayPalButton() {
     
     onError: function(err) {
       console.error('PayPal error:', err);
-      alert('Error al procesar el pago con PayPal. Por favor intenta de nuevo.');
+      alert(window.MJPayPalSync.errorMessage(err, 'Error al procesar el pago con PayPal. Por favor intenta de nuevo.'));
       // Don't re-render — buttons still exist
     }
   }).render('#paypal-button-container').then(function() {

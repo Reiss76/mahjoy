@@ -19,6 +19,11 @@ test('browser retains failed receipts and removes durable acknowledgments',async
  const d={id:'AAAABBBBCCCC1',status:'COMPLETED'};await assert.rejects(()=>ctx.window.MJPayPalSync.save(d));assert(values['mj_paypal_sync_AAAABBBBCCCC1']);
  ctx.fetch=async()=>({ok:true,json:async()=>({sync:'queued'})});await ctx.window.MJPayPalSync.save(d);assert(!values['mj_paypal_sync_AAAABBBBCCCC1']);
  await assert.rejects(()=>ctx.window.MJPayPalSync.save({...d,status:'PENDING'}));
+ ctx.fetch=async()=>{throw new Error('Network offline')};
+ await assert.rejects(()=>ctx.window.MJPayPalSync.save(d),error=>{
+  assert.equal(error.code,'PAYMENT_RECEIVED_SYNC_PENDING');assert.match(ctx.window.MJPayPalSync.errorMessage(error,'try again'),/No vuelvas a pagar/);return true;
+ });
+ assert(values['mj_paypal_sync_AAAABBBBCCCC1']);
 });
 test('failed Proax delivery is saved for retry and never records a paid local order',async()=>{
  const calls=[];const pool={query:async(q,args)=>{calls.push({q,args});return {rows:q.startsWith('UPDATE mahjoy_paypal_sync_jobs SET next_attempt_at')?[{payload:{},attempts:1}]:[]}}};let handler,paid=0;

@@ -5,11 +5,24 @@ window.MJPayPalSync = {
     const orderId = details.id;
     const key = 'mj_paypal_sync_' + orderId;
     const payload = {...hints, paypalOrderId:orderId};
-    localStorage.setItem(key,JSON.stringify(payload));
-    const response = await fetch('/api/orders/paypal-express',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),keepalive:true});
-    if (!response.ok) throw new Error('Your payment was received, but saving the order is pending. Please contact us with PayPal ID ' + orderId + '. Do not pay again.');
-    localStorage.removeItem(key);
-    return response.json();
+    try {
+      try { localStorage.setItem(key,JSON.stringify(payload)); } catch (_) { /* server receipt still persists */ }
+      const response = await fetch('/api/orders/paypal-express',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),keepalive:true});
+      if (!response.ok) throw new Error('Receipt not saved');
+      const result = await response.json();
+      try { localStorage.removeItem(key); } catch (_) { /* harmless duplicate retry */ }
+      return result;
+    } catch (_) {
+      const english = typeof document !== 'undefined' && document.documentElement.lang === 'en';
+      const error = new Error(english
+        ? 'Your payment was received. Saving the order is pending. Please contact us with PayPal ID ' + orderId + '. Do not pay again.'
+        : 'Tu pago ya fue recibido. El pedido está pendiente de guardarse. Contáctanos con el ID de PayPal ' + orderId + '. No vuelvas a pagar.');
+      error.code = 'PAYMENT_RECEIVED_SYNC_PENDING';
+      throw error;
+    }
+  },
+  errorMessage(error, fallback) {
+    return error?.code === 'PAYMENT_RECEIVED_SYNC_PENDING' ? error.message : fallback;
   }
 };
 // Retry receipts after a connection interruption, without capturing another payment.
