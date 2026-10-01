@@ -160,6 +160,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   <script src="https://d3e54v103j8qbb.cloudfront.net/js/jquery-3.5.1.min.dc5e7f18c8.js?site=69b8b6457fb4b98c000aa3ab" type="text/javascript" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
   <script src="js/webflow.js"></script>
   <script src="js/cart.js"></script>
+  <script src="js/paypal-pricing.js"></script>
   <script src="js/vendor-ref.js"></script>
   <script src="js/currency.js"></script>
   <script>
@@ -262,8 +263,12 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       window.open(`https://wa.me/${MJ_WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
-    window.addEventListener('mj:cartUpdated', renderCart);
-    document.addEventListener('DOMContentLoaded', renderCart);
+    window.addEventListener('mj:cartUpdated', function() { renderCart(); updateCartTotals(); });
+    document.addEventListener('DOMContentLoaded', async function() {
+      renderCart();
+      try { await window.MJPayPalPricing.refreshCart('MXN'); }
+      catch (e) { console.error('[Cart prices]', e.message); }
+    });
   </script>
   <script>
     document.addEventListener("DOMContentLoaded",function(){
@@ -328,6 +333,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         btn.disabled = false;
       } else {
         cartDiscount = { code: code, pct: data.discount_pct, vendor: data.vendor_name };
+        window.cartDiscount = cartDiscount;
         btn.style.background = '#16a34a';
         btn.textContent = '✓';
         msg.style.display = 'block';
@@ -373,8 +379,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     paypal.Buttons({
       style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal', height: 45 },
       
-      createOrder: function(data, actions) {
-        var cart = window.MJCart ? window.MJCart.getCart() : [];
+      createOrder: async function(data, actions) {
+        var cart = await window.MJPayPalPricing.refreshCart('MXN');
         if (!cart.length) {
           alert('Tu carrito está vacío');
           return;
@@ -408,7 +414,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         var productNames = cart.map(function(i) { return i.name; }).join(', ');
         var description = 'MAH JOY - ' + (productNames.length > 100 ? productNames.substring(0, 97) + '...' : productNames);
         
-        return actions.order.create({
+        return window.MJPayPalPricing.create(actions, {
           intent: 'CAPTURE',
           purchase_units: [{
             description: description,

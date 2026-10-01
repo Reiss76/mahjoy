@@ -80,9 +80,9 @@ const CURRENCY = isEN ? 'USD' : 'MXN';
 
 function getProductPrice(product) {
   if (!product) return 0;
-  // Use price_usd for EN pages if available
-  if (isEN && product.price_usd) {
-    return parseFloat(product.price_usd) || 0;
+  // The currencies have independent prices in Proax.
+  if (isEN) {
+    return Number(product.priceUsd ?? product.price_usd) || 0;
   }
   return parseFloat(product.price) || 0;
 }

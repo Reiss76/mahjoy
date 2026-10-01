@@ -224,7 +224,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           id: 'bundle-' + bundle.id,
           sku: bundle.sku,
           name: bundle.name,
-          price: parseFloat(bundle.price_usd) || 0,
+          price: Number(bundle.price),
+          price_usd: bundle.priceUsd ?? bundle.price_usd ?? null,
           image: bundle.image || null,
           qty: 1,
           isBundle: true

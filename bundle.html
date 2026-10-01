@@ -441,7 +441,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         const cartItem = {
           id: p.id,
           name: p.name,
-          price: price,
+          price: Number(p.price),
+          price_usd: p.priceUsd ?? p.price_usd ?? null,
           qty: 1,
           image: img,
           sku: p.sku

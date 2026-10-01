@@ -83,7 +83,7 @@ function processPayPalPayment() {
   // ❌ DO NOT use currentProduct.price for USD - it will convert MXN to USD incorrectly!
   // ✅ Always use price_usd field for USD transactions
   const basePrice = isEnCheckout 
-    ? (parseFloat(currentProduct.price_usd) || parseFloat(currentProduct.priceUsd) || parseFloat(currentProduct.price) || 0)
+    ? (Number(currentProduct.priceUsd ?? currentProduct.price_usd) || 0)
     : (parseFloat(currentProduct.price) || 0);
   const discountedPrice = appliedDiscount && appliedDiscount.pct > 0
     ? Math.round(basePrice * (1 - appliedDiscount.pct / 100) * 100) / 100
@@ -142,7 +142,7 @@ function processPayPalPayment() {
   paypal.Buttons({
     style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal', height: 45 },
     createOrder: function(data, actions) {
-      return actions.order.create({
+      return window.MJPayPalPricing.create(actions, {
         intent: 'CAPTURE',
         purchase_units: [{
           description: 'MAH JOY - ' + currentProduct.name,
@@ -275,7 +275,7 @@ function initPayPalButton() {
       // ❌ DO NOT use currentProduct.price for USD - it will convert MXN to USD incorrectly!
       // ✅ Always use price_usd field for USD transactions
       const basePrice = isEnCheckout 
-        ? (parseFloat(currentProduct.price_usd) || parseFloat(currentProduct.priceUsd) || parseFloat(currentProduct.price) || 0)
+        ? (Number(currentProduct.priceUsd ?? currentProduct.price_usd) || 0)
         : (parseFloat(currentProduct.price) || 0);
       const discountedPrice = appliedDiscount && appliedDiscount.pct > 0
         ? Math.round(basePrice * (1 - appliedDiscount.pct / 100) * 100) / 100
@@ -287,6 +287,7 @@ function initPayPalButton() {
       // Build order items - use USD for EN, MXN for ES
       const items = [{
         name: currentProduct.name.substring(0, 127), // PayPal limit
+        sku: currentProduct.sku || '',
         unit_amount: {
           currency_code: PAYPAL_CURRENCY,
           value: discountedPrice.toFixed(2)
@@ -316,7 +317,7 @@ function initPayPalButton() {
       // Calculate final total with converted shipping
       const finalTotal = productTotal + shippingForPayPal;
       
-      return actions.order.create({
+      return window.MJPayPalPricing.create(actions, {
         intent: 'CAPTURE',
         purchase_units: [{
           description: 'MAH JOY - ' + currentProduct.name,
@@ -382,7 +383,7 @@ async function savePayPalOrder(paypalDetails) {
   // ❌ DO NOT use currentProduct.price for USD - it will convert MXN to USD incorrectly!
   // ✅ Always use price_usd field for USD transactions
   const basePrice = isEnCheckout 
-    ? (parseFloat(currentProduct?.price_usd) || parseFloat(currentProduct?.priceUsd) || parseFloat(currentProduct?.price) || 0)
+    ? (Number(currentProduct?.priceUsd ?? currentProduct?.price_usd) || 0)
     : (parseFloat(currentProduct?.price) || 0);
   const discountedPrice = appliedDiscount && appliedDiscount.pct > 0
     ? Math.round(basePrice * (1 - appliedDiscount.pct / 100) * 100) / 100

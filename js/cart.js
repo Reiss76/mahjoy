@@ -25,6 +25,8 @@ function addToCart(product, qty = 1) {
   const idx = cart.findIndex(i => i.id === product.id);
   if (idx >= 0) {
     cart[idx].qty += qty;
+    cart[idx].price = Number(product.price);
+    cart[idx].price_usd = product.priceUsd ?? product.price_usd ?? null;
   } else {
     cart.push({
       id: product.id,
@@ -154,4 +156,4 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Expose globally
-window.MJCart = { getCart, addToCart, removeFromCart, updateQty, clearCart, cartTotal, cartCount };
+window.MJCart = { getCart, saveCart, addToCart, removeFromCart, updateQty, clearCart, cartTotal, cartCount };
