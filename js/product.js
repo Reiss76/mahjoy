@@ -3,7 +3,7 @@
  * Loads product from products.json by ?id= or ?sku= query param
  */
 
-const MJ_API_BASE = 'https://api-production-b888.up.railway.app';
+const MJ_API_BASE = 'https://proax.app/api';
 
 // Products that are actually IN STOCK (not presale)
 // If SKU is not in this list and stock > 0, show as "Pre venta"
@@ -87,7 +87,8 @@ const T = isEnglish ? {
   inStock: '● In Stock',
   lowStock: '● Only a few left',
   outOfStock: '● Out of Stock',
-  presale: '● Pre-order · Ships Oct 10',
+  presale: '● Pre-order',
+  ships: 'Ships',
   buyNow: 'Buy Now →',
   addToCart: 'Add to Cart',
   adding: 'Adding...',
@@ -97,13 +98,24 @@ const T = isEnglish ? {
   inStock: '● En stock',
   lowStock: '● Pocas piezas disponibles',
   outOfStock: '● Agotado',
-  presale: '● Pre venta · Envío Oct 10',
+  presale: '● Pre venta',
+  ships: 'Envío',
   buyNow: 'Comprar ahora →',
   addToCart: 'Agregar al carrito',
   adding: 'Agregando...',
   added: '✓ Agregado!',
   contactPrice: 'Consultar precio'
 };
+
+function presaleLabel(product) {
+  const rawDate = product.presaleDate || product.comingSoonDate;
+  const calendarDate = typeof rawDate === 'string' && rawDate.match(/^\d{4}-\d{2}-\d{2}/);
+  const date = calendarDate ? new Date(calendarDate[0] + 'T12:00:00Z') : null;
+  const formatted = date && !Number.isNaN(date.getTime())
+    ? date.toLocaleDateString(isEnglish ? 'en-US' : 'es-MX', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+    : '';
+  return T.presale + (formatted ? ' · ' + T.ships + ' ' + formatted : '');
+}
 
 function formatPrice(price, priceUsd) {
   if (isEnglish && priceUsd) {
@@ -166,7 +178,7 @@ async function loadProduct() {
 
   let products;
   try {
-    const res = await fetch(MJ_API_BASE + '/public/shop/mahjoy/products');
+    const res = await fetch(MJ_API_BASE + '/public/mahjoy/catalog/products');
     if (!res.ok) throw new Error('API error');
     const data = await res.json();
     products = (data.products || []).map(p => ({
@@ -344,9 +356,9 @@ async function loadProduct() {
       `;
       imgWrap.appendChild(soldOutBadge);
     }
-  } else if (!isInStock) {
+  } else if (product.presale === true || (isEnglish ? product.comingSoonEn : product.comingSoonEs) === true || !isInStock) {
     // Has stock but not in IN_STOCK list = presale
-    stockEl.innerHTML = '<span class="mj-pdp-stock-badge presale" style="color:var(--orchid);font-weight:700;">' + T.presale + '</span>';
+    stockEl.innerHTML = '<span class="mj-pdp-stock-badge presale" style="color:var(--orchid);font-weight:700;">' + presaleLabel(product) + '</span>';
   } else if (product.stock > 5) {
     stockEl.innerHTML = '<span class="mj-pdp-stock-badge in">' + T.inStock + '</span>';
   } else {
