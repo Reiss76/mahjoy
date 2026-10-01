@@ -132,7 +132,7 @@ function updateTotals() {
   document.getElementById('co-total').textContent = unit ? formatPrice(total) : 'Consultar';
   
   // Update shipping display if selected
-  const shippingDisplayEl = document.querySelector('#co-content [style*="A cotizar"]');
+  const shippingDisplayEl = document.getElementById('co-shipping-display');
   if (shippingDisplayEl && selectedShippingCost > 0) {
     shippingDisplayEl.textContent = formatPrice(selectedShippingCost);
     shippingDisplayEl.style.color = 'var(--burgundy)';

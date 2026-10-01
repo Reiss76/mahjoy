@@ -1375,7 +1375,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
 
   function syncShippingToCheckout() {
     // Update shipping display in the order summary
-    const shippingEl = document.querySelector('#co-content span[style*="A cotizar"]');
+    const shippingEl = document.getElementById('co-shipping-display');
     if (shippingEl && selectedShipping > 0) {
       shippingEl.textContent = '$' + window.MJPayPalPricing.shippingPrice(selectedShipping, selectedShippingCurrency, 'MXN', window.cachedExchangeRate || 19.5).toFixed(2) + ' MXN';
       shippingEl.style.color = 'var(--burgundy)';

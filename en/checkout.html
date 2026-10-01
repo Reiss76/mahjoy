@@ -936,7 +936,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
 
   function syncShippingToCheckout() {
     // Update shipping display in the order summary
-    const shippingEl = document.querySelector('#co-content span[style*="To be quoted"], #co-content span[style*="To quote"]');
+    const shippingEl = document.getElementById('co-shipping-display');
     const currency = 'USD';
     // The shipping quote API already returns USD for US destinations.
     const shippingDisplay = window.MJPayPalPricing.shippingPrice(selectedShipping, selectedShippingCurrency, 'USD', window.cachedExchangeRate || 19.5);

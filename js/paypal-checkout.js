@@ -292,7 +292,7 @@ function initPayPalButton() {
       }];
       
       // Add shipping as item if present
-      // For EN checkout, shipping from Envia is MXN - need to convert to USD
+      // Preserve the quote currency; convert only when the payment currency differs.
       const shippingForPayPal = window.MJPayPalPricing.shippingPrice(shippingCost, window.MJShippingCurrency || (isEnCheckout ? 'USD' : 'MXN'), PAYPAL_CURRENCY, window.cachedExchangeRate || 19.5);
       
       if (shippingForPayPal > 0) {
