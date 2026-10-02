@@ -324,7 +324,7 @@ async function loadProduct() {
   } else if (availability.presale || availability.comingSoon) {
     // Show the status and calendar date configured in Proax.
     stockEl.innerHTML = '<span class="mj-pdp-stock-badge presale" style="color:var(--orchid);font-weight:700;">' + '● ' + availability.label + '</span>';
-  } else if (product.stock > 5) {
+  } else if (product.lowStock === false || product.stock > 5) {
     stockEl.innerHTML = '<span class="mj-pdp-stock-badge in">' + T.inStock + '</span>';
   } else {
     stockEl.innerHTML = '<span class="mj-pdp-stock-badge low">' + T.lowStock + '</span>';

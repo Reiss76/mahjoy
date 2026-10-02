@@ -124,7 +124,7 @@ function buildProductCard(product) {
   const isComingSoon = MJ_COMING_SOON_SKUS.includes(product.sku) || apiComingSoon === true;
   // Use regional soldOut flag based on language
   const regionalSoldOut = isEnglishShop ? product.soldOutEn : product.soldOutEs;
-  const isSoldOut = regionalSoldOut === true || product.stock <= 0;
+  const isSoldOut = regionalSoldOut === true || product.hasStock === false || product.stock <= 0;
   // Coming Soon is NOT disabled - only Sold Out
   const isDisabled = isSoldOut;
 
@@ -139,8 +139,8 @@ function buildProductCard(product) {
     badgeHtml = `<div class="mj-product-badge mj-sold-out-badge" style="background:#7a2d47;color:#fff;transform:rotate(-12deg);">${TS.soldOut}</div>`;
   } else if (isComingSoon) {
     badgeHtml = `<div class="mj-product-badge" style="background:var(--orchid);color:#fff;">${TS.comingSoon}${csDateStr ? ' · ' + csDateStr : ''}</div>`;
-  } else if (product.stock <= 5 && product.stock > 0) {
-    badgeHtml = `<div class="mj-product-badge">${TS.lastFew} ${product.stock} ${TS.lastFewSuffix}</div>`;
+  } else if (product.lowStock === true || (product.stock <= 5 && product.stock > 0)) {
+    badgeHtml = `<div class="mj-product-badge">${isEnglishShop ? 'Low stock' : 'Próximo a agotarse'}</div>`;
   }
 
   return `
