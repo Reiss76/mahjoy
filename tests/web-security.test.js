@@ -6,7 +6,7 @@ test('only storefront pages and public assets are served, never server code, sec
 });
 test('private order data, mutations, shipping labels and diagnostic tools require a server-only credential',()=>{
  const before=process.env.PROAX_PAYPAL_SYNC_SECRET;process.env.PROAX_PAYPAL_SYNC_SECRET='test'.repeat(16);
- try{for(const p of ['/api/orders','/api/orders/by-email','/api/orders/save','/api/orders/today','/api/orders/abc/status','/api/shipping/create','/api/poll/debug','/api/notifications/test','/api/telegram/updates']){
+ try{for(const p of ['/api/Orders','/api/shipping/create/','/api/Shipping/Create','/api/orders','/api/orders/by-email','/api/orders/save','/api/orders/today','/api/orders/abc/status','/api/shipping/create','/api/poll/debug','/api/notifications/test','/api/telegram/updates']){
  let next=false;const res={status(n){this.statusCode=n;return this},json(){},set(){}};
  operationsGuard({path:p,get:()=>''},res,()=>next=true);assert.equal(res.statusCode,401,p);assert(!next);
  operationsGuard({path:p,get:()=>process.env.PROAX_PAYPAL_SYNC_SECRET},res,()=>next=true);assert(next,p);
