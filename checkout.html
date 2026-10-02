@@ -643,6 +643,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
               console.log('[PayPal Inline] FINAL:', { price, qty, shipping, total });
               
               paypal.Buttons({
+      onClick: window.MJPayPalPhone.onClick,
                 style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal', height: 55 },
                 createOrder: function(data, actions) {
                   // Build items array for PayPal
@@ -880,6 +881,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       var product = window.MJCheckoutProduct;
       
       paypal.Buttons({
+      onClick: window.MJPayPalPhone.onClick,
         style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal', height: 50 },
         
         createOrder: function(data, actions) {

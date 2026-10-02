@@ -33,6 +33,10 @@
     }
     return value;
   }
-  window.MJPayPalPhone = {requirePhone};
+  function onClick(_data, actions) {
+    try { requirePhone(); return actions.resolve(); }
+    catch (_) { return actions.reject(); }
+  }
+  window.MJPayPalPhone = {requirePhone, onClick};
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
 })();

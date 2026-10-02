@@ -25,3 +25,12 @@ test('all PayPal entry points require a phone before any network request or SDK 
   vm.createContext(ctx);vm.runInContext(fs.readFileSync('js/paypal-pricing.js','utf8'),ctx);
   await assert.rejects(()=>ctx.window.MJPayPalPricing.create({order:{create(){throw new Error('SDK must not run');}}},{}),/Phone required/);
 });
+test('phone validation rejects the PayPal click before opening a popup',()=>{
+  const input={value:'',setCustomValidity(){},focus(){},reportValidity(){},addEventListener(){}};
+  const error={textContent:''},field={style:{},querySelector:()=>input};
+  const document={readyState:'complete',getElementById:id=>id==='paypal-phone-error'?error:{before(){}},createElement:()=>field,querySelectorAll:()=>[]};
+  const ctx={window:{},location:{pathname:'/cart.html'},document};vm.createContext(ctx);vm.runInContext(fs.readFileSync('js/paypal-phone.js','utf8'),ctx);
+  let resolved=0,rejected=0;const actions={resolve:()=>resolved++,reject:()=>rejected++};
+  ctx.window.MJPayPalPhone.onClick({},actions);assert.equal(rejected,1);assert.equal(resolved,0);assert.match(error.textContent,/teléfono válido/);
+  input.value='+525512345678';ctx.window.MJPayPalPhone.onClick({},actions);assert.equal(resolved,1);
+});

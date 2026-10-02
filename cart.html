@@ -264,7 +264,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       window.open(`https://wa.me/${MJ_WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
-    window.addEventListener('mj:cartUpdated', function() { renderCart(); updateCartTotals(); });
+    window.addEventListener('mj:cartUpdated', function() { renderCart(); });
     document.addEventListener('DOMContentLoaded', async function() {
       renderCart();
       try { await window.MJPayPalPricing.refreshCart('MXN'); }
@@ -368,6 +368,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     document.getElementById('cart-total').textContent = '$' + subtotal.toFixed(2);
   }
   
+  window.addEventListener('mj:cartUpdated', updateCartTotals);
+
   // Initialize PayPal buttons
   function initPayPalCart() {
     var container = document.getElementById('paypal-cart-container');
@@ -378,6 +380,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     if (container.hasChildNodes()) return;
     
     paypal.Buttons({
+      onClick: window.MJPayPalPhone.onClick,
       style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal', height: 45 },
       
       createOrder: async function(data, actions) {

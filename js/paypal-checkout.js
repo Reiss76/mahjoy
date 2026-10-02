@@ -136,6 +136,7 @@ function processPayPalPayment() {
   
   // Create PayPal order
   paypal.Buttons({
+    onClick: window.MJPayPalPhone.onClick,
     style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal', height: 45 },
     createOrder: function(data, actions) {
       return window.MJPayPalPricing.create(actions, {
@@ -234,6 +235,7 @@ function initPayPalButton() {
     
     // Validate form before creating order
     onClick: function(data, actions) {
+      try { window.MJPayPalPhone.requirePhone(); } catch (_) { return actions.reject(); }
       const form = document.getElementById('co-form');
       if (!form.checkValidity()) {
         form.reportValidity();
