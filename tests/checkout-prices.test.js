@@ -13,11 +13,9 @@ function browser(cart = structuredClone(stale)) {
   const ctx = { window: {addEventListener() {}}, console, setTimeout, alert() {}, document: {addEventListener() {}},
     fetch: async (_url, options) => {
       const body = JSON.parse(options.body);
-      if (_url === '/api/checkout/contact') return {ok:true,json:async()=>({contact_id:'12345678-1234-1234-1234-123456789abc'})};
       const items = quoteItems(products, body.items, body.currency, body.discount_code ? 10 : 0);
       return {ok:true,json:async()=>({items})};
     }};
-  ctx.window.MJPayPalPhone = {requirePhone:()=>'+15551234567'};
   ctx.window.MJCart = {getCart:()=>cart, saveCart:next=>cart=next};
   vm.createContext(ctx);vm.runInContext(fs.readFileSync('js/paypal-pricing.js','utf8'),ctx);
   return ctx;
@@ -44,7 +42,8 @@ test('the actual English cart callback sends both products for USD475 including 
   await options.createOrder({}, {order:{create:p=>{created=p;return 'ORDER-ID'}}});
   assert.equal(created.purchase_units[0].items[1].unit_amount.value,'70.00');
   assert.equal(created.purchase_units[0].amount.value,'475.00');
-  assert.equal(created.purchase_units[0].custom_id,'mj-contact:12345678-1234-1234-1234-123456789abc');
+  assert.equal(created.purchase_units[0].custom_id,undefined);
+  assert.equal(created.payment_source.paypal.experience_context.contact_preference,'UPDATE_CONTACT_INFO');
 });
 test('zero dollar item never reaches PayPal even if other products and shipping have positive amounts',async()=>{
   const ctx=browser();let called=false;

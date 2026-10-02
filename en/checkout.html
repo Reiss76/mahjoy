@@ -261,10 +261,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           })();
           </script>
 
-          <div>
-            <label class="mj-co-label">Phone *</label>
-            <input class="mj-co-input" type="tel" name="phone" placeholder="+1 (555) 123-4567" required>
-          </div>
+          <input type="hidden" name="phone" value="">
 
           <div>
             <label class="mj-co-label">Quantity</label>
@@ -380,7 +377,6 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
               var total = (price * qty + shipping).toFixed(2);
               
               paypal.Buttons({
-      onClick: window.MJPayPalPhone.onClick,
                 style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal', height: 55 },
                 createOrder: function(data, actions) {
                   return window.MJPayPalPricing.create(actions, {
@@ -421,7 +417,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
 
   <script src="https://d3e54v103j8qbb.cloudfront.net/js/jquery-3.5.1.min.dc5e7f18c8.js?site=69b8b6457fb4b98c000aa3ab" type="text/javascript" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
   <script src="../js/cart.js"></script>
-  <script src="../js/paypal-phone.js"></script>
+
   <script src="../js/paypal-pricing.js"></script>
   <script src="../js/vendor-ref.js"></script>
   <script src="../js/currency-en.js"></script>
@@ -573,7 +569,6 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       var product = window.MJCheckoutProduct;
       
       paypal.Buttons({
-      onClick: window.MJPayPalPhone.onClick,
         style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal', height: 50 },
         
         createOrder: function(data, actions) {
