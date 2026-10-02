@@ -158,3 +158,10 @@ test('market redirect preserves product, quantity and cart instead of converting
  assert(rejected);const url=new URL(redirected);assert.equal(url.pathname,'/en/checkout.html');assert.equal(url.searchParams.get('sku'),'TILE-test');assert.equal(url.searchParams.get('qty'),'3');assert.equal(url.hash,'#62');assert.equal(ctx.window.MJCart.getCart().length,2);
  assert.equal(ctx.window.MJPayPalPricing.requireMarket('US','USD',{reject(){throw Error('unexpected')}}),true);
 });
+test('checkout restores the submitted and displayed quantity before loading USD prices',async()=>{
+ const ctx=browser(),elements={};ctx.URLSearchParams=URLSearchParams;ctx.window.location={pathname:'/en/checkout.html',search:'?id=62&qty=3',hash:''};ctx.isEN=true;
+ ctx.document={addEventListener(){},getElementById:id=>id==='co-wa-btn'?null:elements[id]||(elements[id]={style:{},value:'1',textContent:'',addEventListener(){}})};
+ ctx.fetch=async()=>({ok:true,json:async()=>({...products[0],price_usd:380})});
+ vm.runInContext(fs.readFileSync('js/checkout.js','utf8'),ctx);await ctx.loadCheckout();
+ assert.equal(elements['co-qty'].value,'3');assert.equal(elements['co-qty-display'].textContent,'3');assert.match(elements['co-subtotal'].textContent,/1,140/);
+});
