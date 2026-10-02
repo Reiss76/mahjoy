@@ -66,13 +66,12 @@
     const response=await fetch('/api/checkout/paypal/'+action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const result=await response.json();
     if(!response.ok) {
-      if(result.error==='US_REQUIRES_USD')goToUsMarket();
+      if(result.error==='US_REQUIRES_USD'){goToUsMarket();return new Promise(function(){});}
       throw new Error(result.error || 'Could not verify payment. Please try again.');
     }
     return result;
   }
   function goToUsMarket() {
-    alert('Los envíos a Estados Unidos se compran con los precios publicados en USD. Conservaremos tu carrito y te llevaremos al checkout de Estados Unidos.');
     const url=new URL(window.location.href);
     if(!url.pathname.startsWith('/en/'))url.pathname='/en'+url.pathname;
     const qty=document.getElementById('co-qty')?.value;
