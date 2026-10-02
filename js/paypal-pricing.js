@@ -1,11 +1,17 @@
 (function () {
+  function checkoutError(result,fallback) {
+    if(result.error_code==='DISCOUNT_USD_ONLY' || result.error==='DISCOUNT_USD_ONLY')return window.location?.pathname?.includes('/en/')
+      ? 'This code is only valid in the EN store when paying in USD.'
+      : 'Este código solo funciona en la tienda EN al pagar en USD.';
+    return result.error || fallback;
+  }
   async function quote(items, currency, discountCode) {
     const response = await fetch('/api/checkout/prices', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ items, currency, discount_code: discountCode || null })
     });
     const result = await response.json();
-    if (!response.ok) throw new Error(result.error || 'Could not verify prices. Please try again.');
+    if (!response.ok) throw new Error(checkoutError(result,'Could not verify prices. Please try again.'));
     return result.items;
   }
   async function refreshCart(currency) {
@@ -67,7 +73,7 @@
     const result=await response.json();
     if(!response.ok) {
       if(result.error==='US_REQUIRES_USD'){goToUsMarket();return new Promise(function(){});}
-      throw new Error(result.error || 'Could not verify payment. Please try again.');
+      throw new Error(checkoutError(result,'Could not verify payment. Please try again.'));
     }
     return result;
   }

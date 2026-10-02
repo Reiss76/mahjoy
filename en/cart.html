@@ -320,13 +320,14 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     msg.style.display = 'none';
     
     try {
-      var res = await fetch('https://proax.app/api/public/vendors/discount/' + encodeURIComponent(code));
+      var res = await fetch('https://proax.app/api/public/vendors/discount/' + encodeURIComponent(code) + '?currency=USD&market=EN', {cache:'no-store'});
       var data = await res.json();
       
       if (!res.ok || !data.valid) {
         msg.style.display = 'block';
         msg.style.color = '#dc2626';
-        msg.textContent = '✗ Invalid code';
+        msg.textContent = data.error_code==='DISCOUNT_USD_ONLY' ? 'This code is only valid in the EN store when paying in USD.' : '✗ Invalid code';
+        cartDiscount=null;window.cartDiscount=null;updateCartTotals();
         btn.textContent = 'Apply';
         btn.disabled = false;
       } else {
@@ -352,6 +353,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     var cart = window.MJCart ? window.MJCart.getCart() : [];
     var subtotal = cart.reduce(function(acc, i) { return acc + ((Number(i.price_usd) || 0) * i.qty); }, 0);
     var discountAmount = 0;
+    document.getElementById('cart-discount-row').style.display='none';
     
     if (cartDiscount && cartDiscount.pct > 0) {
       discountAmount = subtotal * (cartDiscount.pct / 100);

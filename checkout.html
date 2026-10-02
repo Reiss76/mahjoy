@@ -798,13 +798,15 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           expressDiscMsg.style.display = 'none';
           
           try {
-            var res = await fetch('https://proax.app/api/public/vendors/discount/' + encodeURIComponent(code));
+            var res = await fetch('https://proax.app/api/public/vendors/discount/' + encodeURIComponent(code) + '?currency=MXN&market=ES', {cache:'no-store'});
             var data = await res.json();
             
             if (!res.ok || !data.valid) {
               expressDiscMsg.style.display = 'block';
               expressDiscMsg.style.color = '#dc2626';
-              expressDiscMsg.textContent = '✗ Código no válido';
+              expressDiscMsg.textContent = data.error_code==='DISCOUNT_USD_ONLY' ? 'Este código solo funciona en la tienda EN al pagar en USD.' : '✗ Código no válido';
+              window.MJAppliedDiscount=null;
+              updateExpressSummary(0);
               expressDiscBtn.textContent = 'Aplicar';
               expressDiscBtn.disabled = false;
             } else {

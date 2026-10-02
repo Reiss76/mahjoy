@@ -552,13 +552,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       // Use proax.app for discount validation (vendor codes are stored there)
-      const res = await fetch(`https://proax.app/api/public/vendors/discount/${encodeURIComponent(code)}`);
+      const res = await fetch(`https://proax.app/api/public/vendors/discount/${encodeURIComponent(code)}?currency=${isEnCheckout ? 'USD' : 'MXN'}&market=${isEnCheckout ? 'EN' : 'ES'}`, {cache:'no-store'});
       const data = await res.json();
 
       if (!res.ok || !data.valid) {
         discMsg.style.display = 'block';
         discMsg.style.color = '#dc2626';
-        discMsg.textContent = '✗ Código no válido o expirado';
+        discMsg.textContent = data.error_code==='DISCOUNT_USD_ONLY'
+          ? (isEnCheckout?'This code is only valid in EN / USD.':'Este código solo funciona en la tienda EN al pagar en USD.')
+          : (isEnCheckout?'Invalid or expired code':'✗ Código no válido o expirado');
         appliedDiscount = null;
         window.MJAppliedDiscount = null; // Clear for PayPal
         updateTotals();
