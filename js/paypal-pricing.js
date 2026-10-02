@@ -74,6 +74,7 @@
   function goToUsMarket() {
     const url=new URL(window.location.href);
     if(!url.pathname.startsWith('/en/'))url.pathname='/en'+url.pathname;
+    url.searchParams.set('country','US');
     const qty=document.getElementById('co-qty')?.value;
     if(qty)url.searchParams.set('qty',qty);
     window.location.assign(url.href);

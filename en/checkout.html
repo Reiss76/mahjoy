@@ -811,8 +811,10 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   
   if (!countrySelect) return;
   
-  // Auto-detect country based on IP
-  fetch('https://ipapi.co/json/')
+  // A destination explicitly chosen by the buyer takes priority over an IP guess.
+  const destinationCountry = new URLSearchParams(window.location.search).get('country');
+  if(destinationCountry==='US'){countrySelect.value='US';updateFormForCountry('US');}
+  else fetch('https://ipapi.co/json/')
     .then(r => r.json())
     .then(data => {
       const country = data.country_code || data.country;

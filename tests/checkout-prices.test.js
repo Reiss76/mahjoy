@@ -155,7 +155,7 @@ test('market redirect preserves product, quantity and cart instead of converting
  ctx.document.getElementById=()=>({value:'3'});
  assert.equal(ctx.window.MJPayPalPricing.requireMarket('US','MXN',{reject(){rejected=true;return Promise.resolve();}}),false);
  await new Promise(setImmediate);
- assert(rejected);const url=new URL(redirected);assert.equal(url.pathname,'/en/checkout.html');assert.equal(url.searchParams.get('sku'),'TILE-test');assert.equal(url.searchParams.get('qty'),'3');assert.equal(url.hash,'#62');assert.equal(ctx.window.MJCart.getCart().length,2);
+ assert(rejected);const url=new URL(redirected);assert.equal(url.pathname,'/en/checkout.html');assert.equal(url.searchParams.get('sku'),'TILE-test');assert.equal(url.searchParams.get('qty'),'3');assert.equal(url.searchParams.get('country'),'US');assert.equal(url.hash,'#62');assert.equal(ctx.window.MJCart.getCart().length,2);
  assert.equal(ctx.window.MJPayPalPricing.requireMarket('US','USD',{reject(){throw Error('unexpected')}}),true);
 });
 test('checkout restores the submitted and displayed quantity before loading USD prices',async()=>{
