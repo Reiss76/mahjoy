@@ -160,6 +160,8 @@ function updateWaLink() {
 async function loadCheckout() {
   // Read product ID from hash or query
   const params = new URLSearchParams(window.location.search);
+  const restoredQty = Number(params.get('qty'));
+  if (Number.isInteger(restoredQty) && restoredQty>=1 && restoredQty<=1000) qty=restoredQty;
   const hashVal = window.location.hash.replace('#', '').trim();
   const rawId = hashVal && !isNaN(hashVal) ? hashVal : params.get('id');
   const productId = rawId ? parseInt(rawId) : null;

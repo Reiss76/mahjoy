@@ -438,7 +438,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       
       onApprove: async function(data, actions) {
         try {
-          var orderData = await actions.order.capture();
+          var orderData = await window.MJPayPalPricing.capture(data.orderID);
           var cart = window.MJCart ? window.MJCart.getCart() : [];
           var shipping = orderData.purchase_units[0].shipping || {};
           var address = shipping.address || {};

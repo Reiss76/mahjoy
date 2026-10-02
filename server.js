@@ -380,6 +380,7 @@ app.post('/api/shipping/quote', async (req, res) => {
   const destCountry = (country || 'MX').toUpperCase();
   const displayCurrency = currency || (destCountry === 'US' ? 'USD' : 'MXN');
   if (!['MXN', 'USD'].includes(displayCurrency)) return res.status(400).json({ error: 'Invalid shipping currency' });
+  if (destCountry === 'US' && displayCurrency !== 'USD') return res.status(409).json({error:'US_REQUIRES_USD'});
   
   // Validate postal code length (5 for both MX and US)
   if (!postalCode || postalCode.length !== 5) {
@@ -522,6 +523,7 @@ const PROAX_NODE_ID = process.env.PROAX_NODE_ID || '31'; // Mahjoy node ID
 const PROAX_API_KEY = process.env.PROAX_API_KEY || 'mj-secret-2024';
 
 require('./lib/checkout-prices').registerCheckoutPrices(app, PROAX_API_URL);
+require('./lib/paypal-checkout').registerPayPalCheckout(app, PROAX_API_URL);
 
 // ─── Orders Backup (File Persistence) ─────────────────────────────────────────
 const ORDERS_BACKUP_FILE = path.join(__dirname, 'data', 'orders-backup.json');

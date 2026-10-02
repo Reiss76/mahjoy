@@ -386,7 +386,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
                   });
                 },
                 onApprove: function(data, actions) {
-                  return actions.order.capture().then(async function(details) {
+                  return window.MJPayPalPricing.capture(data.orderID).then(async function(details) {
                     await window.MJPayPalSync.save(details);
                     window.location.href = 'checkout.html?payment=success&order=' + data.orderID;
                   });
@@ -668,7 +668,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         },
         
         onApprove: function(data, actions) {
-          return actions.order.capture().then(async function(details) {
+          return window.MJPayPalPricing.capture(data.orderID).then(async function(details) {
             var payer = details.payer || {};
             var shipping = details.purchase_units?.[0]?.shipping || {};
             var address = shipping.address || {};

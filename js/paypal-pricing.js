@@ -60,8 +60,33 @@
         }
       }};
     }
-    return actions.order.create(payload);
+    return (await checkoutRequest('create', {payload,discount_code:discount && discount.code})).id;
   }
+  async function checkoutRequest(action,body) {
+    const response=await fetch('/api/checkout/paypal/'+action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const result=await response.json();
+    if(!response.ok) {
+      if(result.error==='US_REQUIRES_USD')goToUsMarket();
+      throw new Error(result.error || 'Could not verify payment. Please try again.');
+    }
+    return result;
+  }
+  function goToUsMarket() {
+    alert('Los envíos a Estados Unidos se compran con los precios publicados en USD. Conservaremos tu carrito y te llevaremos al checkout de Estados Unidos.');
+    const url=new URL(window.location.href);
+    if(!url.pathname.startsWith('/en/'))url.pathname='/en'+url.pathname;
+    const qty=document.getElementById('co-qty')?.value;
+    if(qty)url.searchParams.set('qty',qty);
+    window.location.assign(url.href);
+  }
+  function requireMarket(country,currency,actions) {
+    if(country==='US' && currency!=='USD') {
+      Promise.resolve(actions.reject()).then(goToUsMarket);
+      return false;
+    }
+    return true;
+  }
+  async function capture(orderId) {return checkoutRequest('capture',{orderId});}
   function shippingPrice(cost, sourceCurrency, targetCurrency) {
     const value = Number(cost);
     if (!Number.isFinite(value) || value < 0) throw new Error('Invalid shipping price');
@@ -69,5 +94,5 @@
     if (sourceCurrency !== targetCurrency) throw new Error('Shipping must be quoted in the checkout currency. No currency conversion is allowed.');
     return Math.round(value*100)/100;
   }
-  window.MJPayPalPricing = { quote, refreshCart, create, shippingPrice };
+  window.MJPayPalPricing = { quote, refreshCart, create, capture, requireMarket, shippingPrice };
 })();

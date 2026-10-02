@@ -377,7 +377,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
             <div id="co-express-discount-msg" style="display:none;margin-top:.4rem;font-family:'Plus Jakarta Sans',sans-serif;font-size:.75rem;font-weight:600;text-align:center;"></div>
           </div>
           
-          <div id="paypal-express-container"></div>
+          <p style="font-size:.8rem;text-align:center;color:var(--burgundy);">Los envíos a Estados Unidos usan los precios publicados en USD. Tu carrito se conserva al cambiar de mercado.</p>
+<div id="paypal-express-container"></div>
           <p style="text-align:center;font-size:.7rem;color:#666;margin-top:.5rem;">No necesitas llenar el formulario</p>
           <p style="text-align:center;font-size:.7rem;color:#003087;margin-top:.3rem;font-style:italic;">📦 Incluye envío estimado ($250 MXN) - se ajusta con tu dirección</p>
         </div>
@@ -673,7 +674,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
                   });
                 },
                 onApprove: function(data, actions) {
-                  return actions.order.capture().then(async function(details) {
+                  return window.MJPayPalPricing.capture(data.orderID).then(async function(details) {
                     await window.MJPayPalSync.save(details);
                     window.location.href = 'checkout.html?payment=success&order=' + data.orderID;
                   });
@@ -927,6 +928,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           var address = data.shipping_address || {};
           var cp = address.postal_code || '';
           var country = address.country_code || 'MX';
+          if (!window.MJPayPalPricing.requireMarket(country,'MXN',actions)) return;
           
           // Soportamos México y USA
           if (!['MX', 'US'].includes(country)) {
@@ -1066,7 +1068,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         },
         
         onApprove: function(data, actions) {
-          return actions.order.capture().then(async function(details) {
+          return window.MJPayPalPricing.capture(data.orderID).then(async function(details) {
             console.log('[PayPal Express] Pago completado:', details);
             
             var payer = details.payer || {};

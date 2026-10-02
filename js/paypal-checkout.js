@@ -161,7 +161,7 @@ function processPayPalPayment() {
       });
     },
     onApprove: function(data, actions) {
-      return actions.order.capture().then(async function(details) {
+      return window.MJPayPalPricing.capture(data.orderID).then(async function(details) {
         await savePayPalOrder(details);
       });
     },
@@ -338,7 +338,7 @@ function initPayPalButton() {
       const container = document.getElementById('paypal-button-container');
       container.innerHTML = '<p style="text-align:center;color:var(--burgundy);font-family:Plus Jakarta Sans,sans-serif;font-weight:600;">Procesando pago...</p>';
       
-      return actions.order.capture().then(async function(details) {
+      return window.MJPayPalPricing.capture(data.orderID).then(async function(details) {
         console.log('PayPal payment captured:', details);
         
         // Save order to our system

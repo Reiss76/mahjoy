@@ -12,6 +12,7 @@ const stale = [{id:62,sku:'TILE-mythos',name:'Mythos Tile',price:6000,price_usd:
 function browser(cart = structuredClone(stale)) {
   const ctx = { window: {addEventListener() {}}, console, setTimeout, alert() {}, document: {addEventListener() {}},
     fetch: async (_url, options) => {
+      if(_url.endsWith('/paypal/create')){ctx.createdPayload=JSON.parse(options.body).payload;return {ok:true,json:async()=>({id:'ORDER-ID'})};}
       const body = JSON.parse(options.body);
       const items = quoteItems(products, body.items, body.currency, body.discount_code ? 10 : 0);
       return {ok:true,json:async()=>({items})};
@@ -40,10 +41,10 @@ test('the actual English cart callback sends both products for USD475 including 
   // Its summary needs the normal page elements, so catch only that unrelated render error.
   try{listeners[0]();}catch(e){if(!options)throw e;}
   await options.createOrder({}, {order:{create:p=>{created=p;return 'ORDER-ID'}}});
-  assert.equal(created.purchase_units[0].items[1].unit_amount.value,'70.00');
-  assert.equal(created.purchase_units[0].amount.value,'475.00');
-  assert.equal(created.purchase_units[0].custom_id,undefined);
-  assert.equal(created.payment_source.paypal.experience_context.contact_preference,'UPDATE_CONTACT_INFO');
+  assert.equal(ctx.createdPayload.purchase_units[0].items[1].unit_amount.value,'70.00');
+  assert.equal(ctx.createdPayload.purchase_units[0].amount.value,'475.00');
+  assert.equal(ctx.createdPayload.purchase_units[0].custom_id,undefined);
+  assert.equal(ctx.createdPayload.payment_source.paypal.experience_context.contact_preference,'UPDATE_CONTACT_INFO');
 });
 test('zero dollar item never reaches PayPal even if other products and shipping have positive amounts',async()=>{
   const ctx=browser();let called=false;
@@ -73,7 +74,7 @@ test('validated discount prices still pass the PayPal guard with line rounding',
   const ctx=browser();ctx.window.cartDiscount={code:'VALID',pct:10};const p=payload();
   p.purchase_units[0].items[0].unit_amount.value='342.00';p.purchase_units[0].items[1].unit_amount.value='63.00';
   p.purchase_units[0].amount.breakdown.item_total.value='405.00';p.purchase_units[0].amount.value='430.00';
-  let called=false;await ctx.window.MJPayPalPricing.create({order:{create(){called=true;}}},p);assert(called);
+  let called=false;await ctx.window.MJPayPalPricing.create({order:{create(){called=true;}}},p);assert(ctx.createdPayload);
 });
 test('server quotes use the catalog and validate the coupon, ignoring caller-supplied prices',async()=>{
   let handler;const paths=[];
@@ -104,7 +105,7 @@ test('the USD checkout callback retains a USD60 shipping quote instead of reduci
   vm.runInContext(fs.readFileSync('js/paypal-checkout.js','utf8'),ctx);
   ctx.window.MJPayPal.init();
   await options.createOrder({}, {order:{create:p=>{created=p;return 'SIMULATED';}}});
-  const unit=created.purchase_units[0];assert.equal(unit.items[1].unit_amount.value,'60.00');assert.equal(unit.amount.value,'440.00');
+  const unit=ctx.createdPayload.purchase_units[0];assert.equal(unit.items[1].unit_amount.value,'60.00');assert.equal(unit.amount.value,'440.00');
 });
 test('Mexico PayPal cart uses MXN7200 even though the same items are USD450 in the US market',async()=>{
  const ctx=browser();let options,created;const listeners=[];
@@ -114,7 +115,7 @@ test('Mexico PayPal cart uses MXN7200 even though the same items are USD450 in t
  vm.runInContext(scripts.find(s=>s.includes('function initPayPalCart()')),ctx);
  try{listeners[0]()}catch(e){if(!options)throw e}
  await options.createOrder({}, {order:{create:p=>{created=p;return 'SIMULATED';}}});
- const unit=created.purchase_units[0];assert.equal(unit.amount.currency_code,'MXN');assert.equal(unit.items[0].unit_amount.value,'6000.00');assert.equal(unit.items[1].unit_amount.value,'1200.00');assert.equal(unit.amount.breakdown.item_total.value,'7200.00');
+ const unit=ctx.createdPayload.purchase_units[0];assert.equal(unit.amount.currency_code,'MXN');assert.equal(unit.items[0].unit_amount.value,'6000.00');assert.equal(unit.items[1].unit_amount.value,'1200.00');assert.equal(unit.amount.breakdown.item_total.value,'7200.00');
 });
 test('shipping API requests the storefront currency directly and discards mismatched carrier currencies',async()=>{
  let handler,requested=[];
@@ -122,8 +123,9 @@ test('shipping API requests the storefront currency directly and discards mismat
  const ctx={app:{post:(_p,fn)=>handler=fn},ENVIA_API_KEY:'TEST-ONLY',ENVIA_API_URL:'https://carrier.test',ORIGINS:{US:{country:'US'},MX:{country:'MX'}},getProductWeight:()=>1,console,fetch:async(_url,o)=>{const body=JSON.parse(o.body);requested.push(body.settings.currency);return{json:async()=>({data:[{price:29.99,currency:'USD',service:'std'},{price:999,currency:'MXN',service:'std'}]})}}};
  vm.createContext(ctx);vm.runInContext(source.slice(start,end),ctx);
  for(const currency of ['USD','MXN']){
-  const res={status(){return this},json(v){this.body=v}};requested=[];
+  const res={status(n){this.statusCode=n;return this},json(v){this.body=v}};requested=[];
   await handler({body:{destination:'10001',country:'US',currency,items:[{qty:1,weight:1}]}},res);
+  if(currency==='MXN'){assert.equal(res.statusCode,409);assert.equal(requested.length,0);continue;}
   assert(requested.length>0&&requested.every(c=>c===currency));assert.equal(res.body.currency,currency);assert(res.body.quotes.every(q=>q.currency===currency));assert.equal(res.body.shipping_cost,currency==='USD'?29.99:999);
  }
 });
@@ -134,16 +136,25 @@ test('market toggle navigates to independent prices and ignores a stale localSto
   assert.equal(ctx.window.MJCurrency.get(),english?'USD':'MXN');assert.equal(ctx.window.MJCurrency.format(6000,380),english?'$380.00 USD':'$6000.00 MXN');assert.equal(toggle.href,english?'/product.html#62':'/en/product.html#62');if(english)assert.equal(ctx.window.MJCurrency.format(6000,null),'');
  }
 });
-test('a US shipping address never changes the Mexico checkout product or order currency',async()=>{
- const ctx=browser();let options,patch,quoteRequest;
+test('US delivery in the Mexico checkout rejects before quoting shipping and sends the buyer to the USD market',async()=>{
+ const ctx=browser();let options,quoteCalled=false,rejected=false,marketCountry;
  ctx.window.MJCheckoutProduct={...products[0]};ctx.window.location={pathname:'/checkout.html'};
- ctx.document={readyState:'loading',addEventListener(){},getElementById:id=>id==='co-qty'?{value:'1'}:{hasChildNodes:()=>false}};
+ ctx.window.MJPayPalPricing.requireMarket=(country,currency,actions)=>{marketCountry=country;assert.equal(currency,'MXN');actions.reject();return false;};
+ ctx.document={readyState:'complete',addEventListener(){},getElementById:id=>id==='co-qty'?{value:'1'}:{hasChildNodes:()=>false}};
  ctx.setTimeout=fn=>fn();ctx.paypal={Buttons:o=>{options=o;return{render(){}}}};
  const scripts=[...fs.readFileSync('checkout.html','utf8').matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
  vm.runInContext(scripts.find(s=>s.includes('function initPayPalExpress()')),ctx);
- // The initializer is queued for DOMContentLoaded, run the same callback immediately in this fixture.
- ctx.document.readyState='complete';vm.runInContext(scripts.find(s=>s.includes('function initPayPalExpress()')),ctx);
- ctx.fetch=async(_u,o)=>{quoteRequest=JSON.parse(o.body);return{json:async()=>({quotes:[{id:'test',price:250,currency:'MXN',days:'3-5'}]})}};
- await options.onShippingChange({shipping_address:{country_code:'US',postal_code:'10001'}},{order:{patch:p=>{patch=p;return Promise.resolve()}},reject(){throw Error('unexpected reject')}});
- assert.equal(quoteRequest.currency,'MXN');const amount=patch[0].value;assert.equal(amount.currency_code,'MXN');assert.equal(amount.breakdown.item_total.value,'6000.00');assert.equal(amount.value,'6250.00');
+ ctx.fetch=async()=>{quoteCalled=true;throw Error('unexpected quote');};
+ await options.onShippingChange({shipping_address:{country_code:'US',postal_code:'10001'}},{reject(){rejected=true;return Promise.resolve();}});
+ assert(rejected);assert.equal(marketCountry,'US');assert.equal(quoteCalled,false);
+});
+test('market redirect preserves product, quantity and cart instead of converting prices',async()=>{
+ const ctx=browser();let redirected,rejected=false;
+ ctx.URL=URL;ctx.alert=()=>{};
+ ctx.window.location={href:'https://www.playmahjoy.com/checkout.html?sku=TILE-test#62',assign:url=>redirected=url};
+ ctx.document.getElementById=()=>({value:'3'});
+ assert.equal(ctx.window.MJPayPalPricing.requireMarket('US','MXN',{reject(){rejected=true;return Promise.resolve();}}),false);
+ await new Promise(setImmediate);
+ assert(rejected);const url=new URL(redirected);assert.equal(url.pathname,'/en/checkout.html');assert.equal(url.searchParams.get('sku'),'TILE-test');assert.equal(url.searchParams.get('qty'),'3');assert.equal(url.hash,'#62');assert.equal(ctx.window.MJCart.getCart().length,2);
+ assert.equal(ctx.window.MJPayPalPricing.requireMarket('US','USD',{reject(){throw Error('unexpected')}}),true);
 });
