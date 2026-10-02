@@ -94,5 +94,11 @@
     if (sourceCurrency !== targetCurrency) throw new Error('Shipping must be quoted in the checkout currency. No currency conversion is allowed.');
     return Math.round(value*100)/100;
   }
+  document.addEventListener('DOMContentLoaded', function() {
+    const country=document.getElementById('co-country');
+    if(country)country.addEventListener('change',function(){
+      if(country.value==='US' && !window.location.pathname.startsWith('/en/'))goToUsMarket();
+    });
+  });
   window.MJPayPalPricing = { quote, refreshCart, create, capture, requireMarket, shippingPrice };
 })();
