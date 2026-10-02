@@ -109,8 +109,9 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     
     <!-- Email lookup form -->
     <div class="mj-lookup-box">
-      <p class="mj-lookup-text">Ingresa tu email para ver el estado de tus pedidos:</p>
+      <p class="mj-lookup-text">Ingresa el número de pedido y el email de tu compra para consultar su estado:</p>
       <form id="lookup-form" class="mj-lookup-form">
+        <input type="text" id="lookup-order" placeholder="Número de pedido de PayPal" required maxlength="100" class="mj-lookup-input">
         <input type="email" id="lookup-email" placeholder="tu@email.com" required class="mj-lookup-input">
         <button type="submit" class="mj-lookup-btn">Buscar</button>
       </form>
@@ -137,8 +138,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       return d.toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' });
     }
     
-    function formatPrice(p) {
-      return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(p || 0);
+    function formatPrice(p, currency = 'MXN') {
+      return new Intl.NumberFormat('es-MX', { style: 'currency', currency: currency === 'USD' ? 'USD' : 'MXN' }).format(p || 0);
     }
     
     function getStatusClass(status) {
@@ -221,14 +222,14 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
                 <div class="mj-order-item">
                   <span class="mj-order-item-name">${item.name || item.product_name || '—'}</span>
                   <span class="mj-order-item-qty">x${item.qty || item.quantity || 1}</span>
-                  <span class="mj-order-item-price">${formatPrice((item.price || item.unit_price || 0) * (item.qty || item.quantity || 1))}</span>
+                  <span class="mj-order-item-price">${formatPrice((item.price || item.unit_price || 0) * (item.qty || item.quantity || 1), order.currency)}</span>
                 </div>
               `).join('')}
             </div>
             
             <div class="mj-order-total">
               <span>Total</span>
-              <span>${formatPrice(order.total || order.amount)}</span>
+              <span>${formatPrice(order.total || order.amount, order.currency)}</span>
             </div>
             
             ${order.shipping || order.shipping_address ? `
@@ -260,7 +261,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         container.innerHTML = `
           <div class="mj-orders-empty">
             <div class="mj-orders-empty-icon">📦</div>
-            <p class="mj-orders-empty-text">No encontramos pedidos con este email</p>
+            <p class="mj-orders-empty-text">No encontramos ese pedido con los datos ingresados</p>
             <a href="shop.html" class="mj-orders-cta">Ir a la tienda</a>
           </div>
         `;
@@ -278,12 +279,14 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     }
     
     async function fetchOrdersByEmail(email) {
+      const orderId = document.getElementById('lookup-order').value.trim();
+      if (!orderId || !email) return;
       const container = document.getElementById('orders-list');
       container.innerHTML = '<div class="mj-loading">Buscando pedidos</div>';
       
       try {
         // Fetch from Proax API
-        const res = await fetch(`${ORDERS_API}/orders?email=${encodeURIComponent(email)}`);
+        const res = await fetch(`${ORDERS_API}/orders?email=${encodeURIComponent(email)}&order_id=${encodeURIComponent(orderId)}`);
         
         if (!res.ok) {
           throw new Error('API error');
@@ -302,7 +305,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         // Fallback: try localStorage
         const localOrders = JSON.parse(localStorage.getItem('mj_orders') || '[]');
         const filtered = localOrders.filter(o => 
-          o.customer?.email?.toLowerCase() === email.toLowerCase()
+          o.customer?.email?.toLowerCase() === email.toLowerCase() && (o.orderId || o.order_id) === orderId
         );
         
         if (filtered.length) {
@@ -312,23 +315,12 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
             <div class="mj-orders-empty">
               <div class="mj-orders-empty-icon">😕</div>
               <p class="mj-orders-empty-text">No pudimos conectar con el servidor. Intenta de nuevo.</p>
-              <button onclick="fetchOrdersByEmail('${email}')" class="mj-orders-cta" style="border:none;cursor:pointer;">Reintentar</button>
+              <button id="lookup-retry" class="mj-orders-cta" style="border:none;cursor:pointer;">Reintentar</button>
             </div>
           `;
+          document.getElementById('lookup-retry').addEventListener('click', () => fetchOrdersByEmail(email));
         }
       }
-    }
-    
-    async function fetchOrderById(orderId) {
-      try {
-        const res = await fetch(`${PROAX_API}/orders/${encodeURIComponent(orderId)}`);
-        if (res.ok) {
-          return await res.json();
-        }
-      } catch (err) {
-        console.error('Error fetching order:', err);
-      }
-      return null;
     }
     
     // Form handler
@@ -344,40 +336,9 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     const urlParams = new URLSearchParams(window.location.search);
     const orderIdParam = urlParams.get('order') || urlParams.get('orderId');
     
-    if (orderIdParam) {
-      // Show specific order
-      (async () => {
-        const container = document.getElementById('orders-list');
-        container.innerHTML = '<div class="mj-loading">Cargando pedido</div>';
-        
-        const order = await fetchOrderById(orderIdParam);
-        if (order) {
-          renderOrders([order]);
-        } else {
-          // Check localStorage
-          const localOrders = JSON.parse(localStorage.getItem('mj_orders') || '[]');
-          const found = localOrders.find(o => o.orderId === orderIdParam);
-          if (found) {
-            renderOrders([found]);
-          } else {
-            container.innerHTML = `
-              <div class="mj-orders-empty">
-                <div class="mj-orders-empty-icon">🔍</div>
-                <p class="mj-orders-empty-text">No encontramos el pedido #${orderIdParam}</p>
-                <p class="mj-lookup-text">Intenta buscar con tu email:</p>
-              </div>
-            `;
-          }
-        }
-      })();
-    } else {
-      // Check for saved email
-      const savedEmail = localStorage.getItem('mj_orders_email');
-      if (savedEmail) {
-        document.getElementById('lookup-email').value = savedEmail;
-        fetchOrdersByEmail(savedEmail);
-      }
-    }
+    if (orderIdParam) document.getElementById('lookup-order').value = orderIdParam.slice(0,100);
+    const savedEmail = localStorage.getItem('mj_orders_email');
+    if (savedEmail) document.getElementById('lookup-email').value = savedEmail;
   </script>
   
   <script src="js/mobile-nav.js"></script>

@@ -522,6 +522,7 @@ const PROAX_NODE_ID = process.env.PROAX_NODE_ID || '31'; // Mahjoy node ID
 const PROAX_API_KEY = process.env.PROAX_API_KEY || 'mj-secret-2024';
 
 require('./lib/checkout-prices').registerCheckoutPrices(app, PROAX_API_URL);
+require('./lib/checkout-contact').registerCheckoutContact(app, pool);
 
 // ─── Orders Backup (File Persistence) ─────────────────────────────────────────
 const ORDERS_BACKUP_FILE = path.join(__dirname, 'data', 'orders-backup.json');

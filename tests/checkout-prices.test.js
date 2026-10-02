@@ -13,9 +13,11 @@ function browser(cart = structuredClone(stale)) {
   const ctx = { window: {}, console, setTimeout, alert() {}, document: {addEventListener() {}},
     fetch: async (_url, options) => {
       const body = JSON.parse(options.body);
+      if (_url === '/api/checkout/contact') return {ok:true,json:async()=>({contact_id:'12345678-1234-1234-1234-123456789abc'})};
       const items = quoteItems(products, body.items, body.currency, body.discount_code ? 10 : 0);
       return {ok:true,json:async()=>({items})};
     }};
+  ctx.window.MJPayPalPhone = {requirePhone:()=>'+15551234567'};
   ctx.window.MJCart = {getCart:()=>cart, saveCart:next=>cart=next};
   vm.createContext(ctx);vm.runInContext(fs.readFileSync('js/paypal-pricing.js','utf8'),ctx);
   return ctx;

@@ -2,7 +2,7 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const {publicAsset,operationsGuard}=require('../lib/web-security');
 test('only storefront pages and public assets are served, never server code, secrets or backups',()=>{
  for(const p of ['/','/en/checkout.html','/js/paypal-pricing.js','/css/site.css','/fonts/My Font.otf','/images/a.webp','/product'])assert(publicAsset(p),p);
- for(const p of ['/server.js','/lib/paypal-sync.js','/lib/web-security.js','/package.json','/data/orders.json','/config/secrets.json','/.env','/%2eenv','/node_modules/express/index.js','/tests/file.js','/js/../../server.js','/js/app.js.map','/js/%2e%2e/server.js'])assert(!publicAsset(p),p);
+ for(const p of ['/Dockerfile','/data/orders','/node_modules/express/LICENSE','/server.js','/lib/paypal-sync.js','/lib/web-security.js','/package.json','/data/orders.json','/config/secrets.json','/.env','/%2eenv','/node_modules/express/index.js','/tests/file.js','/js/../../server.js','/js/app.js.map','/js/%2e%2e/server.js'])assert(!publicAsset(p),p);
 });
 test('private order data, mutations, shipping labels and diagnostic tools require a server-only credential',()=>{
  const before=process.env.PROAX_PAYPAL_SYNC_SECRET;process.env.PROAX_PAYPAL_SYNC_SECRET='test'.repeat(16);

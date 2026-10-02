@@ -22,6 +22,7 @@
     return updated;
   }
   async function create(actions, payload) {
+    const phone = window.MJPayPalPhone.requirePhone();
     const units = payload.purchase_units;
     if (!units || units.length !== 1) throw new Error('Invalid checkout');
     const unit = units[0], currency = unit.amount.currency_code;
@@ -49,6 +50,13 @@
     const shipping = Number(breakdown.shipping && breakdown.shipping.value || 0);
     if (Math.round(Number(breakdown.item_total && breakdown.item_total.value) * 100) !== cents || !Number.isFinite(shipping) || shipping < 0
       || Math.round(Number(unit.amount.value) * 100) !== cents + Math.round(shipping * 100)) throw new Error('Invalid checkout total. Please refresh the page.');
+    const contactResponse = await fetch('/api/checkout/contact', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({phone, currency})
+    });
+    const contact = await contactResponse.json();
+    if (!contactResponse.ok || !/^[a-f0-9-]{36}$/.test(contact.contact_id || '')) throw new Error(contact.error || 'Could not save your phone number. Please try again.');
+    unit.custom_id = 'mj-contact:' + contact.contact_id;
     return actions.order.create(payload);
   }
   function shippingPrice(cost, sourceCurrency, targetCurrency) {
