@@ -10,7 +10,7 @@ const products = [
 const stale = [{id:62,sku:'TILE-mythos',name:'Mythos Tile',price:6000,price_usd:380,qty:1},
   {id:73,sku:'BAG-tilelila',name:'Lilac Tile Case',price:1200,qty:1}];
 function browser(cart = structuredClone(stale)) {
-  const ctx = { window: {}, console, setTimeout, alert() {}, document: {addEventListener() {}},
+  const ctx = { window: {addEventListener() {}}, console, setTimeout, alert() {}, document: {addEventListener() {}},
     fetch: async (_url, options) => {
       const body = JSON.parse(options.body);
       if (_url === '/api/checkout/contact') return {ok:true,json:async()=>({contact_id:'12345678-1234-1234-1234-123456789abc'})};
@@ -44,6 +44,7 @@ test('the actual English cart callback sends both products for USD475 including 
   await options.createOrder({}, {order:{create:p=>{created=p;return 'ORDER-ID'}}});
   assert.equal(created.purchase_units[0].items[1].unit_amount.value,'70.00');
   assert.equal(created.purchase_units[0].amount.value,'475.00');
+  assert.equal(created.purchase_units[0].custom_id,'mj-contact:12345678-1234-1234-1234-123456789abc');
 });
 test('zero dollar item never reaches PayPal even if other products and shipping have positive amounts',async()=>{
   const ctx=browser();let called=false;

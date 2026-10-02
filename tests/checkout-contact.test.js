@@ -34,3 +34,12 @@ test('phone validation rejects the PayPal click before opening a popup',()=>{
   ctx.window.MJPayPalPhone.onClick({},actions);assert.equal(rejected,1);assert.equal(resolved,0);assert.match(error.textContent,/teléfono válido/);
   input.value='+525512345678';ctx.window.MJPayPalPhone.onClick({},actions);assert.equal(resolved,1);
 });
+test('cart update listeners refresh summary within their own scope in both markets',()=>{
+  for(const file of ['cart.html','en/cart.html']) {
+    const listeners=[];const node={style:{},textContent:'',innerHTML:''};
+    const ctx={window:{MJCart:{getCart:()=>[]},MJPayPalPhone:{},addEventListener:(_,fn)=>listeners.push(fn)},document:{getElementById:()=>node,addEventListener(){}},console};
+    vm.createContext(ctx);const scripts=[...fs.readFileSync(file,'utf8').matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
+    for(const code of scripts.filter(s=>s.includes('function renderCart()')||s.includes('function initPayPalCart()')))vm.runInContext(code,ctx);
+    assert.equal(listeners.length,2);assert.doesNotThrow(()=>listeners.forEach(fn=>fn()));
+  }
+});
