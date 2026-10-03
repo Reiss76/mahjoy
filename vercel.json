@@ -5,6 +5,12 @@
   "installCommand": null,
   "redirects": [
     {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "playmahjoy.com" }],
+      "destination": "https://www.playmahjoy.com/:path*",
+      "permanent": true
+    },
+    {
       "source": "/admin",
       "destination": "https://proax.app/login?next=%2Fn%2F31%2Finventory",
       "permanent": false
