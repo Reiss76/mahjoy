@@ -61,6 +61,15 @@ app.use(express.json());
 app.disable('x-powered-by');
 app.use(require('./lib/web-security').operationsGuard);
 
+// Administrative entry point: Proax handles authentication and existing roles.
+// Register before language routing so the login also works for US visitors.
+app.get(['/admin', '/admin.html', '/en/admin', '/en/admin.html'], (_req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.set('X-Robots-Tag', 'noindex, nofollow');
+  res.set('Referrer-Policy', 'no-referrer');
+  res.redirect(302, 'https://proax.app/login?next=%2Fn%2F31%2Finventory');
+});
+
 // ─── Geo-redirect: USA→English, Mexico→Spanish ───────────────────────────────
 
 // Countries that should see English by default

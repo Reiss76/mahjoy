@@ -2,5 +2,37 @@
   "framework": null,
   "buildCommand": null,
   "outputDirectory": ".",
-  "installCommand": null
+  "installCommand": null,
+  "redirects": [
+    {
+      "source": "/admin",
+      "destination": "https://proax.app/login?next=%2Fn%2F31%2Finventory",
+      "permanent": false
+    },
+    {
+      "source": "/admin/",
+      "destination": "https://proax.app/login?next=%2Fn%2F31%2Finventory",
+      "permanent": false
+    },
+    {
+      "source": "/admin.html",
+      "destination": "https://proax.app/login?next=%2Fn%2F31%2Finventory",
+      "permanent": false
+    },
+    {
+      "source": "/en/admin",
+      "destination": "https://proax.app/login?next=%2Fn%2F31%2Finventory",
+      "permanent": false
+    },
+    {
+      "source": "/en/admin/",
+      "destination": "https://proax.app/login?next=%2Fn%2F31%2Finventory",
+      "permanent": false
+    },
+    {
+      "source": "/en/admin.html",
+      "destination": "https://proax.app/login?next=%2Fn%2F31%2Finventory",
+      "permanent": false
+    }
+  ]
 }
