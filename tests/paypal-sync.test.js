@@ -41,3 +41,10 @@ test('repeated synced receipts acknowledge completion without another delivery',
  assert.equal(res.code,200);assert.equal(res.body.sync,'synced');assert.equal(paid,0);
  assert(!calls.some(q=>q.startsWith('UPDATE mahjoy_paypal_sync_jobs SET next_attempt_at')));
 });
+test('server can durably enqueue an order without browser hints or recording an unverified sale',async()=>{
+ const calls=[];let paid=0;
+ const queue=registerPayPalSync({post(){}},{query:async(q,args)=>{calls.push({q,args});return {rows:q.startsWith('INSERT INTO')?[{status:'pending'}]:[]}}},'https://proax.test',async()=>paid++);
+ assert.equal(await queue.enqueue('AAAABBBBCCCC1'),'pending');
+ const insert=calls.find(c=>c.q.startsWith('INSERT INTO'));assert.deepEqual(insert.args,['AAAABBBBCCCC1','{}']);assert.match(insert.q,/payload=mahjoy_paypal_sync_jobs.payload \|\| EXCLUDED.payload/);assert.equal(paid,0);
+ await assert.rejects(()=>queue.enqueue('../invalid'));assert.equal(calls.filter(c=>c.q.startsWith('INSERT INTO')).length,1);
+});

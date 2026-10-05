@@ -69,13 +69,30 @@
     return (await checkoutRequest('create', {payload,discount_code:discount && discount.code})).id;
   }
   async function checkoutRequest(action,body) {
-    const response=await fetch('/api/checkout/paypal/'+action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    const result=await response.json();
+    let response,result;
+    try {
+      response=await fetch('/api/checkout/paypal/'+action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      result=await response.json();
+    } catch(error) {
+      if(action==='capture')throw paymentStatusError(body.orderId);
+      throw error;
+    }
     if(!response.ok) {
       if(result.error==='US_REQUIRES_USD'){goToUsMarket();return new Promise(function(){});}
+      const safeErrors=['DISCOUNT_USD_ONLY','INVALID_ORDER','CHECKOUT_NOT_FOUND','CHECKOUT_MISMATCH','CURRENCY_MISMATCH','ORDER_NOT_APPROVED','PRICE_MISMATCH','PAYPAL_RECEIPT_UNAVAILABLE','CHECKOUT_UNAVAILABLE'];
+      if(action==='capture' && !safeErrors.includes(result.error_code || result.error))throw paymentStatusError(body.orderId);
       throw new Error(checkoutError(result,'Could not verify payment. Please try again.'));
     }
+    if(action==='capture' && result.status!=='COMPLETED')throw paymentStatusError(body.orderId);
     return result;
+  }
+  function paymentStatusError(orderId) {
+    const english=window.location?.pathname?.startsWith('/en/') || document.documentElement?.lang?.startsWith('en');
+    const error=new Error(english
+      ? 'We are verifying your PayPal payment. Do not pay again. Contact us with PayPal order ID '+orderId+'.'
+      : 'Estamos verificando tu pago de PayPal. No vuelvas a pagar. Contáctanos con el ID de pedido PayPal '+orderId+'.');
+    error.code='PAYMENT_STATUS_UNCERTAIN';
+    return error;
   }
   function goToUsMarket() {
     const url=new URL(window.location.href);

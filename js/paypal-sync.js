@@ -22,7 +22,7 @@ window.MJPayPalSync = {
     }
   },
   errorMessage(error, fallback) {
-    return error?.code === 'PAYMENT_RECEIVED_SYNC_PENDING' ? error.message : fallback;
+    return ['PAYMENT_RECEIVED_SYNC_PENDING','PAYMENT_STATUS_UNCERTAIN'].includes(error?.code) ? error.message : fallback;
   }
 };
 // Retry receipts after a connection interruption, without capturing another payment.

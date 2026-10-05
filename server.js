@@ -532,7 +532,11 @@ const PROAX_NODE_ID = process.env.PROAX_NODE_ID || '31'; // Mahjoy node ID
 const PROAX_API_KEY = process.env.PROAX_API_KEY || 'mj-secret-2024';
 
 require('./lib/checkout-prices').registerCheckoutPrices(app, PROAX_API_URL);
-require('./lib/paypal-checkout').registerPayPalCheckout(app, PROAX_API_URL);
+let paypalReceipts;
+require('./lib/paypal-checkout').registerPayPalCheckout(app, PROAX_API_URL, fetch, async orderId => {
+  if(!paypalReceipts)throw new Error('PAYPAL_RECEIPT_UNAVAILABLE');
+  await paypalReceipts.enqueue(orderId);
+});
 
 // ─── Orders Backup (File Persistence) ─────────────────────────────────────────
 const ORDERS_BACKUP_FILE = path.join(__dirname, 'data', 'orders-backup.json');
@@ -875,7 +879,7 @@ app.get('/api/orders/by-email', async (req, res) => {
 });
 
 // Verified PayPal payments use a durable queue and the signed Proax integration.
-require('./lib/paypal-sync').registerPayPalSync(app, pool, PROAX_API_URL, async order => {
+paypalReceipts=require('./lib/paypal-sync').registerPayPalSync(app, pool, PROAX_API_URL, async order => {
   const saved = await saveOrderToDatabase({
     ...order, orderId: order.order_id, cart: order.items, status: 'paid', source: 'paypal'
   });

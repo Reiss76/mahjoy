@@ -15,3 +15,32 @@ test('checkout proxy obtains independent catalog prices and signs the exact appr
   const timestamp=transmitted.headers['x-mahjoy-timestamp'];assert.equal(transmitted.headers['x-mahjoy-signature'],crypto.createHmac('sha256',process.env.PROAX_PAYPAL_SYNC_SECRET).update(timestamp+'.'+transmitted.body).digest('hex'));
  }finally{if(previous===undefined)delete process.env.PROAX_PAYPAL_SYNC_SECRET;else process.env.PROAX_PAYPAL_SYNC_SECRET=previous;}
 });
+test('capture persists its receipt before requesting payment and fails closed if storage is unavailable',async()=>{
+ const previous=process.env.PROAX_PAYPAL_SYNC_SECRET;process.env.PROAX_PAYPAL_SYNC_SECRET='fixture-secret';
+ try{
+  const handlers={},events=[];
+  registerPayPalCheckout({post:(path,handler)=>handlers[path]=handler},'https://proax.test',async(url,options)=>{
+   events.push('capture');assert.equal(JSON.parse(options.body).orderId,'TESTORDER123456');
+   return {status:200,json:async()=>({id:'TESTORDER123456',status:'COMPLETED'})};
+  },async id=>{assert.equal(id,'TESTORDER123456');events.push('persist')});
+  const res={set(){},status(n){this.statusCode=n;return this},json(body){this.body=body}};
+  await handlers['/api/checkout/paypal/capture']({body:{orderId:'TESTORDER123456'}},res);
+  assert.deepEqual(events,['persist','capture']);assert.equal(res.body.status,'COMPLETED');
+  events.length=0;
+  registerPayPalCheckout({post:(path,handler)=>handlers[path]=handler},'https://proax.test',async()=>{events.push('capture')},async()=>{throw new Error('Private database connection failure')});
+  await handlers['/api/checkout/paypal/capture']({body:{orderId:'TESTORDER123456'}},res);
+  assert.equal(res.statusCode,503);assert.equal(res.body.error_code,'PAYPAL_RECEIPT_UNAVAILABLE');assert.deepEqual(events,[]);assert(!JSON.stringify(res.body).includes('Private'));
+  await handlers['/api/checkout/paypal/capture']({body:{orderId:'../invalid'}},res);
+  assert.equal(res.statusCode,400);assert.equal(res.body.error_code,'INVALID_ORDER');
+ }finally{if(previous===undefined)delete process.env.PROAX_PAYPAL_SYNC_SECRET;else process.env.PROAX_PAYPAL_SYNC_SECRET=previous;}
+});
+test('a lost capture response keeps the persisted reference and reports uncertain payment without a second capture',async()=>{
+ const previous=process.env.PROAX_PAYPAL_SYNC_SECRET;process.env.PROAX_PAYPAL_SYNC_SECRET='fixture-secret';
+ try{
+  const handlers={},receipts=[];let captures=0;
+  registerPayPalCheckout({post:(path,handler)=>handlers[path]=handler},'https://proax.test',async()=>{captures++;throw new Error('Network disconnected')},async id=>receipts.push(id));
+  const res={set(){},status(n){this.statusCode=n;return this},json(body){this.body=body}};
+  await handlers['/api/checkout/paypal/capture']({body:{orderId:'TESTORDER123456'}},res);
+  assert.deepEqual(receipts,['TESTORDER123456']);assert.equal(captures,1);assert.equal(res.statusCode,503);assert.equal(res.body.error_code,'PAYPAL_CAPTURE_STATUS_PENDING');assert.equal(res.body.orderId,'TESTORDER123456');
+ }finally{if(previous===undefined)delete process.env.PROAX_PAYPAL_SYNC_SECRET;else process.env.PROAX_PAYPAL_SYNC_SECRET=previous;}
+});
