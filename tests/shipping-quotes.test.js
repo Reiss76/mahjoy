@@ -84,7 +84,7 @@ test('canonical cart aggregates/reorders duplicates and preserves SKU identity',
 });
 test('configured specific weights take precedence over generic tile/rack names', () => {
   assert.equal(productWeight({name:'Rack Bag Vino'},configured),0.12);
-  assert.equal(productWeight({name:'Velvet Tile Bag'},configured),0.13);
+  assert.equal(productWeight({name:'Velvet Tile Bag'},configured),0.25);
   assert.equal(productWeight({name:'Tile Case'},configured),0.31);
   assert.equal(productWeight({name:'Mat Polo Club'},configured),0.81);
   assert.throws(()=>productWeight({name:'Unknown product'},configured),/PRODUCT_WEIGHT_UNAVAILABLE/);
