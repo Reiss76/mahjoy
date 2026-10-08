@@ -348,6 +348,7 @@ function shippingOrigin(country) {
 }
 const shippingQuotes = createShippingQuoteService({
   config: shippingConfig, getOrigin: shippingOrigin, apiKey: ENVIA_API_KEY,
+  getPackingPlan: require('./lib/proax-shipping-plan').createProaxShippingPlanProvider(process.env.PROAX_API_URL || 'https://proax.app'),
   apiBase: ENVIA_API_URL.replace('/ship/rate/', ''),
   getStoredShippingQuote: (orderId, client) => getStoredShippingQuote(client || pool, orderId),
   store: shipmentStore(pool)

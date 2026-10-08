@@ -224,14 +224,14 @@ async function loadProduct() {
   const descMap = window.MJ_DESCRIPTIONS || {};
   const specsMap = window.MJ_SPECS || {};
   const nameKey = (product.name || '').toLowerCase().trim();
-  const skuUpper = (product.sku || '').toUpperCase();
+  const skuUpper = (product.sku || '').trim().toUpperCase();
   const localDesc = descMap[nameKey];
 
   // Find specs by SKU prefix
   let localSpecs = null;
   if (skuUpper.startsWith('MAT-')) localSpecs = specsMap['MAT'];
   else if (skuUpper.startsWith('TILE-')) localSpecs = specsMap['TILE'];
-  else if (skuUpper.startsWith('RAKBAG-')) localSpecs = specsMap['RAKBAG'];
+  else if (skuUpper.startsWith('RAKBAG') || skuUpper.startsWith('RACK-BAG') || nameKey.replace(/\s+/g, '').startsWith('rackbag')) localSpecs = specsMap['RAKBAG'];
   else if (skuUpper.startsWith('RACK-')) localSpecs = specsMap['RACK'];
   else if (skuUpper.startsWith('BAG-TILE')) localSpecs = specsMap['BAG-TILE'];
   else if (skuUpper.startsWith('BAG-')) localSpecs = specsMap['BAG'];

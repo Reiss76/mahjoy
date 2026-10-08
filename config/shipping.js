@@ -45,8 +45,8 @@ module.exports = {
     // Bags
     'big bag': 0.97,
     'bigbag': 0.97,
-    'velvet tile bag': 0.13,
-    'tile bag velvet': 0.13,
+    'velvet tile bag': 0.25,
+    'tile bag velvet': 0.25,
     'tile bag piel': 0.31,
     'tile case': 0.31,
     'rack bag': 0.12,
