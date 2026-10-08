@@ -1,3 +1,4 @@
+const {installShippingFixture}=require('./shipping-client-fixtures');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -18,7 +19,7 @@ function browser(cart = structuredClone(stale)) {
       return {ok:true,json:async()=>({items})};
     }};
   ctx.window.MJCart = {getCart:()=>cart, saveCart:next=>cart=next};
-  vm.createContext(ctx);vm.runInContext(fs.readFileSync('js/paypal-pricing.js','utf8'),ctx);
+  installShippingFixture(ctx);vm.createContext(ctx);vm.runInContext(fs.readFileSync('js/paypal-pricing.js','utf8'),ctx);
   return ctx;
 }
 function payload(casePrice = 70) {
@@ -98,14 +99,14 @@ test('the USD checkout callback retains a USD60 shipping quote instead of reduci
   const ctx=browser();let options,created;
   ctx.window.location={pathname:'/en/checkout.html'};
   ctx.window.MJCheckoutProduct={...products[0],price_usd:380};
-  ctx.window.MJShippingCost=60;ctx.window.MJShippingCurrency='USD';ctx.window.cachedExchangeRate=19.5;
+  installShippingFixture(ctx,{currency:'USD',price:60});ctx.window.MJShippingCost=60;ctx.window.MJShippingCurrency='USD';ctx.window.cachedExchangeRate=19.5;
   const container={innerHTML:''};
   ctx.document={readyState:'loading',addEventListener(){},getElementById:id=>id==='co-form'?{qty:{value:'1'}}:container};
   ctx.paypal={Buttons:o=>{options=o;return {render:()=>Promise.resolve()};}};
   vm.runInContext(fs.readFileSync('js/paypal-checkout.js','utf8'),ctx);
   ctx.window.MJPayPal.init();
   await options.createOrder({}, {order:{create:p=>{created=p;return 'SIMULATED';}}});
-  const unit=ctx.createdPayload.purchase_units[0];assert.equal(unit.items[1].unit_amount.value,'60.00');assert.equal(unit.amount.value,'440.00');
+  const unit=ctx.createdPayload.purchase_units[0];assert.equal(unit.items.length,1);assert.equal(unit.amount.breakdown.shipping.value,'60.00');assert.equal(unit.amount.value,'440.00');
 });
 test('Mexico PayPal cart uses MXN7200 even though the same items are USD450 in the US market',async()=>{
  const ctx=browser();let options,created;const listeners=[];
@@ -118,15 +119,23 @@ test('Mexico PayPal cart uses MXN7200 even though the same items are USD450 in t
  const unit=ctx.createdPayload.purchase_units[0];assert.equal(unit.amount.currency_code,'MXN');assert.equal(unit.items[0].unit_amount.value,'6000.00');assert.equal(unit.items[1].unit_amount.value,'1200.00');assert.equal(unit.amount.breakdown.item_total.value,'7200.00');
 });
 test('shipping API requests the storefront currency directly and discards mismatched carrier currencies',async()=>{
- let handler,requested=[];
- const source=fs.readFileSync('server.js','utf8');const start=source.indexOf("app.post('/api/shipping/quote'");const end=source.indexOf('// ─── Envia.com Shipment Creation',start);
- const ctx={app:{post:(_p,fn)=>handler=fn},ENVIA_API_KEY:'TEST-ONLY',ENVIA_API_URL:'https://carrier.test',ORIGINS:{US:{country:'US'},MX:{country:'MX'}},getProductWeight:()=>1,console,fetch:async(_url,o)=>{const body=JSON.parse(o.body);requested.push(body.settings.currency);return{json:async()=>({data:[{price:29.99,currency:'USD',service:'std'},{price:999,currency:'MXN',service:'std'}]})}}};
- vm.createContext(ctx);vm.runInContext(source.slice(start,end),ctx);
+ const {createShippingQuoteService}=require('../lib/shipping-quotes');
+ const configured=require('../config/shipping');
+ const shippingProducts=[{sku:'MAT-PIEL',name:'Mat Polo Club',price:1000,priceUsd:50},{sku:'RACK-VERDE',name:'Rack Green',price:2000,priceUsd:100},{sku:'RACK-BAG006',name:'Rack Bag Vino',price:500,priceUsd:25}];
+ const shippingItems=shippingProducts.map(product=>({sku:product.sku,qty:1}));
+ let requested=[];
+ const service=createShippingQuoteService({config:{...configured,carriersByCountry:{MX:['estafeta']}},origins:{MX:configured.origin},
+  signingSecret:'currency-test-fixture',apiKey:'provider-test-placeholder',now:()=>Date.UTC(2026,9,8),fetcher:async(url,options)=>{
+   if(url.includes('/catalog/products'))return{ok:true,json:async()=>({products:shippingProducts})};
+   requested.push(JSON.parse(options.body).settings.currency);
+   return{ok:true,json:async()=>({meta:'rate',data:[{totalPrice:29.99,currency:'USD',service:'ground',deliveryEstimate:3},{totalPrice:999,currency:'MXN',service:'ground',deliveryEstimate:3}]})};
+  }});
  for(const currency of ['USD','MXN']){
-  const res={status(n){this.statusCode=n;return this},json(v){this.body=v}};requested=[];
-  await handler({body:{destination:'10001',country:'US',currency,items:[{qty:1,weight:1}]}},res);
-  if(currency==='MXN'){assert.equal(res.statusCode,409);assert.equal(requested.length,0);continue;}
-  assert(requested.length>0&&requested.every(c=>c===currency));assert.equal(res.body.currency,currency);assert(res.body.quotes.every(q=>q.currency===currency));assert.equal(res.body.shipping_cost,currency==='USD'?29.99:999);
+  requested=[];
+  const result=await service.quote({destination:'85219',country:'MX',currency,items:shippingItems});
+  assert(requested.length>0&&requested.every(value=>value===currency));
+  assert.equal(result.currency,currency);assert(result.quotes.every(rate=>rate.currency===currency));
+  assert.equal(result.shipping_cost,currency==='USD'?29.99:999);assert(result.quotes.every(rate=>rate.quote_token));
  }
 });
 test('market toggle navigates to independent prices and ignores a stale localStorage currency',()=>{
@@ -136,17 +145,12 @@ test('market toggle navigates to independent prices and ignores a stale localSto
   assert.equal(ctx.window.MJCurrency.get(),english?'USD':'MXN');assert.equal(ctx.window.MJCurrency.format(6000,380),english?'$380.00 USD':'$6000.00 MXN');assert.equal(toggle.href,english?'/product.html#62':'/en/product.html#62');if(english)assert.equal(ctx.window.MJCurrency.format(6000,null),'');
  }
 });
-test('US delivery in the Mexico checkout rejects before quoting shipping and sends the buyer to the USD market',async()=>{
- const ctx=browser();let options,quoteCalled=false,rejected=false,marketCountry;
- ctx.window.MJCheckoutProduct={...products[0]};ctx.window.location={pathname:'/checkout.html'};
- ctx.window.MJPayPalPricing.requireMarket=(country,currency,actions)=>{marketCountry=country;assert.equal(currency,'MXN');actions.reject();return false;};
- ctx.document={readyState:'complete',addEventListener(){},getElementById:id=>id==='co-qty'?{value:'1'}:{hasChildNodes:()=>false}};
- ctx.setTimeout=fn=>fn();ctx.paypal={Buttons:o=>{options=o;return{render(){}}}};
- const scripts=[...fs.readFileSync('checkout.html','utf8').matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
- vm.runInContext(scripts.find(s=>s.includes('function initPayPalExpress()')),ctx);
- ctx.fetch=async()=>{quoteCalled=true;throw Error('unexpected quote');};
- await options.onShippingChange({shipping_address:{country_code:'US',postal_code:'10001'}},{reject(){rejected=true;return Promise.resolve();}});
- assert(rejected);assert.equal(marketCountry,'US');assert.equal(quoteCalled,false);
+test('US delivery in the Mexico checkout rejects before requesting shipping',async()=>{
+ const ctx={window:{location:{pathname:'/checkout.html'}},document:{addEventListener(){}},fetch:async()=>{throw Error('No quote should be requested');}};
+ vm.createContext(ctx);vm.runInContext(fs.readFileSync('js/shipping-checkout.js','utf8'),ctx);
+ ctx.window.MJShippingCheckout.configure({currency:'MXN',items:()=>[{sku:'TEST',qty:1}]});
+ ctx.window.MJShippingCheckout.setDestination('10001','US');
+ await assert.rejects(()=>ctx.window.MJShippingCheckout.quote(),error=>error.code==='SHIPPING_MARKET_INVALID');
 });
 test('market redirect preserves product, quantity and cart instead of converting prices',async()=>{
  const ctx=browser();let redirected,rejected=false;
