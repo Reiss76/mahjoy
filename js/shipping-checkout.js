@@ -88,6 +88,9 @@
     const parsed = typeof value === 'number' ? (value < 1e12 ? value * 1000 : value) : Date.parse(value);
     return Number.isFinite(parsed) ? parsed : 0;
   }
+  function serviceLabel(rate) {
+    return [rate.carrier_name, rate.service_name, rate.delivery_description].filter(Boolean).join(' · ');
+  }
   async function quote() {
     refresh();
     if (!configuration || !/^\d{5}$/.test(destination.postalCode) || !['MX', 'US'].includes(destination.country)) throw shippingError('SHIPPING_DESTINATION_INVALID');
@@ -114,6 +117,8 @@
         id: String(rate.id || ''), carrier: String(rate.carrier || ''), service: String(rate.service || ''),
         carrier_name: String(rate.carrier_name || rate.carrierDescription || rate.carrier || ''),
         service_name: String(rate.service_name || rate.serviceDescription || rate.service || ''),
+        delivery_description: String(rate.delivery_description || ''),
+        drop_off: rate.drop_off == null ? null : Number(rate.drop_off),
         days: String(rate.days ?? ''), price: Number(rate.price), currency: rate.currency,
         quote_token: rate.quote_token, expiresAt: expiry(rate.expires_at ?? result.expires_at)
       })).filter(rate => rate.id && rate.carrier && rate.service && Number.isFinite(rate.price) && rate.price > 0
@@ -248,7 +253,7 @@
         input.type = 'radio'; input.name = 'shipping_option'; input.value = String(index); input.checked = rate === snapshot.selected;
         input.addEventListener('change', () => { try { selectRate(index); } catch (error) { status.textContent = error.message; } });
         const text = document.createElement('span');
-        text.textContent = `${rate.carrier_name} · ${rate.service_name}${rate.days ? ' · ' + rate.days : ''} · ${new Intl.NumberFormat(english() ? 'en-US' : 'es-MX', { style: 'currency', currency }).format(rate.price)} ${currency}`;
+        text.textContent = `${serviceLabel(rate)}${rate.days ? ' · ' + rate.days : ''} · ${new Intl.NumberFormat(english() ? 'en-US' : 'es-MX', { style: 'currency', currency }).format(rate.price)} ${currency}`;
         label.append(input, text); choices.append(label);
       });
     });
@@ -256,6 +261,6 @@
     window.addEventListener('mj:cartUpdated', refresh);
   }
   window.MJShippingCheckout = { configure, setDestination, quote, selectRate, refresh, invalidate, state, subscribe,
-    requireForPayment, rememberOrder, requireForCapture, paypalCallbacks, errorMessage, itemsKey };
+    requireForPayment, rememberOrder, requireForCapture, paypalCallbacks, errorMessage, itemsKey, serviceLabel };
   document.addEventListener('DOMContentLoaded', mount);
 })();

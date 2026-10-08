@@ -42,7 +42,7 @@ function fixture(overrides = {}) {
   const requests = [];
   let currentTime = fixtureTime, stored;
   const config = {...configured, envia:{apiUrl:'https://carrier.test'},
-    carriersByCountry:{MX:['estafeta']}};
+    carriersByCountry:{MX:overrides.carriers || ['estafeta']}};
   const fetcher = async (url, request) => {
     if (url.includes('/catalog/products')) return {ok:true,json:async()=>({products})};
     requests.push({url,body:JSON.parse(request.body)});
@@ -138,6 +138,38 @@ test('rates require provider total, matching currency and genuine service, never
     {...valid,service:undefined},
     {...valid,deliveryEstimate:{min:2}}
   ]) assert.equal(normalizeRate(invalid,'estafeta','MXN'),null);
+});
+test('delivery modes follow provider dropOff metadata and human labels are signed with the quote', async () => {
+  const providerRate={carrier:'paquetexpress',carrierDescription:'Paquetexpress',serviceDescription:'Paquetexpress Standard',
+    currency:'MXN',deliveryEstimate:'2-4 días'};
+  const providerRates=[
+    {...providerRate,service:'ground',totalPrice:179,dropOff:0,dropOffDescription:'Puerta a puerta'},
+    {...providerRate,service:'ground_do',totalPrice:188,dropOff:2,dropOffDescription:'Sucursal a puerta'},
+    {...providerRate,service:'ground_od',totalPrice:170,dropOff:1,dropOffDescription:'Puerta a sucursal'}
+  ];
+  const f=fixture({carriers:['paquetexpress'],fetcher:async(url)=>{
+    assert.ok(url.endsWith('/ship/rate/'));
+    return {ok:true,json:async()=>({meta:'rate',data:providerRates})};
+  }});
+  const result=await f.service.quote({items,destination:'85219',country:'MX',currency:'MXN'});
+  assert.deepEqual(result.quotes.map(rate=>rate.service),['ground','ground_do']);
+  assert.equal(result.cheapest_rate,179); // The cheaper destination-branch rate cannot be offered.
+  for(const rate of result.quotes) {
+    const expected=providerRates.find(provider=>provider.service===rate.service);
+    assert.equal(rate.carrier_name,'Paquetexpress');assert.equal(rate.service_name,'Paquetexpress Standard');
+    assert.equal(rate.delivery_description,expected.dropOffDescription);assert.equal(rate.drop_off,expected.dropOff);
+    const snapshot=verifyShippingQuote(rate.quote_token,{items,currency:'MXN',postalCode:'85219',country:'MX'},
+      {secret:signingSecret,now:fixtureTime});
+    for(const field of ['carrier_name','service_name','delivery_description','drop_off']) assert.equal(snapshot[field],rate[field]);
+  }
+  const selected=result.quotes.find(rate=>rate.service==='ground_do');
+  const [version,payload,signature]=selected.quote_token.split('.');
+  const changed=JSON.parse(Buffer.from(payload,'base64url').toString('utf8'));
+  changed.delivery_description='Puerta a sucursal';
+  const forged=[version,Buffer.from(JSON.stringify(changed)).toString('base64url'),signature].join('.');
+  assert.throws(()=>verifyShippingQuote(forged,{}, {secret:signingSecret,now:fixtureTime}),/SHIPPING_QUOTE_INVALID/);
+  assert.equal(normalizeRate({...providerRates[2],dropOff:2,dropOffDescription:'Sucursal a puerta'},'paquetexpress','MXN').service,'ground_od');
+  assert.equal(normalizeRate({...providerRates[1],dropOff:1},'paquetexpress','MXN'),null);
 });
 test('signature, expiry and all checkout bindings are enforced with shared error codes', async () => {
   const f=fixture(),result=await f.service.quote({items,destination:'85219',country:'MX',currency:'MXN'});

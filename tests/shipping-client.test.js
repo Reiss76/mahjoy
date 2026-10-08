@@ -61,6 +61,17 @@ test('the selected actual carrier/service is retained instead of grouping numeri
   assert.equal(f.shipping.requireForPayment('MXN').id,'ground');
   assert.equal(f.shipping.requireForPayment('MXN').price,445);
 });
+test('human service labels retain the provider delivery mode without exposing service codes',async()=>{
+  const f=browser({respond:async()=>({ok:true,json:async()=>({quotes:[rate('MXN',{
+    id:'paquetexpress-ground_do',carrier:'paquetexpress',service:'ground_do',carrier_name:'Paquetexpress',
+    service_name:'Paquetexpress Standard',delivery_description:'Sucursal a puerta',drop_off:2
+  })]})})});
+  await ready(f);const selected=f.shipping.requireForPayment('MXN');
+  assert.equal(selected.delivery_description,'Sucursal a puerta');assert.equal(selected.drop_off,2);
+  assert.equal(f.shipping.serviceLabel(selected),'Paquetexpress · Paquetexpress Standard · Sucursal a puerta');
+  assert.doesNotMatch(f.shipping.serviceLabel(selected),/ground_do/);
+  assert.equal(f.shipping.serviceLabel({...selected,delivery_description:''}),'Paquetexpress · Paquetexpress Standard');
+});
 test('destination, quantity, currency and expiry cannot reuse a signed selection',async()=>{
   const f=browser();await ready(f);
   assert.throws(()=>f.shipping.requireForPayment('USD'));
