@@ -1,5 +1,7 @@
 (function () {
   function checkoutError(result,fallback) {
+    const code = result.error_code || result.error || '';
+    if (/^(SHIPPING_|INVALID_SHIPPING_)/.test(code) || code === 'ORDER_ID_MISMATCH') return window.MJShippingCheckout?.errorMessage(code) || 'Select a valid shipping quote before paying.';
     if(result.error_code==='DISCOUNT_USD_ONLY' || result.error==='DISCOUNT_USD_ONLY')return window.location?.pathname?.includes('/en/')
       ? 'This code is only valid in the EN store when paying in USD.'
       : 'Este código solo funciona en la tienda EN al pagar en USD.';
@@ -32,11 +34,13 @@
     if (!units || units.length !== 1) throw new Error('Invalid checkout');
     const unit = units[0], currency = unit.amount.currency_code;
     const items = unit.items || [];
-    const shippingItem = i => !i.sku && /^(shipping|envío)$/i.test(i.name);
+    const shippingItem = i => !i.sku && /^(shipping|env[ií]o)$/i.test(i.name);
     const merchandise = items.filter(i => !shippingItem(i));
+    if (!window.MJShippingCheckout) throw new Error('Shipping must be selected before paying. Please reload the page.');
+    const selection = window.MJShippingCheckout.requireForPayment(currency, merchandise);
     const discount = window.MJAppliedDiscount || window.cartDiscount;
     const prices = await quote(merchandise, currency, discount && discount.code);
-    let cents = 0;
+    let cents = 0, legacyShippingCents = 0;
     for (let n = 0; n < items.length; n++) {
       const item = items[n], value = Number(item.unit_amount.value), qty = Number(item.quantity);
       if (item.unit_amount.currency_code !== currency || !Number.isFinite(value) || value <= 0 || !Number.isInteger(qty) || qty < 1) {
@@ -48,13 +52,25 @@
           throw new Error('Prices have changed. Please refresh the page and review your total before paying.');
         }
       }
-      cents += Math.round(value * 100) * qty;
+      if (shippingItem(item)) legacyShippingCents += Math.round(value * 100) * qty;
+      else cents += Math.round(value * 100) * qty;
     }
     const breakdown = unit.amount.breakdown || {};
     if (Object.values(breakdown).some(amount => amount.currency_code !== currency)) throw new Error('Mixed checkout currencies are not allowed.');
     const shipping = Number(breakdown.shipping && breakdown.shipping.value || 0);
-    if (Math.round(Number(breakdown.item_total && breakdown.item_total.value) * 100) !== cents || !Number.isFinite(shipping) || shipping < 0
-      || Math.round(Number(unit.amount.value) * 100) !== cents + Math.round(shipping * 100)) throw new Error('Invalid checkout total. Please refresh the page.');
+    if (Math.round(Number(breakdown.item_total && breakdown.item_total.value) * 100) !== cents + legacyShippingCents || !Number.isFinite(shipping) || shipping < 0
+      || Math.round(Number(unit.amount.value) * 100) !== cents + legacyShippingCents + Math.round(shipping * 100)) throw new Error('Invalid checkout total. Please refresh the page.');
+    const current = window.MJShippingCheckout.requireForPayment(currency, merchandise);
+    if (selection.quote_token !== current.quote_token || selection.contextKey !== current.contextKey) throw new Error(window.MJShippingCheckout.errorMessage('SHIPPING_QUOTE_CHANGED'));
+    unit.items = merchandise;
+    unit.amount.breakdown = { ...breakdown,
+      item_total: { currency_code: currency, value: (cents / 100).toFixed(2) },
+      shipping: { currency_code: currency, value: selection.price.toFixed(2) }
+    };
+    unit.amount.value = ((cents + Math.round(selection.price * 100)) / 100).toFixed(2);
+    unit.shipping = { ...unit.shipping, options: [{ id: selection.id, label: ((selection.carrier_name || selection.carrier) + ' · ' + (selection.service_name || selection.service)).slice(0, 127),
+      type: 'SHIPPING', selected: true, amount: { currency_code: currency, value: selection.price.toFixed(2) } }] };
+    payload.application_context = { ...payload.application_context, shipping_preference: 'GET_FROM_FILE' };
     // PayPal collects contact details in its checkout, with no extra storefront form.
     // Its Contact Module currently supports US checkout only. Required collection
     // is controlled separately by the merchant's Contact Telephone Number setting.
@@ -66,7 +82,9 @@
         }
       }};
     }
-    return (await checkoutRequest('create', {payload,discount_code:discount && discount.code})).id;
+    const result = await checkoutRequest('create', {payload,discount_code:discount && discount.code,shipping_quote_token:selection.quote_token});
+    window.MJShippingCheckout.rememberOrder(result.id, selection);
+    return result.id;
   }
   async function checkoutRequest(action,body) {
     let response,result;
@@ -79,9 +97,12 @@
     }
     if(!response.ok) {
       if(result.error==='US_REQUIRES_USD'){goToUsMarket();return new Promise(function(){});}
-      const safeErrors=['DISCOUNT_USD_ONLY','INVALID_ORDER','CHECKOUT_NOT_FOUND','CHECKOUT_MISMATCH','CURRENCY_MISMATCH','ORDER_NOT_APPROVED','PRICE_MISMATCH','PAYPAL_RECEIPT_UNAVAILABLE','CHECKOUT_UNAVAILABLE'];
-      if(action==='capture' && !safeErrors.includes(result.error_code || result.error))throw paymentStatusError(body.orderId);
-      throw new Error(checkoutError(result,'Could not verify payment. Please try again.'));
+      const safeErrors=['DISCOUNT_USD_ONLY','INVALID_ORDER','CHECKOUT_NOT_FOUND','CHECKOUT_MISMATCH','CURRENCY_MISMATCH','ORDER_NOT_APPROVED','PRICE_MISMATCH','PAYPAL_RECEIPT_UNAVAILABLE','CHECKOUT_UNAVAILABLE','ORDER_ID_MISMATCH'];
+      const code = result.error_code || result.error || '';
+      if(action==='capture' && !safeErrors.includes(code) && !/^(SHIPPING_|INVALID_SHIPPING_)/.test(code))throw paymentStatusError(body.orderId);
+      const error = new Error(checkoutError(result,'Could not verify payment. Please try again.'));
+      error.code = code;
+      throw error;
     }
     if(action==='capture' && result.status!=='COMPLETED')throw paymentStatusError(body.orderId);
     return result;
@@ -109,7 +130,11 @@
     }
     return true;
   }
-  async function capture(orderId) {return checkoutRequest('capture',{orderId});}
+  async function capture(orderId) {
+    if (!window.MJShippingCheckout) throw new Error('A shipping quote is required before payment.');
+    const selection = window.MJShippingCheckout.requireForCapture(orderId);
+    return checkoutRequest('capture',{orderId,shipping_quote_token:selection.quote_token});
+  }
   function shippingPrice(cost, sourceCurrency, targetCurrency) {
     const value = Number(cost);
     if (!Number.isFinite(value) || value < 0) throw new Error('Invalid shipping price');

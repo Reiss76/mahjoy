@@ -40,6 +40,7 @@ async function initDatabase() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    await pool.query('ALTER TABLE mahjoy_orders ADD COLUMN IF NOT EXISTS shipping_quote JSONB');
     console.log('[db] Orders table ready');
   } catch (err) {
     console.error('[db] Failed to init database:', err.message);
@@ -167,22 +168,38 @@ app.post('/api/centumpay/checkout', async (req, res) => {
     } = req.body;
     
     if (!cart.length) return res.status(400).json({ error: 'Cart vacío' });
+    if(req.body.currency && req.body.currency!=='MXN')return res.status(409).json({error:'Card checkout is only available in MXN',error_code:'CARD_CURRENCY_UNAVAILABLE'});
+    if([customer_name,customer_email,customer_phone,shipping_street,shipping_city,shipping_state].some(value=>typeof value!=='string' || !value.trim())) {
+      return res.status(409).json({error:'Completa tus datos y dirección de envío antes de pagar.',error_code:'SHIPPING_ADDRESS_REQUIRED'});
+    }
+    const productQuote=await require('./lib/checkout-prices').resolveCheckoutQuote(PROAX_API_URL,{items:cart,currency:'MXN',discount_code},fetch);
+    for(let n=0;n<cart.length;n++) {
+      const shown=Number(cart[n].price);
+      if(!Number.isFinite(shown) || Math.round(shown*100)!==Math.round(productQuote.items[n].unit_price*100)) {
+        return res.status(409).json({error:'Los precios cambiaron. Actualiza el carrito y revisa el total.',error_code:'PRICE_MISMATCH'});
+      }
+    }
+    const merchandise=productQuote.items.map(p=>({id:p.id,sku:p.sku,name:p.name,qty:p.qty,price:p.unit_price}));
+    const shippingQuote=require('./lib/shipping-payment').verifyCardShipping({...req.body,cart:merchandise},require('./lib/shipping-quotes').verifyShippingQuote);
 
-    const myOrderId = orderId || `mahjoy-${Date.now()}`;
+    // A checkout cannot overwrite a previously frozen quote or paid order.
+    const myOrderId = 'mahjoy-'+crypto.randomUUID();
 
     // Build cart with shipping included
-    const cartItems = cart.map(item => ({
+    const cartItems = merchandise.map(item => ({
+      id: item.id,
+      sku: item.sku,
       name: item.name,
       qty: Number(item.qty),
       price: Number(item.price)
     }));
     
     // Add shipping as cart item if present
-    if (shipping_cost && Number(shipping_cost) > 0) {
+    if (shippingQuote.price > 0) {
       cartItems.push({
         name: 'Envío',
         qty: 1,
-        price: Number(shipping_cost)
+        price: shippingQuote.price
       });
     }
 
@@ -200,13 +217,14 @@ app.post('/api/centumpay/checkout', async (req, res) => {
       shipping_city: shipping_city || '',
       shipping_state: shipping_state || '',
       shipping_cp: shipping_cp || '',
-      shipping_cost: Number(shipping_cost) || 0
+      shipping_cost: shippingQuote.price,
+      shipping_quote: shippingQuote
     };
 
     // BACKUP: Save order data to file AND database BEFORE calling Proax
     const orderBackupData = {
       orderId: myOrderId,
-      cart: cartItems,
+      cart: merchandise,
       customer_name,
       customer_lastname,
       customer_email,
@@ -217,7 +235,8 @@ app.post('/api/centumpay/checkout', async (req, res) => {
       shipping_city,
       shipping_state,
       shipping_cp,
-      shipping_cost: Number(shipping_cost) || 0,
+      shipping_cost: shippingQuote.price,
+      shipping_quote: shippingQuote,
       status: 'checkout_started',
       source: 'centumpay',
       discount_code: discount_code || null
@@ -227,7 +246,9 @@ app.post('/api/centumpay/checkout', async (req, res) => {
     saveOrderToBackup(orderBackupData);
     
     // Save to Neon database (primary)
-    await saveOrderToDatabase(orderBackupData);
+    if(!await saveOrderToDatabase(orderBackupData)) {
+      return res.status(503).json({error:'Could not save the shipping quote. Please try again.',error_code:'SHIPPING_QUOTE_STORAGE_UNAVAILABLE'});
+    }
 
     console.log('[centumpay] Forwarding to Proax:', JSON.stringify(universePayload, null, 2));
 
@@ -249,11 +270,14 @@ app.post('/api/centumpay/checkout', async (req, res) => {
       });
     } else {
       return res.status(502).json({ 
-        error: 'Universe API error', 
+        error: 'Universe API error',
+        error_code: universeJson.error_code || 'CHECKOUT_UNAVAILABLE',
         detail: universeJson 
       });
     }
   } catch (err) {
+    if(err.code==='DISCOUNT_USD_ONLY')return res.status(403).json({error:err.message,error_code:err.code});
+    if(/^SHIPPING_|^PACKAGE_PROFILE_/.test(err.code || err.message || ''))return res.status(409).json({error:err.code || err.message,error_code:err.code || err.message});
     console.error('[centumpay]', err);
     return res.status(500).json({ error: 'Error interno', detail: String(err) });
   }
@@ -301,221 +325,38 @@ app.listen(PORT, () => {
 // ─── Envia.com Shipping API ──────────────────────────────────────────────────
 
 const ENVIA_API_KEY = process.env.ENVIA_API_KEY || 'c541f5b32442e1505448fbdcf85f6cc4ac132a273f148242b8159234fa34432c';
-const ENVIA_ORIGIN_CP_MX = process.env.ENVIA_ORIGIN_CP || '66260'; // Mexico: San Pedro Garza García
-const ENVIA_ORIGIN_CP_US = '78852'; // USA: Eagle Pass, TX
 const ENVIA_API_URL = 'https://api.envia.com/ship/rate/';
 
-// Product weights in kg (for shipping calculations)
-const PRODUCT_WEIGHTS = {
-  // Main products
-  'tiles': 2.39,
-  'tile': 2.39,
-  'sensu': 2.39,
-  'mystic': 2.39,
-  'cosmic': 2.39,
-  // Racks
-  'rack': 0.55,
-  'racks': 0.55,
-  // Mats
-  'mat': 0.81,
-  // Bags
-  'big bag': 0.97,
-  'bigbag': 0.97,
-  'velvet tile bag': 0.13,
-  'tile bag velvet': 0.13,
-  'tile bag piel': 0.31,
-  'tile case': 0.31,
-  'rack bag': 0.12,
-  // Accessories
-  'shuffler': 0.05,
-  'line reader': 0.04,
-  'folio': 0.11,
-  // Default for unknown
-  'default': 0.5,
-};
-
-// Get weight for a product by name
-function getProductWeight(productName) {
-  if (!productName) return PRODUCT_WEIGHTS.default;
-  const name = productName.toLowerCase();
-  
-  // Check for exact matches first
-  for (const [key, weight] of Object.entries(PRODUCT_WEIGHTS)) {
-    if (key === 'default') continue;
-    if (name.includes(key)) return weight;
+// One shipping authority supplies signed rates and the same parcel for fulfillment.
+const shippingConfig = require('./config/shipping');
+const {
+  createShippingQuoteService, getStoredShippingQuote, shipmentStore
+} = require('./lib/shipping-quotes');
+function shippingOrigin(country) {
+  const configured = country === 'MX' ? shippingConfig.origin : shippingConfig.originUS;
+  const completeOverride = process.env['ENVIA_ORIGIN_' + country + '_JSON'];
+  let origin = configured;
+  if (completeOverride) {
+    try { origin = JSON.parse(completeOverride); }
+    catch (_) { const error = new Error('INVALID_SHIPPING_ORIGIN'); error.code = error.message; error.status = 503; throw error; }
   }
-  return PRODUCT_WEIGHTS.default;
+  const postalOverride = country === 'MX' ? process.env.ENVIA_ORIGIN_CP : process.env.ENVIA_ORIGIN_CP_US;
+  if (postalOverride && postalOverride !== origin.postalCode) {
+    const error = new Error('SHIPPING_ORIGIN_MISMATCH'); error.code = error.message; error.status = 503; throw error;
+  }
+  return origin;
 }
-
-// Origin addresses for each country
-const ORIGINS = {
-  MX: {
-    name: 'Mah Joy',
-    company: 'Play Mahjoy',
-    email: 'info@playmahjoy.com',
-    phone: '5530395891',
-    street: 'Av. Lázaro Cárdenas',
-    number: '2225 PB Local 1-B',
-    district: 'Valle Oriente',
-    city: 'San Pedro Garza García',
-    state: 'NL',
-    country: 'MX',
-    postalCode: ENVIA_ORIGIN_CP_MX,
-    reference: 'Torre Latitud'
-  },
-  US: {
-    name: 'Play Mahjoy',
-    company: 'Play Mahjoy',
-    email: 'info@playmahjoy.com',
-    phone: '8305551234',
-    street: 'Webster St',
-    number: '3267',
-    district: '',
-    city: 'Eagle Pass',
-    state: 'TX',
-    country: 'US',
-    postalCode: ENVIA_ORIGIN_CP_US
-  }
-};
-
+const shippingQuotes = createShippingQuoteService({
+  config: shippingConfig, getOrigin: shippingOrigin, apiKey: ENVIA_API_KEY,
+  apiBase: ENVIA_API_URL.replace('/ship/rate/', ''),
+  getStoredShippingQuote: (orderId, client) => getStoredShippingQuote(client || pool, orderId),
+  store: shipmentStore(pool)
+});
 app.post('/api/shipping/quote', async (req, res) => {
-  if (!ENVIA_API_KEY) {
-    return res.status(500).json({ error: 'Shipping not configured' });
-  }
-
-  // Accept both 'destination' and 'destination_postal_code' for compatibility
-  const { destination, destination_postal_code, country, items, currency } = req.body;
-  const postalCode = destination || destination_postal_code;
-  const destCountry = (country || 'MX').toUpperCase();
-  const displayCurrency = currency || (destCountry === 'US' ? 'USD' : 'MXN');
-  if (!['MXN', 'USD'].includes(displayCurrency)) return res.status(400).json({ error: 'Invalid shipping currency' });
-  if (destCountry === 'US' && displayCurrency !== 'USD') return res.status(409).json({error:'US_REQUIRES_USD'});
-  
-  // Validate postal code length (5 for both MX and US)
-  if (!postalCode || postalCode.length !== 5) {
-    return res.status(400).json({ error: 'Invalid postal code' });
-  }
-  
-  // Only support MX and US for now
-  if (!['MX', 'US'].includes(destCountry)) {
-    return res.status(400).json({ error: 'Country not supported. Contact us for international shipping.' });
-  }
-
-  try {
-    // Calculate package weight based on cart items
-    let weight = 0.5; // minimum weight
-    if (items && items.length > 0) {
-      weight = items.reduce((sum, item) => {
-        let itemWeight = item.weight || getProductWeight(item.name || item.sku || '');
-        // Round to 1kg if weight is >= 0.80kg
-        if (itemWeight >= 0.80 && itemWeight < 1) itemWeight = 1;
-        return sum + (itemWeight * (item.qty || 1));
-      }, 0);
-    }
-    weight = Math.max(weight, 0.5); // Ensure minimum 500g
-    // Round total weight to 1kg if >= 0.80kg
-    if (weight >= 0.80 && weight < 1) weight = 1;
-    
-    // Select origin based on destination country (ship from same country)
-    const origin = ORIGINS[destCountry];
-    
-    // Envia.com API requires full address structure
-    const payload = {
-      origin: origin,
-      destination: {
-        name: 'Cliente',
-        phone: destCountry === 'US' ? '5551234567' : '5500000000',
-        street: 'Street',
-        number: '1',
-        district: destCountry === 'US' ? '' : 'Colonia',
-        city: 'City',
-        state: destCountry === 'US' ? 'TX' : 'MX', // Will be determined from CP
-        country: destCountry,
-        postalCode: postalCode
-      },
-      packages: [{
-        content: 'Mahjong Set',
-        amount: 1,
-        type: 'box',
-        weight: weight,
-        insurance: 0,
-        declaredValue: 3000,
-        weightUnit: 'KG',
-        lengthUnit: 'CM',
-        dimensions: {
-          length: 40,
-          width: 30,
-          height: 15
-        }
-      }],
-      settings: { currency: displayCurrency },
-      shipment: {
-        type: 1
-      }
-    };
-
-    // Query multiple carriers in parallel - different carriers per country
-    const carriers = destCountry === 'US' 
-      ? ['usps', 'fedex', 'ups'] // USA carriers
-      : ['fedex', 'dhl', 'estafeta', 'paquetexpress']; // Mexico carriers
-    
-    const fetchCarrierQuotes = async (carrier) => {
-      try {
-        const carrierPayload = { ...payload, shipment: { ...payload.shipment, carrier } };
-        const response = await fetch(ENVIA_API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${ENVIA_API_KEY}`
-          },
-          body: JSON.stringify(carrierPayload)
-        });
-        const data = await response.json();
-        const rates = data.data || data || [];
-        if (Array.isArray(rates)) {
-          return rates.map(q => {
-            const rawPrice = parseFloat(q.total_price || q.totalPrice || q.amount || q.price || 0);
-            const currency = q.currency;
-            
-            return {
-              id: q.carrier_service_code || q.serviceCode || `${carrier}-${q.service}`,
-              carrier: (q.carrierDescription || q.carrier || carrier).toUpperCase(),
-              service: q.serviceDescription || q.service || q.serviceName || 'Standard',
-              days: q.deliveryEstimate || q.delivery_days || q.deliveryDays || q.estimated_delivery || '2-5',
-              price: rawPrice,
-              currency: currency
-            };
-          }).filter(q => q.price > 0 && q.currency === displayCurrency);
-        }
-        return [];
-      } catch (e) {
-        console.error(`Error fetching ${carrier}:`, e.message);
-        return [];
-      }
-    };
-
-    const allQuotes = await Promise.all(carriers.map(fetchCarrierQuotes));
-    let quotes = allQuotes.flat().sort((a, b) => a.price - b.price);
-    
-    // The carrier quotes the requested market currency. Never convert or relabel it.
-    if (quotes.length > 0) {
-      // Return quotes plus cheapest rate for easy access
-      const cheapest = quotes[0]; // Already sorted by price
-      res.json({ 
-        quotes, 
-        currency: displayCurrency,
-        cheapest_rate: cheapest.price,
-        shipping_cost: cheapest.price,
-        cheapest_carrier: cheapest.carrier,
-        cheapest_service: cheapest.service,
-        cheapest_days: cheapest.days
-      });
-    } else {
-      res.json({ error: 'No shipping options available', quotes: [] });
-    }
-  } catch (err) {
-    console.error('Envia.com API error:', err);
-    res.status(500).json({ error: 'Shipping calculation failed' });
+  res.set('Cache-Control', 'no-store');
+  try { res.json(await shippingQuotes.quote(req.body)); }
+  catch (error) {
+    res.status(error.status || 503).json({error: 'Could not verify shipping. Please try again.', error_code:error.code || 'SHIPPING_UNAVAILABLE', quotes:[]});
   }
 });
 
@@ -594,11 +435,12 @@ async function saveOrderToDatabase(orderData) {
       INSERT INTO mahjoy_orders (
         order_id, customer_name, customer_lastname, customer_email, customer_phone,
         shipping_street, shipping_interior, shipping_neighborhood, shipping_city, 
-        shipping_state, shipping_cp, shipping_cost, cart, status, source, discount_code
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        shipping_state, shipping_cp, shipping_cost, cart, status, source, discount_code, shipping_quote
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
       ON CONFLICT (order_id) DO UPDATE SET
         status = CASE WHEN mahjoy_orders.status IN ('shipped','delivered') THEN mahjoy_orders.status ELSE EXCLUDED.status END,
         discount_code = COALESCE(EXCLUDED.discount_code, mahjoy_orders.discount_code),
+        shipping_quote = COALESCE(mahjoy_orders.shipping_quote, EXCLUDED.shipping_quote),
         updated_at = CURRENT_TIMESTAMP
       RETURNING id
     `, [
@@ -617,7 +459,8 @@ async function saveOrderToDatabase(orderData) {
       JSON.stringify(orderData.cart || []),
       orderData.status || 'checkout_started',
       orderData.source || 'web',
-      orderData.discount_code || null
+      orderData.discount_code || null,
+      orderData.shipping_quote ? JSON.stringify(orderData.shipping_quote) : null
     ]);
     console.log(`[db] Saved order ${orderData.orderId} (id: ${result.rows[0]?.id})${orderData.discount_code ? ` Código: ${orderData.discount_code}` : ''}`);
     return true;
@@ -1228,121 +1071,22 @@ async function sendOrderConfirmationEmail(order) {
   }
 }
 
-// Create shipment with Envia.com
+// Generate only from a paid order's persisted, accepted shipping snapshot.
 app.post('/api/shipping/create', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
   try {
-    const { orderId, carrier, destination, packageInfo } = req.body;
-    
-    if (!destination || !destination.postalCode || !destination.name) {
-      return res.status(400).json({ error: 'Missing destination info' });
+    const result = await shippingQuotes.generate(req.body);
+    if (pendingOrders.has(result.orderId)) {
+      const order = pendingOrders.get(result.orderId);
+      order.status = 'shipped';
+      order.trackingNumber = result.trackingNumber;
+      order.labelUrl = result.labelUrl;
+      order.shippedAt = new Date().toISOString();
+      pendingOrders.set(result.orderId, order);
     }
-
-    // Map state abbreviations to full names for Envia
-    const stateMap = {
-      'AGS': 'Aguascalientes', 'BC': 'Baja California', 'BCS': 'Baja California Sur',
-      'CAM': 'Campeche', 'CHIS': 'Chiapas', 'CHIH': 'Chihuahua', 'CDMX': 'Ciudad de Mexico',
-      'COAH': 'Coahuila', 'COL': 'Colima', 'DGO': 'Durango', 'GTO': 'Guanajuato',
-      'GRO': 'Guerrero', 'HGO': 'Hidalgo', 'JAL': 'Jalisco', 'MEX': 'Estado de Mexico',
-      'MICH': 'Michoacan', 'MOR': 'Morelos', 'NAY': 'Nayarit', 'NL': 'Nuevo Leon',
-      'OAX': 'Oaxaca', 'PUE': 'Puebla', 'QRO': 'Queretaro', 'QROO': 'Quintana Roo',
-      'SLP': 'San Luis Potosi', 'SIN': 'Sinaloa', 'SON': 'Sonora', 'TAB': 'Tabasco',
-      'TAMPS': 'Tamaulipas', 'TLAX': 'Tlaxcala', 'VER': 'Veracruz', 'YUC': 'Yucatan', 'ZAC': 'Zacatecas'
-    };
-
-    const payload = {
-      origin: {
-        name: 'Mah Joy',
-        company: 'Mah Joy',
-        email: 'info@playmahjoy.com',
-        phone: '5530395891',
-        street: 'Av. Vasconcelos',
-        number: '1000',
-        district: 'Del Valle',
-        city: 'San Pedro Garza Garcia',
-        state: 'NL',
-        country: 'MX',
-        postalCode: ENVIA_ORIGIN_CP
-      },
-      destination: {
-        name: destination.name || 'Cliente',
-        email: destination.email || '',
-        phone: destination.phone || '5500000000',
-        street: destination.street || '',
-        number: destination.number || 'S/N',
-        district: destination.neighborhood || destination.district || '',
-        city: destination.city || '',
-        state: stateMap[destination.state] || destination.state || '',
-        country: 'MX',
-        postalCode: destination.postalCode || destination.cp
-      },
-      packages: [{
-        content: packageInfo?.content || 'Mahjong Set',
-        amount: packageInfo?.amount || 1,
-        type: 'box',
-        weight: packageInfo?.weight || 2,
-        insurance: 0,
-        declaredValue: packageInfo?.declaredValue || 3000,
-        weightUnit: 'KG',
-        lengthUnit: 'CM',
-        dimensions: packageInfo?.dimensions || { length: 40, width: 30, height: 15 }
-      }],
-      shipment: {
-        carrier: carrier || 'estafeta',
-        type: 1
-      },
-      settings: {
-        printFormat: 'PDF',
-        printSize: 'STOCK_4X6'
-      }
-    };
-
-    console.log(`[shipping] Creating shipment for order ${orderId}:`, JSON.stringify(payload, null, 2));
-
-    const response = await fetch(ENVIA_CREATE_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${ENVIA_API_KEY}`
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await response.json();
-    console.log('[shipping] Envia response:', JSON.stringify(data, null, 2));
-
-    if (data.meta === 'generate' && data.data && data.data[0]) {
-      const shipment = data.data[0];
-      const result = {
-        ok: true,
-        orderId,
-        trackingNumber: shipment.trackingNumber || shipment.tracking || shipment.carrier_tracking_number,
-        carrier: shipment.carrier || carrier,
-        labelUrl: shipment.label || shipment.labelUrl || null,
-        estimatedDelivery: shipment.estimated_delivery || null
-      };
-      
-      // Update order status
-      if (pendingOrders.has(orderId)) {
-        const order = pendingOrders.get(orderId);
-        order.status = 'shipped';
-        order.trackingNumber = result.trackingNumber;
-        order.labelUrl = result.labelUrl;
-        order.shippedAt = new Date().toISOString();
-        pendingOrders.set(orderId, order);
-      }
-      
-      console.log(`[shipping] Created shipment:`, result);
-      return res.json(result);
-    } else {
-      console.error('[shipping] Envia error:', data);
-      return res.status(502).json({ 
-        error: 'Shipment creation failed', 
-        details: data.error || data.message || data 
-      });
-    }
-  } catch (err) {
-    console.error('[shipping] Create error:', err);
-    res.status(500).json({ error: 'Shipment creation failed', details: String(err) });
+    res.json(result);
+  } catch (error) {
+    res.status(error.status || 503).json({error:'Could not verify shipment. Please review the order.', error_code:error.code || 'SHIPPING_FULFILLMENT_UNAVAILABLE'});
   }
 });
 

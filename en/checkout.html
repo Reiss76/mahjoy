@@ -212,9 +212,10 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           </div>
           
           <p style="font-size:.8rem;text-align:center;color:var(--burgundy);">Deliveries to the United States use the published USD prices.</p>
+<div id="mj-shipping-checkout" data-kind="product" data-currency="USD"></div>
 <div id="paypal-express-container"></div>
           <p style="text-align:center;font-size:.7rem;color:#666;margin-top:.5rem;">No need to fill the form</p>
-          <p style="text-align:center;font-size:.7rem;color:#003087;margin-top:.3rem;font-style:italic;">📦 Includes estimated shipping ($25 USD) - adjusts with your address</p>
+          <p style="text-align:center;font-size:.7rem;color:#003087;margin-top:.3rem;font-style:italic;">📦 Calculate and select shipping before paying. Use that same address in PayPal.</p>
         </div>
         
         <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;">
@@ -342,68 +343,14 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
             <div id="paypal-button-container" style="display:none;"></div>
             <script>
             function handlePayPalClick() {
-              var form = document.getElementById('co-form');
-              if (form && !form.checkValidity()) { form.reportValidity(); return; }
-              var email = form.email ? form.email.value.trim() : '';
-              var emailConfirm = form.email_confirm ? form.email_confirm.value.trim() : '';
-              if (emailConfirm && email !== emailConfirm) {
-                var mm = document.getElementById('email-mismatch');
-                if (mm) mm.style.display = 'block';
-                return;
-              }
-              if (typeof paypal === 'undefined') {
-                alert('PayPal unavailable. Please reload the page or contact us via WhatsApp.');
-                return;
-              }
-              if (!window.MJCheckoutProduct) {
-                alert('Product not loaded. Please refresh the page.');
-                return;
-              }
-              // Hide static button, show PayPal container
-              var staticBtn = document.getElementById('paypal-static-btn');
-              var tagline = staticBtn.nextElementSibling;
-              staticBtn.style.display = 'none';
-              if (tagline && tagline.tagName === 'P') tagline.style.display = 'none';
-              
-              var container = document.getElementById('paypal-button-container');
-              container.style.display = 'block';
-              container.innerHTML = '';
-              
-              var product = window.MJCheckoutProduct;
-              var qty = parseInt(form.qty ? form.qty.value : 1) || 1;
-              var price = parseFloat(product.priceUsd || product.price_usd) || 0;
-              var shipping = window.MJShippingCost || 0;
-              var discount = window.MJAppliedDiscount;
-              if (discount && discount.pct > 0) price = Math.round(price * (1 - discount.pct / 100) * 100) / 100;
-              var total = (price * qty + shipping).toFixed(2);
-              
-              paypal.Buttons({
-                style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal', height: 55 },
-                createOrder: function(data, actions) {
-                  return window.MJPayPalPricing.create(actions, {
-                    intent: 'CAPTURE',
-                    purchase_units: [{ description: 'MAH JOY - ' + product.name, amount: { currency_code: 'USD', value: total, breakdown: { item_total: { currency_code: 'USD', value: (price * qty).toFixed(2) }, shipping: { currency_code: 'USD', value: Number(shipping).toFixed(2) } } }, items: [{ name: product.name.substring(0,127), sku: product.sku || '', unit_amount: { currency_code: 'USD', value: price.toFixed(2) }, quantity: String(qty) }] }],
-                    application_context: { brand_name: 'MAH JOY', shipping_preference: 'NO_SHIPPING' }
-                  });
-                },
-                onApprove: function(data, actions) {
-                  return window.MJPayPalPricing.capture(data.orderID).then(async function(details) {
-                    await window.MJPayPalSync.save(details);
-                    window.location.href = 'checkout.html?payment=success&order=' + data.orderID;
-                  });
-                },
-                onCancel: function() {
-                  staticBtn.style.display = 'flex';
-                  if (tagline && tagline.tagName === 'P') tagline.style.display = 'block';
-                  container.style.display = 'none';
-                },
-                onError: function(err) { 
-                  alert(window.MJPayPalSync.errorMessage(err, 'PayPal error: ' + err.message));
-                  staticBtn.style.display = 'flex';
-                  if (tagline && tagline.tagName === 'P') tagline.style.display = 'block';
-                  container.style.display = 'none';
-                }
-              }).render('#paypal-button-container');
+              var form=document.getElementById('co-form');
+              if(form && !form.checkValidity()) { form.reportValidity(); return; }
+              var email=form.email?.value.trim(), confirmed=form.email_confirm?.value.trim();
+              if(confirmed && email!==confirmed) { document.getElementById('email-mismatch').style.display='block'; return; }
+              try {
+                window.MJShippingCheckout.requireForPayment('USD');
+                window.MJPayPal.pay();
+              } catch(error) { alert(error.message); }
             }
             </script>
           </div>
@@ -419,6 +366,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   <script src="https://d3e54v103j8qbb.cloudfront.net/js/jquery-3.5.1.min.dc5e7f18c8.js?site=69b8b6457fb4b98c000aa3ab" type="text/javascript" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
   <script src="../js/cart.js"></script>
 
+  <script src="../js/shipping-checkout.js"></script>
   <script src="../js/paypal-pricing.js"></script>
   <script src="../js/vendor-ref.js"></script>
   <script src="../js/currency-en.js"></script>
@@ -432,71 +380,21 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   <!-- PayPal Express Checkout with flat US shipping -->
   <script>
   (function() {
-    var US_SHIPPING_FLAT = 25; // $25 USD flat rate shipping to US
     
     // Function to update summary with estimated shipping and discount
     function updateExpressSummary(discountPct) {
-      var product = window.MJCheckoutProduct;
-      if (!product) return;
-      
-      var qty = parseInt(document.getElementById('co-qty')?.value) || 1;
-      // 🔒 CANDADO: SIEMPRE usar precio USD - NUNCA MXN
-      // API devuelve priceUsd (camelCase), también aceptamos price_usd
-      var price = parseFloat(product.priceUsd || product.price_usd) || 0;
-      if (!price) console.error('🚨 [CRITICAL] Missing USD price for:', product.name);
-      var subtotal = price * qty;
-      
-      // Apply discount
-      if (discountPct && discountPct > 0) {
-        subtotal = Math.round(subtotal * (1 - discountPct / 100) * 100) / 100;
-      }
-      
-      var total = subtotal + US_SHIPPING_FLAT;
-      
-      // Update displays
-      var shippingDisplay = document.getElementById('co-shipping-display');
-      var totalDisplay = document.getElementById('co-total');
-      var discountRow = document.getElementById('co-discount-row');
-      var discountAmount = document.getElementById('co-discount-amount');
-      
-      if (shippingDisplay) {
-        shippingDisplay.textContent = '$' + US_SHIPPING_FLAT.toFixed(2);
-        shippingDisplay.style.color = '#003087';
-      }
-      
-      if (totalDisplay) {
-        totalDisplay.textContent = '$' + total.toFixed(2);
-      }
-      
-      // Show discount row if applicable
-      if (discountPct && discountPct > 0 && discountRow && discountAmount) {
-        var originalPrice = parseFloat(product.priceUsd || product.price_usd) || 0;
-        var discountValue = (originalPrice * qty) - subtotal;
-        discountRow.style.display = 'flex';
-        discountAmount.textContent = '-$' + discountValue.toFixed(2);
-      }
+      var product=window.MJCheckoutProduct; if (!product) return;
+      var qty=Number(document.getElementById('co-qty')?.value || 1);
+      var price=Number((product.priceUsd ?? product.price_usd) || 0);
+      if (discountPct > 0) price=Math.round(price*(1-discountPct/100)*100)/100;
+      var selected=window.MJShippingCheckout.state().selected;
+      var shippingDisplay=document.getElementById('co-shipping-display');
+      if (shippingDisplay) shippingDisplay.textContent=selected ? '$'+selected.price.toFixed(2)+' USD' : 'Select a shipping service';
+      var totalDisplay=document.getElementById('co-total');
+      if (totalDisplay) totalDisplay.textContent='$'+(price*qty+(selected ? selected.price : 0)).toFixed(2);
     }
-    
-    // Initialize summary with shipping estimate on page load
-    document.addEventListener('DOMContentLoaded', function() {
-      setTimeout(function() {
-        var shippingDisplay = document.getElementById('co-shipping-display');
-        var totalDisplay = document.getElementById('co-total');
-        var product = window.MJCheckoutProduct;
-        
-        if (shippingDisplay && product) {
-          shippingDisplay.textContent = '$' + US_SHIPPING_FLAT.toFixed(2);
-          shippingDisplay.style.color = '#003087';
-        }
-        if (totalDisplay && product) {
-          var qty = parseInt(document.getElementById('co-qty')?.value) || 1;
-          var price = parseFloat(product.priceUsd || product.price_usd) || 0;
-          var total = (price * qty) + US_SHIPPING_FLAT;
-          totalDisplay.textContent = '$' + total.toFixed(2);
-        }
-      }, 1000);
-    });
-    
+    window.MJShippingCheckout.subscribe(function() { updateExpressSummary(window.MJAppliedDiscount?.pct || 0); });
+
     // Express discount handler
     document.addEventListener('DOMContentLoaded', function() {
       var expressDiscInput = document.getElementById('co-express-discount');
@@ -561,173 +459,47 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     });
     
     function initPayPalExpress() {
-      if (typeof paypal === 'undefined' || !window.MJCheckoutProduct) {
-        setTimeout(initPayPalExpress, 500);
-        return;
-      }
-      
-      var container = document.getElementById('paypal-express-container');
+      if (typeof paypal==='undefined' || !window.MJCheckoutProduct) { setTimeout(initPayPalExpress,500); return; }
+      var container=document.getElementById('paypal-express-container');
       if (!container || container.hasChildNodes()) return;
-      
-      var product = window.MJCheckoutProduct;
-      
       paypal.Buttons({
-        style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal', height: 50 },
-        
-        createOrder: function(data, actions) {
-          var qty = parseInt(document.getElementById('co-qty')?.value) || 1;
-          // Use USD price if available, otherwise fall back to MXN price
-          var price = parseFloat(product.priceUsd || product.price_usd) || 0;
-          console.log('[PayPal Express EN] price:', price, 'price_usd:', product.price_usd, 'price:', product.price);
-          var discount = window.MJAppliedDiscount;
-          if (discount && discount.pct > 0) price = Math.round(price * (1 - discount.pct / 100) * 100) / 100;
-          var subtotal = price * qty;
-          var total = subtotal + US_SHIPPING_FLAT;
-          
-          return window.MJPayPalPricing.create(actions, {
-            intent: 'CAPTURE',
-            purchase_units: [{
-              description: 'MAH JOY - ' + product.name,
-              amount: {
-                currency_code: 'USD',
-                value: total.toFixed(2),
-                breakdown: {
-                  item_total: { currency_code: 'USD', value: subtotal.toFixed(2) },
-                  shipping: { currency_code: 'USD', value: US_SHIPPING_FLAT.toFixed(2) }
-                }
-              },
-              items: [{
-                name: product.name,
-                unit_amount: { currency_code: 'USD', value: price.toFixed(2) },
-                quantity: qty.toString(),
-                sku: product.sku || ''
-              }]
-            }],
-            application_context: {
-              brand_name: 'MAH JOY',
-              shipping_preference: 'GET_FROM_FILE',
-              user_action: 'PAY_NOW'
-            }
+        style:{layout:'vertical',color:'gold',shape:'pill',label:'paypal',height:50},
+        onInit:function(data,actions) {
+          actions.disable(); window.MJShippingCheckout.subscribe(function(state) { if(state.selected) actions.enable(); else actions.disable(); });
+        },
+        onClick:function(data,actions) {
+          try { window.MJShippingCheckout.requireForPayment('USD'); }
+          catch(error) { alert(error.message); return actions.reject(); }
+          return actions.resolve();
+        },
+        createOrder:function(data,actions) {
+          var product=window.MJCheckoutProduct;
+          var qty=Number(document.getElementById('co-qty')?.value || 1);
+          var selected=window.MJShippingCheckout.requireForPayment('USD',[{...product,qty:qty}]);
+          var price=Number((product.priceUsd ?? product.price_usd) || 0);
+          var discount=window.MJAppliedDiscount;
+          if(discount?.pct>0) price=Math.round(price*(1-discount.pct/100)*100)/100;
+          var subtotal=price*qty;
+          return window.MJPayPalPricing.create(actions,{
+            intent:'CAPTURE',purchase_units:[{description:'MAH JOY - '+product.name,
+              items:[{name:product.name.substring(0,127),sku:product.sku || '',quantity:String(qty),unit_amount:{currency_code:'USD',value:price.toFixed(2)}}],
+              amount:{currency_code:'USD',value:(subtotal+selected.price).toFixed(2),breakdown:{
+                item_total:{currency_code:'USD',value:subtotal.toFixed(2)},shipping:{currency_code:'USD',value:selected.price.toFixed(2)}
+              }} }],application_context:{brand_name:'MAH JOY',shipping_preference:'GET_FROM_FILE',user_action:'PAY_NOW'}
           });
         },
-        
-        onShippingChange: function(data, actions) {
-          var address = data.shipping_address || {};
-          var country = address.country_code || '';
-          var cp = address.postal_code || '';
-          
-          // Support US and MX from EN checkout
-          if (!['US', 'MX'].includes(country)) {
-            return actions.reject();
-          }
-          
-          // Quote shipping with Envia API
-          return fetch('/api/shipping/quote', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              destination: cp,
-              country: country,
-              currency: 'USD',
-              items: [{
-                sku: window.MJCheckoutProduct?.sku,
-                name: window.MJCheckoutProduct?.name,
-                qty: parseInt(document.getElementById('co-qty')?.value) || 1
-              }]
-            })
-          })
-          .then(function(res) { return res.json(); })
-          .then(function(quote) {
-            console.log('[PayPal EN] Shipping quote:', quote);
-            
-            var shippingCost = quote.currency === 'USD' ? (parseFloat(quote.cheapest_rate || quote.shipping_cost) || US_SHIPPING_FLAT) : US_SHIPPING_FLAT;
-            var qty = parseInt(document.getElementById('co-qty')?.value) || 1;
-            // 🔒 CANDADO: USD price directo
-            var price = parseFloat(window.MJCheckoutProduct?.priceUsd || window.MJCheckoutProduct?.price_usd) || 0;
-            var discount = window.MJAppliedDiscount;
-            if (discount && discount.pct > 0) price = Math.round(price * (1 - discount.pct / 100) * 100) / 100;
-            var subtotal = price * qty;
-            var total = subtotal + shippingCost;
-            
-            return actions.order.patch([
-              {
-                op: 'replace',
-                path: '/purchase_units/@reference_id==\'default\'/amount',
-                value: {
-                  currency_code: 'USD',
-                  value: total.toFixed(2),
-                  breakdown: {
-                    item_total: { currency_code: 'USD', value: subtotal.toFixed(2) },
-                    shipping: { currency_code: 'USD', value: shippingCost.toFixed(2) }
-                  }
-                }
-              }
-            ]);
-          })
-          .catch(function(err) {
-            console.error('[PayPal EN] Quote error:', err);
-            return actions.resolve(); // Use flat rate on error
-          });
+        ...window.MJShippingCheckout.paypalCallbacks(),
+        onApprove:async function(data) {
+          try {
+            var receipt=await window.MJPayPalPricing.capture(data.orderID);
+            await window.MJPayPalSync.save(receipt, {discount_code:window.MJAppliedDiscount?.code || null});
+            window.location.href='checkout.html?payment=success&order='+data.orderID+'&method=paypal';
+          } catch(error) { alert(window.MJPayPalSync.errorMessage(error,error.message)); }
         },
-        
-        onApprove: function(data, actions) {
-          return window.MJPayPalPricing.capture(data.orderID).then(async function(details) {
-            var payer = details.payer || {};
-            var shipping = details.purchase_units?.[0]?.shipping || {};
-            var address = shipping.address || {};
-            var amount = details.purchase_units?.[0]?.amount || {};
-            
-            var orderData = {
-              orderId: data.orderID,
-              paypalOrderId: details.id,
-              source: 'paypal_express_en',
-              customer: {
-                name: (payer.name?.given_name || '') + ' ' + (payer.name?.surname || ''),
-                email: payer.email_address || '',
-                phone: payer.phone?.phone_number?.national_number || ''
-              },
-              shipping: {
-                name: shipping.name?.full_name || '',
-                street: address.address_line_1 || '',
-                street2: address.address_line_2 || '',
-                city: address.admin_area_2 || '',
-                state: address.admin_area_1 || '',
-                cp: address.postal_code || '',
-                country: address.country_code || 'US',
-                cost: US_SHIPPING_FLAT
-              },
-              product: {
-                name: window.MJCheckoutProduct?.name,
-                sku: window.MJCheckoutProduct?.sku,
-                price: window.MJCheckoutProduct?.price,
-                qty: parseInt(document.getElementById('co-qty')?.value) || 1
-              },
-              payment: {
-                method: 'paypal',
-                currency: 'USD',
-                status: details.status,
-                total: amount.value,
-                shipping_charged: US_SHIPPING_FLAT,
-                captureId: details.purchase_units?.[0]?.payments?.captures?.[0]?.id
-              },
-              timestamp: new Date().toISOString()
-            };
-            
-            await window.MJPayPalSync.save(details, orderData);
-            
-            localStorage.setItem('mj_paypal_order', JSON.stringify(orderData));
-            localStorage.setItem('mj_last_order_id', data.orderID);
-            
-            window.location.href = 'checkout.html?payment=success&order=' + data.orderID + '&method=paypal';
-          });
-        },
-        
-        onError: function(err) {
-          alert(window.MJPayPalSync.errorMessage(err, 'PayPal error. Please try again or use Pay with Card.'));
-        }
+        onError:function(error) { alert(window.MJPayPalSync.errorMessage(error,error.message)); }
       }).render('#paypal-express-container');
     }
-    
+
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function() { setTimeout(initPayPalExpress, 800); });
     } else {
@@ -847,120 +619,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
 })();
 </script>
 
-<!-- Shipping Quote (envia.com) -->
-<script>
-(function(){
-  const cpInput = document.getElementById('co-cp');
-  const quoteDiv = document.getElementById('co-shipping-quote');
-  let selectedShipping = 0;
-  let selectedShippingCurrency = 'USD';
-  let debounceTimer;
-
-  if (!cpInput) return;
-
-  cpInput.addEventListener('input', function() {
-    clearTimeout(debounceTimer);
-    const cp = this.value.replace(/\D/g, '');
-    
-    if (cp.length === 5) {
-      debounceTimer = setTimeout(() => fetchShippingQuote(cp), 500);
-    } else {
-      quoteDiv.style.display = 'none';
-      selectedShipping = 0;
-      syncShippingToCheckout();
-    }
-  });
-
-  async function fetchShippingQuote(cp) {
-    const country = window.getSelectedCountry ? window.getSelectedCountry() : 'US';
-    const isUS = country === 'US';
-    const currency = 'USD';
-    
-    quoteDiv.innerHTML = '<div style="color:var(--orchid);"><span style="animation:pulse 1s infinite">✦</span> Getting shipping rates...</div>';
-    quoteDiv.style.display = 'block';
-    
-    try {
-      const res = await fetch('/api/shipping/quote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ destination: cp, country: country, currency: 'USD', items: [{ weight: 2 }] })
-      });
-      
-      const data = await res.json();
-      
-      if (data.quotes) data.quotes = data.quotes.filter(q => q.currency === 'USD');
-      if (data.quotes && data.quotes.length > 0) {
-        renderQuotes(data.quotes, currency);
-      } else {
-        quoteDiv.innerHTML = '<div style="color:#c53030;">No shipping options available for this postal code</div>';
-      }
-    } catch (err) {
-      console.error('Shipping quote error:', err);
-      quoteDiv.innerHTML = '<div style="color:#c53030;">Error getting shipping rates. Please try again.</div>';
-    }
-  }
-
-  function renderQuotes(quotes, currency) {
-    // Group by carrier, keep only cheapest per carrier
-    const byCarrier = {};
-    quotes.forEach(q => {
-      const key = q.carrier.toUpperCase();
-      if (!byCarrier[key] || q.price < byCarrier[key].price) {
-        byCarrier[key] = q;
-      }
-    });
-    
-    const sorted = Object.values(byCarrier).sort((a, b) => a.price - b.price);
-    
-    const html = sorted.map((q, i) => `
-      <label style="display:flex;align-items:center;gap:.75rem;padding:.75rem;margin:.5rem 0;background:#fff;border:2px solid ${i===0?'var(--orchid)':'#eee'};border-radius:8px;cursor:pointer;transition:border .2s;">
-        <input type="radio" name="shipping_option" value="${q.id}" data-price="${q.price}" data-currency="${q.currency || currency}" ${i===0?'checked':''} style="accent-color:var(--orchid);">
-        <div style="flex:1;">
-          <div style="font-weight:700;color:var(--burgundy);font-size:.85rem;">${q.carrier}</div>
-          <div style="color:#888;font-size:.75rem;">${q.days || '2-5'} business days</div>
-        </div>
-        <div style="font-weight:700;color:var(--burgundy);">$${q.price.toFixed(2)} ${currency}</div>
-      </label>
-    `).join('');
-    
-    quoteDiv.innerHTML = '<div style="font-size:.75rem;color:var(--orchid);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.5rem;">Shipping Options</div>' + html;
-    quoteDiv.style.display = 'block';
-    
-    selectedShipping = sorted[0].price;
-    selectedShippingCurrency = sorted[0].currency || currency;
-    syncShippingToCheckout();
-    
-    quoteDiv.querySelectorAll('input[name="shipping_option"]').forEach(radio => {
-      radio.addEventListener('change', function() {
-        selectedShipping = parseFloat(this.dataset.price);
-        selectedShippingCurrency = this.dataset.currency || currency;
-        syncShippingToCheckout();
-        quoteDiv.querySelectorAll('label').forEach(l => l.style.borderColor = '#eee');
-        this.closest('label').style.borderColor = 'var(--orchid)';
-      });
-    });
-  }
-
-  function syncShippingToCheckout() {
-    // Update shipping display in the order summary
-    const shippingEl = document.getElementById('co-shipping-display');
-    const currency = 'USD';
-    // The shipping quote API already returns USD for US destinations.
-    const shippingDisplay = window.MJPayPalPricing.shippingPrice(selectedShipping, selectedShippingCurrency, 'USD');
-    
-    if (shippingEl && selectedShipping > 0) {
-      shippingEl.textContent = '$' + shippingDisplay.toFixed(2) + ' ' + currency;
-      shippingEl.style.color = 'var(--burgundy)';
-      shippingEl.style.fontWeight = '600';
-    }
-    
-    // Sync with checkout.js for total calculation
-    if (window.MJCheckout && window.MJCheckout.setShippingCost) {
-      window.MJCheckout.setShippingCost(selectedShipping, selectedShippingCurrency);
-    }
-  }
-})();
-</script>
+<!-- Shipping quotes are handled by js/shipping-checkout.js. -->
 <style>
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 </style>

@@ -16,6 +16,7 @@ var PAYPAL_CURRENCY = isEnCheckout ? 'USD' : 'MXN';
 function setupPayPalStaticButton() {
   console.log('[PayPal] setupPayPalStaticButton called');
   const staticBtn = document.getElementById('paypal-static-btn');
+  if (staticBtn?.getAttribute?.('onclick')) return;
   console.log('[PayPal] Button found:', !!staticBtn);
   if (staticBtn && !staticBtn._paypalHandlerAttached) {
     staticBtn._paypalHandlerAttached = true;
@@ -76,6 +77,8 @@ function processPayPalPayment() {
   const qty = parseInt(form?.qty?.value) || 1;
   const appliedDiscount = window.MJAppliedDiscount || null;
   const shippingCost = window.MJShippingCost || 0;
+  try { window.MJShippingCheckout.requireForPayment(PAYPAL_CURRENCY, [{ ...currentProduct, qty }]); }
+  catch (error) { alert(error.message); return; }
   
   console.log('[PayPal] processPayPalPayment - shippingCost:', shippingCost, 'window.MJShippingCost:', window.MJShippingCost);
   
@@ -137,6 +140,7 @@ function processPayPalPayment() {
   // Create PayPal order
   paypal.Buttons({
     style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal', height: 45 },
+    ...window.MJShippingCheckout.paypalCallbacks(),
     createOrder: function(data, actions) {
       return window.MJPayPalPricing.create(actions, {
         intent: 'CAPTURE',
@@ -231,6 +235,7 @@ function initPayPalButton() {
       tagline: false,
       height: 45
     },
+    ...window.MJShippingCheckout.paypalCallbacks(),
     
     // Validate form before creating order
     onClick: function(data, actions) {
@@ -239,6 +244,8 @@ function initPayPalButton() {
         form.reportValidity();
         return actions.reject();
       }
+      try { window.MJShippingCheckout.requireForPayment(PAYPAL_CURRENCY); }
+      catch (error) { alert(error.message); return actions.reject(); }
       
       // Check email match
       const email = form.email.value.trim();
@@ -283,6 +290,7 @@ function initPayPalButton() {
       // Build order items - use USD for EN, MXN for ES
       const items = [{
         name: currentProduct.name.substring(0, 127), // PayPal limit
+        sku: currentProduct.sku || '',
         sku: currentProduct.sku || '',
         unit_amount: {
           currency_code: PAYPAL_CURRENCY,
@@ -452,7 +460,8 @@ function showPaymentSuccess(details) {
 
 // Expose for checkout.js
 window.MJPayPal = {
-  init: initPayPalButton
+  init: initPayPalButton,
+  pay: processPayPalPayment
 };
 
 })(); // End IIFE

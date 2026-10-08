@@ -1,7 +1,8 @@
+const {installShippingFixture}=require('./shipping-client-fixtures');
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
 function browser(fetch,lang='es'){
  const ctx={window:{addEventListener(){},location:{pathname:lang==='en'?'/en/shop/':'/shop/'}},document:{documentElement:{lang},addEventListener(){}},fetch};
- vm.createContext(ctx);vm.runInContext(fs.readFileSync('js/paypal-pricing.js','utf8'),ctx);vm.runInContext(fs.readFileSync('js/paypal-sync.js','utf8'),ctx);return ctx.window;
+ installShippingFixture(ctx);vm.createContext(ctx);vm.runInContext(fs.readFileSync('js/paypal-pricing.js','utf8'),ctx);vm.runInContext(fs.readFileSync('js/paypal-sync.js','utf8'),ctx);return ctx.window;
 }
 test('ambiguous capture failures and pending payments preserve the order reference and never encourage paying again',async()=>{
  for(const lang of ['es','en'])for(const response of ['offline','invalid-json','pending','service-error']){
@@ -15,5 +16,5 @@ test('completed captures return their original receipt and explicit pre-capture 
  const w=browser(async()=>({ok:true,json:async()=>({id:'TESTORDER123456',status:'COMPLETED'})}));
  assert.equal((await w.MJPayPalPricing.capture('TESTORDER123456')).status,'COMPLETED');
  const rejected=browser(async()=>({ok:false,json:async()=>({error_code:'PAYPAL_RECEIPT_UNAVAILABLE',error:'Could not save receipt'})}));
- await assert.rejects(()=>rejected.MJPayPalPricing.capture('TESTORDER123456'),e=>{assert.equal(e.code,undefined);assert.match(e.message,/Could not save receipt/);return true});
+ await assert.rejects(()=>rejected.MJPayPalPricing.capture('TESTORDER123456'),e=>{assert.equal(e.code,'PAYPAL_RECEIPT_UNAVAILABLE');assert.match(e.message,/Could not save receipt/);return true});
 });

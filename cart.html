@@ -130,8 +130,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       <div class="mj-cart-summary">
         <div class="mj-cart-summary-row"><span>Subtotal</span><span id="cart-subtotal"></span></div>
         <div id="cart-discount-row" style="display:none;" class="mj-cart-summary-row"><span id="cart-discount-label" style="color:#16a34a;">Descuento</span><span id="cart-discount-amount" style="color:#16a34a;font-weight:700;"></span></div>
-        <div class="mj-cart-summary-row"><span>Envío</span><span id="cart-shipping" style="color:var(--orchid-mid);font-weight:600;font-size:.85rem;">Se calcula en PayPal</span></div>
-        <div class="mj-cart-summary-total"><span>Total (sin envío)</span><span id="cart-total"></span></div>
+        <div class="mj-cart-summary-row"><span>Envío</span><span id="cart-shipping" style="color:var(--orchid-mid);font-weight:600;font-size:.85rem;">Selecciona un servicio de envío</span></div>
+        <div class="mj-cart-summary-total"><span id="cart-total-label">Total (sin envío)</span><span id="cart-total"></span></div>
       </div>
       
       <!-- PayPal Express Checkout -->
@@ -148,10 +148,26 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         
         <!-- PayPal button container -->
         <p style="font-size:.8rem;text-align:center;color:var(--burgundy);">Los envíos a Estados Unidos usan los precios publicados en USD. Tu carrito se conserva al cambiar de mercado.</p>
+<div id="mj-shipping-checkout" data-kind="cart" data-currency="MXN"></div>
 <div id="paypal-cart-container"></div>
       </div>
       
+      <style>#mj-card-checkout{font-size:14px;line-height:1.4;text-transform:none}#mj-card-checkout label{font-size:12px;font-weight:400;line-height:1.4;text-transform:none}#mj-card-checkout input,#mj-card-checkout button{font-size:14px;line-height:1.4;text-transform:none;font-weight:400;box-sizing:border-box}</style>
+      <section id="mj-card-checkout" hidden style="border:1px solid #ddd;border-radius:12px;padding:18px;margin:18px 0;">
+        <h2 style="font-size:1.2rem;margin:0 0 12px;">Domicilio para pagar con tarjeta</h2>
+        <form id="mj-card-form" onsubmit="proceedToCheckout(event)" style="display:grid;gap:12px;">
+          <label>Nombre completo<input name="customer_name" autocomplete="name" required style="display:block;width:100%;padding:10px;"></label>
+          <label>Correo electrónico<input name="customer_email" type="email" autocomplete="email" required style="display:block;width:100%;padding:10px;"></label>
+          <label>Teléfono de contacto<input name="customer_phone" type="tel" autocomplete="tel" required style="display:block;width:100%;padding:10px;"></label>
+          <label>Calle y número<input name="shipping_street" autocomplete="address-line1" required style="display:block;width:100%;padding:10px;"></label>
+          <label>Ciudad<input name="shipping_city" autocomplete="address-level2" required style="display:block;width:100%;padding:10px;"></label>
+          <label>Estado<input name="shipping_state" autocomplete="address-level1" required style="display:block;width:100%;padding:10px;"></label>
+          <p id="mj-card-destination" style="font-size:.85rem;margin:0;">El código postal y país deben coincidir con el envío seleccionado.</p>
+          <button id="mj-card-submit" type="submit" class="mj-cart-btn-primary" disabled>Continuar al pago con tarjeta</button>
+        </form>
+      </section>
       <div class="mj-cart-actions">
+        <button id="mj-card-open" type="button" onclick="openCardCheckout()" class="mj-cart-btn-primary">Pagar con tarjeta</button>
         <button onclick="proceedWhatsApp()" class="mj-cart-btn-secondary">Continuar por WhatsApp</button>
         <a href="shop-mats.html" style="text-align:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;color:var(--orchid-mid);text-decoration:none;margin-top:.25rem;">← Seguir comprando</a>
       </div>
@@ -162,6 +178,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   <script src="js/webflow.js"></script>
   <script src="js/cart.js"></script>
 
+  <script src="js/shipping-checkout.js"></script>
   <script src="js/paypal-pricing.js"></script>
   <script src="js/vendor-ref.js"></script>
   <script src="js/currency.js"></script>
@@ -229,33 +246,73 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     function changeItemQty(id, qty) { window.MJCart.updateQty(id, qty); renderCart(); }
     function removeItem(id) { window.MJCart.removeFromCart(id); renderCart(); }
 
-    async function proceedToCheckout() {
-      const cart = window.MJCart.getCart();
-      if (!cart.length) return;
-      const btn = event.target;
-      btn.textContent = 'Procesando...'; btn.disabled = true;
-      try {
-        const res = await fetch('/api/centumpay/checkout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            cart: cart.map(i => ({ name: i.name, price: i.price, qty: i.qty })),
-            orderId: `mahjoy-${Date.now()}`,
-          }),
-        });
-        const data = await res.json();
-        if (data.ok && data.checkoutUrl) {
-          window.MJCart.clearCart();
-          window.location.href = data.checkoutUrl;
-        } else {
-          alert('Error al procesar pago. Intenta por WhatsApp.');
-          btn.textContent = 'Pagar con tarjeta →'; btn.disabled = false;
-        }
-      } catch (e) {
-        alert('Error de conexión. Intenta por WhatsApp.');
-        btn.textContent = 'Pagar con tarjeta →'; btn.disabled = false;
-      }
+    function updateCardReadiness() {
+      const form=document.getElementById('mj-card-form'),button=document.getElementById('mj-card-submit');
+      if(!form || !button) return;
+      const selected=window.MJShippingCheckout.state().selected;
+      button.disabled=!!form._checkoutPending || !!form._checkoutUncertain || !selected || !form.checkValidity();
+      const destination=window.MJShippingCheckout.state().destination;
+      document.getElementById('mj-card-destination').textContent='Envío: '+(destination.postalCode || 'sin código postal')+' · '+destination.country;
     }
+    function openCardCheckout() {
+      try { window.MJShippingCheckout.requireForPayment('MXN'); }
+      catch(error) { alert(error.message); return; }
+      document.getElementById('mj-card-checkout').hidden=false;
+      updateCardReadiness(); document.getElementById('mj-card-form').elements.customer_name.focus();
+    }
+    async function proceedToCheckout(event) {
+      event?.preventDefault();
+      const form=document.getElementById('mj-card-form');
+      if(form?._checkoutPending) return;
+      if(!form || !form.checkValidity()) { form?.reportValidity(); return; }
+      if(form._checkoutUncertain) { alert('No pudimos confirmar el checkout anterior. Contacta a MAH JOY antes de volver a intentarlo.'); return; }
+      const cart=window.MJCart.getCart();
+      if(!cart.length) return;
+      let selected;
+      try { selected=window.MJShippingCheckout.requireForPayment('MXN',cart); }
+      catch(error) { alert(error.message); return; }
+      const button=document.getElementById('mj-card-submit');form._checkoutPending=true;button.disabled=true;
+      let financialRequested=false;
+      try {
+        const field=name=>form.elements.namedItem(name).value.trim();
+        const discount=window.cartDiscount;
+        const verified=await window.MJPayPalPricing.quote(cart,'MXN',discount?.code);
+        const paymentCart=cart.map(item=>{
+          const price=Math.round(Number(item.price)*(1-(discount?.pct || 0)/100)*100)/100;
+          const actual=verified.find(product=>String(product.sku).toUpperCase()===String(item.sku).toUpperCase());
+          if(!actual || Math.round(Number(actual.unit_price)*100)!==Math.round(price*100)) {
+            const error=new Error('Los precios cambiaron. Revisa el carrito antes de continuar.');error.code='PRICE_MISMATCH';throw error;
+          }
+          return{id:item.id,sku:item.sku,name:item.name,price,qty:item.qty};
+        });
+        const current=window.MJShippingCheckout.requireForPayment('MXN',cart);
+        if(current.quote_token!==selected.quote_token || current.contextKey!==selected.contextKey) {
+          const error=new Error(window.MJShippingCheckout.errorMessage('SHIPPING_QUOTE_CHANGED'));error.code='SHIPPING_QUOTE_CHANGED';throw error;
+        }
+        financialRequested=true;
+        const res=await fetch('/api/centumpay/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+          cart:paymentCart,
+          customer_name:field('customer_name'),customer_email:field('customer_email'),customer_phone:field('customer_phone'),
+          shipping_street:field('shipping_street'),shipping_city:field('shipping_city'),shipping_state:field('shipping_state'),
+          shipping_cost:selected.price,shipping_cp:selected.postalCode,shipping_country:selected.country,shipping_quote_token:selected.quote_token,
+          discount_code:window.cartDiscount?.code || null
+        })});
+        const data=await res.json();
+        if(!res.ok || !data.ok || !data.checkoutUrl || !data.orderId) {
+          const error=new Error(window.MJShippingCheckout.errorMessage(data.error_code || data.error || 'SHIPPING_QUOTE_REQUIRED'));
+          error.code=data.error_code || data.error;throw error;
+        }
+        localStorage.setItem('mj_last_order_id',data.orderId);
+        localStorage.setItem('mj_last_cart',JSON.stringify(paymentCart));
+        localStorage.setItem('mj_checkout_data',JSON.stringify({orderId:data.orderId,shippingCost:selected.price,shippingCurrency:'MXN'}));
+        window.MJCart.clearCart();window.location.href=data.checkoutUrl;
+      } catch(error) {
+        form._checkoutUncertain=financialRequested && !/^(SHIPPING_|PRICE_|INVALID_|CART_)/.test(error.code || '');
+        alert(form._checkoutUncertain ? 'No pudimos confirmar el checkout. Contacta a MAH JOY antes de volver a intentarlo.' : error.message);
+      } finally { form._checkoutPending=false;updateCardReadiness(); }
+    }
+    document.getElementById('mj-card-form')?.addEventListener('input',updateCardReadiness);
+    window.MJShippingCheckout.subscribe(updateCardReadiness);
 
     function proceedWhatsApp() {
       const cart = window.MJCart.getCart();
@@ -308,7 +365,6 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
 <script src="https://www.paypal.com/sdk/js?client-id=BAAbbz1L2qH_VMP2ACU9ua4HeR2A3NfU8Hp_v3POkGyYIuz4_ot1tihAmUP3h-KHzP9AiAjTRblKvZeKn4&currency=MXN&locale=es_MX"></script>
 <script>
 (function() {
-  var ESTIMATED_SHIPPING = 250;
   var cartDiscount = null;
   
   // Apply discount code
@@ -355,262 +411,69 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   
   function updateCartTotals() {
     var cart = window.MJCart ? window.MJCart.getCart() : [];
-    var subtotal = cart.reduce(function(acc, i) { return acc + (i.price * i.qty); }, 0);
-    var discountAmount = 0;
-    document.getElementById('cart-discount-row').style.display='none';
-    
+    var subtotal = cart.reduce(function(sum,item) { return sum + Number(item.price || 0) * item.qty; },0);
+    var row=document.getElementById('cart-discount-row'); if (row) row.style.display='none';
     if (cartDiscount && cartDiscount.pct > 0) {
-      discountAmount = subtotal * (cartDiscount.pct / 100);
-      subtotal = subtotal - discountAmount;
-      document.getElementById('cart-discount-row').style.display = 'flex';
-      document.getElementById('cart-discount-label').textContent = 'Descuento (' + cartDiscount.pct + '%)';
-      document.getElementById('cart-discount-amount').textContent = '-$' + discountAmount.toFixed(2);
+      var saving=subtotal * cartDiscount.pct / 100; subtotal-=saving;
+      if (row) row.style.display='flex';
+      document.getElementById('cart-discount-label').textContent='Descuento ('+cartDiscount.pct+'%)';
+      document.getElementById('cart-discount-amount').textContent='-$'+saving.toFixed(2);
     }
-    
-    document.getElementById('cart-shipping').textContent = 'Se calcula en PayPal';
-    document.getElementById('cart-total').textContent = '$' + subtotal.toFixed(2);
+    var selected=window.MJShippingCheckout.state().selected;
+    document.getElementById('cart-shipping').textContent=selected ? '$'+selected.price.toFixed(2)+' MXN' : 'Selecciona un servicio de envío';
+    document.getElementById('cart-total').textContent='$'+(subtotal+(selected ? selected.price : 0)).toFixed(2);
+    var totalLabel=document.getElementById('cart-total-label'); if(totalLabel) totalLabel.textContent=selected ? 'Total' : 'Total (sin envío)';
   }
-  
+
   window.addEventListener('mj:cartUpdated', updateCartTotals);
 
-  // Initialize PayPal buttons
+  // Quote shipping before opening PayPal; callbacks only validate the selected address/service.
   function initPayPalCart() {
     var container = document.getElementById('paypal-cart-container');
-    if (!container || typeof paypal === 'undefined') {
-      setTimeout(initPayPalCart, 500);
-      return;
-    }
+    if (!container || typeof paypal === 'undefined') { setTimeout(initPayPalCart, 500); return; }
     if (container.hasChildNodes()) return;
-    
     paypal.Buttons({
       style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal', height: 45 },
-      
+      onInit: function(data, actions) {
+        actions.disable();
+        window.MJShippingCheckout.subscribe(function(state) { if (state.selected) actions.enable(); else actions.disable(); });
+      },
+      onClick: function(data, actions) {
+        try { window.MJShippingCheckout.requireForPayment('MXN'); }
+        catch (error) { alert(error.message); return actions.reject(); }
+        return actions.resolve();
+      },
       createOrder: async function(data, actions) {
         var cart = await window.MJPayPalPricing.refreshCart('MXN');
-        if (!cart.length) {
-          alert('Tu carrito está vacío');
-          return;
-        }
-        
+        var selected = window.MJShippingCheckout.requireForPayment('MXN', cart);
         var discountPct = cartDiscount ? cartDiscount.pct : 0;
-        
-        // Build individual items for PayPal
         var items = cart.map(function(item) {
-          var unitPrice = parseFloat(item.price) || 0;
-          if (discountPct > 0) {
-            unitPrice = Math.round(unitPrice * (1 - discountPct / 100) * 100) / 100;
-          }
-          return {
-            name: (item.name || 'Producto').substring(0, 127),
-            sku: item.sku || '',
-            unit_amount: {
-              currency_code: 'MXN',
-              value: unitPrice.toFixed(2)
-            },
-            quantity: (item.qty || 1).toString()
-          };
+          var unitPrice = Number(item.price);
+          if (discountPct > 0) unitPrice = Math.round(unitPrice * (1 - discountPct / 100) * 100) / 100;
+          return { name: (item.name || 'Producto').substring(0,127), sku: item.sku || '',
+            unit_amount: {currency_code:'MXN',value:unitPrice.toFixed(2)},quantity:String(item.qty || 1) };
         });
-        
-        var subtotal = items.reduce(function(acc, i) {
-          return acc + (parseFloat(i.unit_amount.value) * parseInt(i.quantity));
-        }, 0);
-        var total = subtotal + ESTIMATED_SHIPPING;
-        
-        // Build description with product names
-        var productNames = cart.map(function(i) { return i.name; }).join(', ');
-        var description = 'MAH JOY - ' + (productNames.length > 100 ? productNames.substring(0, 97) + '...' : productNames);
-        
+        var subtotal = items.reduce(function(sum,item) { return sum + Number(item.unit_amount.value) * Number(item.quantity); },0);
         return window.MJPayPalPricing.create(actions, {
-          intent: 'CAPTURE',
-          purchase_units: [{
-            description: description,
-            amount: {
-              currency_code: 'MXN',
-              value: total.toFixed(2),
-              breakdown: {
-                item_total: { currency_code: 'MXN', value: subtotal.toFixed(2) },
-                shipping: { currency_code: 'MXN', value: ESTIMATED_SHIPPING.toFixed(2) }
-              }
-            },
-            items: items,
-            shipping: {
-              options: [
-                {
-                  id: 'standard',
-                  label: 'Envío Standard (3-5 días)',
-                  type: 'SHIPPING',
-                  selected: true,
-                  amount: { currency_code: 'MXN', value: ESTIMATED_SHIPPING.toFixed(2) }
-                },
-                {
-                  id: 'express',
-                  label: 'Envío Express (1-2 días)',
-                  type: 'SHIPPING',
-                  selected: false,
-                  amount: { currency_code: 'MXN', value: (ESTIMATED_SHIPPING * 2).toFixed(2) }
-                }
-              ]
-            }
-          }],
-          application_context: {
-            brand_name: 'MAH JOY',
-            shipping_preference: 'GET_FROM_FILE',
-            user_action: 'PAY_NOW'
-          }
+          intent:'CAPTURE', purchase_units:[{description:'MAH JOY',items:items,
+            amount:{currency_code:'MXN',value:(subtotal + selected.price).toFixed(2),breakdown:{
+              item_total:{currency_code:'MXN',value:subtotal.toFixed(2)},shipping:{currency_code:'MXN',value:selected.price.toFixed(2)}
+            }} }],application_context:{brand_name:'MAH JOY',shipping_preference:'GET_FROM_FILE',user_action:'PAY_NOW'}
         });
       },
-      
-      onShippingChange: function(data, actions) {
-        // DEBUG: Verificar que el callback se está llamando
-        console.log('🚨 [PayPal] onShippingChange CALLED!', data);
-        
+      ...window.MJShippingCheckout.paypalCallbacks(),
+      onApprove: async function(data) {
         try {
-          var address = data.shipping_address || {};
-          var cp = address.postal_code || '';
-          var country = address.country_code || 'MX';
-          if (!window.MJPayPalPricing.requireMarket(country,'MXN',actions)) return;
-          
-          console.log('🚨 [PayPal] CP:', cp, 'Country:', country);
-          
-          if (!['MX', 'US'].includes(country)) {
-            console.log('🚨 [PayPal] País no soportado, rechazando');
-            return actions.reject();
-          }
-          
-          var currency = 'MXN'; // Siempre MXN para carrito MX
-          var cart = window.MJCart ? window.MJCart.getCart() : [];
-          var discountPct = cartDiscount ? cartDiscount.pct : 0;
-          
-          var subtotal = cart.reduce(function(acc, item) {
-            var price = parseFloat(item.price) || 0;
-            if (discountPct > 0) price = Math.round(price * (1 - discountPct / 100) * 100) / 100;
-            return acc + (price * (item.qty || 1));
-          }, 0);
-          
-          console.log('🚨 [PayPal] Subtotal:', subtotal);
-          
-          var items = cart.map(function(item) {
-            return { sku: item.sku, name: item.name, qty: item.qty || 1 };
-          });
-          
-          console.log('🚨 [PayPal] Llamando API /api/shipping/quote...');
-          
-          return fetch('/api/shipping/quote', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ destination: cp, country: country, currency: 'MXN', items: items })
-          })
-          .then(function(res) { 
-            console.log('🚨 [PayPal] API Response status:', res.status);
-            return res.json(); 
-          })
-          .then(function(quote) {
-            console.log('🚨 [PayPal] Cotización recibida:', quote);
-            
-            var quotes = (quote.quotes || []).filter(q => q.currency === 'MXN');
-            
-            // Agrupar: Standard (2+ días) vs Express (1-2 días)
-            var standardQuotes = quotes.filter(function(q) {
-              return q.days && (q.days.includes('2') || q.days.includes('3') || q.days.includes('4') || q.days.includes('5'));
-            });
-            var expressQuotes = quotes.filter(function(q) {
-              return q.days && (q.days.includes('1') || q.days.toLowerCase().includes('siguiente') || q.days.toLowerCase().includes('same'));
-            });
-            
-            if (expressQuotes.length === 0) expressQuotes = standardQuotes;
-            if (standardQuotes.length === 0) standardQuotes = quotes;
-            
-            // El MÁS CARO de cada categoría
-            var standardPrice = standardQuotes.length > 0 
-              ? standardQuotes.sort(function(a, b) { return b.price - a.price; })[0].price 
-              : 250;
-            var expressPrice = expressQuotes.length > 0 
-              ? expressQuotes.sort(function(a, b) { return b.price - a.price; })[0].price 
-              : standardPrice * 1.5;
-            
-            // Usar el seleccionado o Standard por defecto
-            var selectedOption = data.selected_shipping_option?.id || 'standard';
-            var shippingCost = selectedOption === 'express' ? expressPrice : standardPrice;
-            var total = subtotal + shippingCost;
-            
-            console.log('🚨 [PayPal] Standard:', standardPrice, 'Express:', expressPrice, 'Selected:', selectedOption);
-            
-            // Patch shipping options Y amount
-            return actions.order.patch([
-              {
-                op: 'replace',
-                path: '/purchase_units/@reference_id==\'default\'/shipping/options',
-                value: [
-                  {
-                    id: 'standard',
-                    label: 'Envío Standard (3-5 días)',
-                    type: 'SHIPPING',
-                    selected: selectedOption === 'standard',
-                    amount: { currency_code: currency, value: standardPrice.toFixed(2) }
-                  },
-                  {
-                    id: 'express',
-                    label: 'Envío Express (1-2 días)',
-                    type: 'SHIPPING',
-                    selected: selectedOption === 'express',
-                    amount: { currency_code: currency, value: expressPrice.toFixed(2) }
-                  }
-                ]
-              },
-              {
-                op: 'replace',
-                path: '/purchase_units/@reference_id==\'default\'/amount',
-                value: {
-                  currency_code: currency,
-                  value: total.toFixed(2),
-                  breakdown: {
-                    item_total: { currency_code: currency, value: subtotal.toFixed(2) },
-                    shipping: { currency_code: currency, value: shippingCost.toFixed(2) }
-                  }
-                }
-              }
-            ]).then(function() {
-              console.log('🚨 [PayPal] PATCH exitoso! Standard:', standardPrice, 'Express:', expressPrice);
-            }).catch(function(patchErr) {
-              console.error('🚨 [PayPal] PATCH ERROR:', patchErr);
-            });
-          })
-          .catch(function(err) {
-            console.error('🚨 [PayPal] Fetch ERROR:', err);
-            return actions.resolve(); // Continue with default shipping
-          });
-          
-        } catch(e) {
-          console.error('🚨 [PayPal] EXCEPTION:', e);
-          return actions.resolve();
-        }
+          var receipt = await window.MJPayPalPricing.capture(data.orderID);
+          await window.MJPayPalSync.save(receipt, {discount_code:cartDiscount ? cartDiscount.code : null});
+          window.MJCart.clearCart(); window.location.href='gracias.html?order='+data.orderID;
+        } catch(error) { alert(window.MJPayPalSync.errorMessage(error, error.message)); }
       },
-      
-      onApprove: async function(data, actions) {
-        try {
-          var orderData = await window.MJPayPalPricing.capture(data.orderID);
-          var cart = window.MJCart ? window.MJCart.getCart() : [];
-          var shipping = orderData.purchase_units[0].shipping || {};
-          var address = shipping.address || {};
-          
-          // Save order to database
-          await window.MJPayPalSync.save(orderData, {discount_code: cartDiscount ? cartDiscount.code : null});
-          
-          window.MJCart.clearCart();
-          window.location.href = 'gracias.html?order=' + orderData.id;
-        } catch(e) {
-          console.error('PayPal capture error:', e);
-          alert(window.MJPayPalSync.errorMessage(e, 'Hubo un error procesando tu pago. Por favor contacta a soporte.'));
-        }
-      },
-      
-      onError: function(err) {
-        console.error('PayPal error:', err);
-        alert(window.MJPayPalSync.errorMessage(err, 'Error con PayPal. Por favor intenta de nuevo o usa WhatsApp.'));
-      }
+      onError:function(error) { alert(window.MJPayPalSync.errorMessage(error,error.message)); }
     }).render('#paypal-cart-container');
   }
-  
+  window.MJShippingCheckout.subscribe(updateCartTotals);
+
   document.addEventListener('DOMContentLoaded', function() {
     initPayPalCart();
     updateCartTotals();

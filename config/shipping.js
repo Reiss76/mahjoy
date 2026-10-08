@@ -17,14 +17,13 @@ module.exports = {
     company: 'Play Mahjoy',
     email: 'info@playmahjoy.com',
     phone: '5530395891',
-    street: 'Av. Lázaro Cárdenas 2225',
-    number: 'PB Local 1-B',
-    district: 'Valle Oriente',  // Colonia
-    city: 'San Pedro Garza García',
+    street: 'Espigas',
+    number: '88',
+    district: 'Las Fincas',
+    city: 'Ciudad Santa Catarina',
     state: 'NL',  // Nuevo León
     country: 'MX',
-    postalCode: '66260',
-    reference: 'Torre Latitud',
+    postalCode: '66188',
   },
 
   // Product weights in kg (used for shipping calculations)
@@ -74,6 +73,37 @@ module.exports = {
     'mat': { length: 60, width: 10, height: 10 },
     'rack': { length: 35, width: 8, height: 5 },
     'big bag': { length: 40, width: 30, height: 20 },
+  },
+
+  // Confirmed only for this exact cart and market, from the owner's real guide.
+  // Other carts require their own measured, approved packing profile.
+  packageProfiles: [{
+    id: 'mx-mat-polo-rack-green-rack-bag-vino',
+    confirmed: true,
+    country: 'MX',
+    items: [
+      { sku: 'MAT-PIEL', qty: 1 },
+      { sku: 'RACK-VERDE', qty: 1 },
+      { sku: 'RACK-BAG006', qty: 1 },
+    ],
+    packages: [{
+      content: 'Mat Polo Club, Rack Green, Rack Bag Vino',
+      type: 'box', amount: 1, weight: 14.79,
+      weightUnit: 'KG', lengthUnit: 'CM', insurance: 0,
+      dimensions: { length: 83, width: 33, height: 27 },
+    }],
+  }],
+
+  // Preserve the existing US origin; quote and generation share this source.
+  originUS: {
+    name: 'Play Mahjoy', company: 'Play Mahjoy',
+    email: 'info@playmahjoy.com', phone: '8305551234',
+    street: 'Webster St', number: '3267', district: '',
+    city: 'Eagle Pass', state: 'TX', country: 'US', postalCode: '78852',
+  },
+  carriersByCountry: {
+    MX: ['fedex', 'dhl', 'estafeta', 'paquetexpress'],
+    US: ['usps', 'fedex', 'ups'],
   },
 
   // Supported carriers (can be filtered)

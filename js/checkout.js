@@ -139,6 +139,9 @@ window.MJCheckout = {
   },
   updateTotals: updateTotals
 };
+window.MJShippingCheckout.subscribe(function(state) {
+  window.MJCheckout.setShippingCost(state.selected?.price || 0, state.currency || CURRENCY);
+});
 
 function changeQty(delta) {
   qty = Math.max(1, qty + delta);
@@ -353,6 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     const form = e.target;
     const btn = document.getElementById('co-submit');
+    if (btn._checkoutUncertain) { alert('No pudimos confirmar el checkout anterior. Contacta a MAH JOY antes de volver a intentarlo.'); return; }
     // CentumPay supports MXN only. USD orders must stay in USD through PayPal.
     if (isEN) { alert('Please use PayPal to pay the published USD price.'); return; }
 
@@ -393,6 +397,12 @@ document.addEventListener('DOMContentLoaded', () => {
       sku: currentProduct ? currentProduct.sku : '—',
     };
 
+    let shippingSelection;
+    try {
+      window.MJShippingCheckout.setDestination(form.cp?.value || '', form.country?.value || 'MX');
+      shippingSelection = window.MJShippingCheckout.requireForPayment('MXN', [{ ...currentProduct, qty: data.qty }]);
+    } catch (error) { alert(error.message); return; }
+
     btn.textContent = TC.processing;
     btn.disabled = true;
     btn.style.opacity = '0.7';
@@ -406,22 +416,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // The Mexico payment form uses its published MXN price.
     const priceForPayment = discountedPrice;
     const cart = currentProduct
-      ? [{ name: currentProduct.name, price: priceForPayment, qty: data.qty, currency: 'MXN' }]
+      ? [{ id: currentProduct.id, sku: currentProduct.sku, name: currentProduct.name, price: priceForPayment, qty: data.qty, currency: 'MXN' }]
       : [];
     
-    // CentumPay requires shipping in MXN, just like the products.
-    if (selectedShippingCost > 0) {
-      cart.push({ name: 'Envio', price: window.MJPayPalPricing.shippingPrice(selectedShippingCost, window.MJShippingCurrency, 'MXN'), qty: 1, currency: 'MXN' });
-    }
-
-    // Include vendor ref in order ID
-    const vendorCode = window.MJVendor?.getCode() || null;
-    const orderId = `mahjoy-${currentProduct?.id || ''}-${vendorCode ? vendorCode + '-' : ''}${Date.now()}`;
+    let orderId = null; // The payment server returns the canonical ID.
 
     try {
       // Build complete payload with customer and shipping data
       const centumPayload = {
-        orderId,
         cart: cart.filter(i => i.name !== 'Envio'), // Products only, shipping separate
         customer_name: form.name.value.trim(),
         customer_lastname: form.lastname.value.trim(),
@@ -433,7 +435,9 @@ document.addEventListener('DOMContentLoaded', () => {
         shipping_city: form.city?.value?.trim() || '',
         shipping_state: form.state?.value?.trim() || '',
         shipping_cp: form.cp?.value?.trim() || '',
-        shipping_cost: selectedShippingCost || 0,
+        shipping_cost: shippingSelection.price,
+        shipping_country: shippingSelection.country,
+        shipping_quote_token: shippingSelection.quote_token,
         webSite: 'https://mahjoy-production.up.railway.app',
         discount_code: appliedDiscount?.code || null,
       };
@@ -446,8 +450,15 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       const result = await res.json();
+      if (!res.ok) {
+        const error = new Error(window.MJShippingCheckout.errorMessage(result.error_code || result.error || 'SHIPPING_QUOTE_REQUIRED'));
+        error.code = result.error_code || result.error;
+        throw error;
+      }
 
       if (result.ok && result.checkoutUrl) {
+        if (!result.orderId) throw new Error('No pudimos confirmar el pedido. Contacta a MAH JOY antes de volver a intentarlo.');
+        orderId = result.orderId;
         // Save complete checkout data including shipping address
         const shippingData = {
           name: `${form.name.value} ${form.lastname.value}`.trim(),
@@ -461,79 +472,34 @@ document.addEventListener('DOMContentLoaded', () => {
           notes: form.notes?.value || ''
         };
         
-        // Get selected carrier from shipping options
-        const selectedShippingOption = document.querySelector('input[name="shipping_option"]:checked');
-        const selectedCarrier = selectedShippingOption?.closest('label')?.querySelector('[style*="font-weight:700"]')?.textContent?.toLowerCase() || 'estafeta';
-        
-        // Save order to server for webhook processing
-        try {
-          await fetch('/api/orders/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              orderId: orderId,
-              customer: {
-                name: form.name.value,
-                lastname: form.lastname.value,
-                email: form.email.value,
-                phone: form.phone.value
-              },
-              shipping: shippingData,
-              items: cart.filter(i => i.name !== 'Envio'),
-              carrier: selectedCarrier,
-              shippingCost: selectedShippingCost,
-              total: cart.reduce((sum, i) => sum + (i.price * i.qty), 0)
-            })
-          });
-          console.log('[checkout] Order saved for webhook processing');
-        } catch (saveErr) {
-          console.warn('[checkout] Could not save order to server:', saveErr);
-        }
-        
         localStorage.setItem('mj_checkout_data', JSON.stringify({
           name: form.name.value,
           lastname: form.lastname.value,
           email: form.email.value,
           phone: form.phone.value,
           cp: form.cp?.value || '',
-          orderId: orderId
+          orderId: orderId,
+          shippingCost: shippingSelection.price,
+          shippingCurrency: shippingSelection.currency
         }));
         localStorage.setItem('mj_shipping_address', JSON.stringify(shippingData));
         localStorage.setItem('mj_last_order_id', orderId);
-        localStorage.setItem('mj_selected_carrier', selectedCarrier);
+        localStorage.setItem('mj_selected_carrier', shippingSelection.carrier);
         
         // Save cart for order history
         localStorage.setItem('mj_last_cart', JSON.stringify(cart));
         
-        // Register vendor sale if applicable
-        if (vendorCode && window.MJVendor) {
-          const total = cart.reduce((a, i) => a + i.price * i.qty, 0);
-          window.MJVendor.registerSale({
-            orderId,
-            productNames: cart.map(i => i.name).join(', '),
-            amount: total,
-          });
-        }
         window.location.href = result.checkoutUrl;
       } else {
-        // Fallback to WhatsApp if CentumPay fails
-        const msg = [`🀄 *Nuevo pedido MAH JOY*`, ``, `*Producto:* ${data.product} (${data.sku})`,
-          `*Cantidad:* ${data.qty}`, ``, `*Cliente:* ${data.name}`, `*Email:* ${data.email}`,
-          `*WhatsApp:* ${data.phone}`, `*Ciudad:* ${data.city}`,
-          data.notes ? `*Notas:* ${data.notes}` : ''].filter(Boolean).join('\n');
-        window.open(`https://wa.me/${MJ_WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
-        document.getElementById('co-content').style.display = 'none';
-        document.getElementById('co-thanks').style.display = 'flex';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        throw new Error('No pudimos confirmar el checkout. Contacta a MAH JOY antes de volver a intentarlo.');
       }
     } catch (err) {
-      // Network error — fallback to WhatsApp
-      console.error('CentumPay error:', err);
-      const msg = `🀄 Pedido MAH JOY: ${data.product} x${data.qty}\nCliente: ${data.name} | ${data.phone}`;
-      window.open(`https://wa.me/${MJ_WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+      const safeToRetry = /^(SHIPPING_|PRICE_|INVALID_|CART_)/.test(err.code || '');
+      btn._checkoutUncertain = !safeToRetry;
+      alert(safeToRetry ? err.message : 'No pudimos confirmar el checkout. Contacta a MAH JOY antes de volver a intentarlo.');
       btn.textContent = TC.sendOrder;
-      btn.disabled = false;
-      btn.style.opacity = '1';
+      btn.disabled = !safeToRetry;
+      btn.style.opacity = safeToRetry ? '1' : '0.7';
     }
   });
 
@@ -638,6 +604,7 @@ const newUpdateTotals = function() {
     window.MJAppliedDiscount = appliedDiscount;
   }
   window.MJShippingCost = selectedShippingCost;
+  window.MJShippingCheckout.refresh();
 };
 
 // Override updateTotals
