@@ -472,7 +472,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       container._paypalInitializing=true;
       try {
       await window.MJPayPalPricing.init();
-      await paypal.Buttons({
+      await window.MJPayPalPricing.renderButtons('#paypal-express-container',function() { return {
         style:{layout:'vertical',color:'gold',shape:'pill',label:'paypal',height:50},
         ...window.MJPayPalPricing.buttonCallbacks('USD'),
         createOrder:function(data,actions) {
@@ -499,7 +499,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           } catch(error) { alert(window.MJPayPalSync.errorMessage(error,error.message)); }
         },
         onError:function(error) { alert(window.MJPayPalSync.errorMessage(error,error.message)); }
-      }).render('#paypal-express-container');
+      }; });
       } finally { container._paypalInitializing=false; }
     }
 

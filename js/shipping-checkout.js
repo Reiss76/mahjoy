@@ -84,7 +84,16 @@
       ? message('El envío se calcula con tu dirección en PayPal. Revisa el total antes de pagar.', 'Shipping is calculated using your PayPal address. Review the total before paying.')
       : message('Calcula y selecciona el envío antes de pagar. Usa esa misma dirección en PayPal.', 'Calculate and select shipping before paying. Use that same address in PayPal.');
   }
-  function setPayPalNativeMode(value) { payPalNative = value === true; applyPaymentLayout(); emit(); }
+  function setPayPalNativeMode(value) {
+    const previous=payPalNative;payPalNative=value===true;
+    if(previous && !payPalNative) {
+      const form=document.getElementById('co-form');if(form)form.style.display='flex';
+      for(const id of ['mj-card-checkout','mj-product-form-divider','mj-product-form-title']) {
+        const node=document.getElementById(id);if(node){node.hidden=false;if(id==='mj-product-form-divider')node.style.display='flex';}
+      }
+    }
+    applyPaymentLayout();emit();
+  }
   function showCardFields() {
     cardMode = true;
     const section = document.getElementById('mj-card-checkout'); if (section) section.hidden = false;
