@@ -54,6 +54,10 @@
   }
   function state() { return { rates: rates.slice(), selected: selectedRate, loading, notice, destination: { ...destination }, currency: configuration?.currency, payPalNative, cardMode }; }
   function applyPaymentLayout() {
+    const contact=document.getElementById('mj-paypal-delivery-contact'),phone=document.getElementById('mj-paypal-delivery-phone');
+    const phoneRequired=payPalNative && configuration?.currency==='MXN' && !cardMode;
+    if(contact)contact.hidden=!phoneRequired;
+    if(phone)phone.required=phoneRequired;
     const cardSection = document.getElementById('mj-card-checkout');
     if (cardSection && payPalNative) cardSection.hidden = !cardMode;
     const container = document.getElementById('mj-shipping-checkout');

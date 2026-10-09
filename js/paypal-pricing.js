@@ -32,6 +32,18 @@
     return initialization;
   }
   function uncertainOrder() { return [...nativeOrders].find(([, order]) => order.capturePending)?.[0]; }
+  function deliveryPhoneForPayPal(currency) {
+    if(!nativeShippingEnabled() || currency!=='MXN')return undefined;
+    const input=document.getElementById('mj-paypal-delivery-phone');
+    try {
+      if(!window.MJDeliveryPhone)throw Object.assign(new Error('NATIVE_SHIPPING_PHONE_INVALID'),{code:'NATIVE_SHIPPING_PHONE_INVALID'});
+      return window.MJDeliveryPhone.normalizeMxDeliveryPhone(input?.value);
+    } catch(error) {
+      input?.focus?.();
+      const localized=new Error(checkoutError({error_code:error.code},'Enter a valid delivery phone.'));
+      localized.code=error.code;throw localized;
+    }
+  }
   function selectionForPayPal(currency, items) {
     const pending = uncertainOrder();
     if (pending) throw paymentStatusError(pending);
@@ -52,7 +64,7 @@
       },
       onClick: function(_data, actions) {
         if (nativeShippingEnabled()) window.MJShippingCheckout?.showPayPalFields?.();
-        try { selectionForPayPal(currency, typeof items === 'function' ? items() : items); }
+        try { selectionForPayPal(currency, typeof items === 'function' ? items() : items);deliveryPhoneForPayPal(currency); }
         catch (error) { alert(error.message); return actions.reject(); }
         return actions.resolve();
       }
@@ -63,6 +75,9 @@
     const code = result.error_code || result.error || '';
     if (/^(NATIVE_SHIPPING_|NATIVE_CHECKOUT_)/.test(code)) {
       const english=window.location?.pathname?.startsWith('/en/');
+      if(code==='NATIVE_SHIPPING_PHONE_REQUIRED' || code==='NATIVE_SHIPPING_PHONE_INVALID')return english
+        ? 'Enter a 10-digit Mexican delivery phone number, with +52 if you include the country code.'
+        : 'Ingresa un teléfono de entrega de 10 dígitos. Si incluyes la clave de país, usa +52.';
       if (code === 'NATIVE_SHIPPING_UNAVAILABLE') return english
         ? 'Automatic PayPal shipping is unavailable. Refresh your cart to continue.'
         : 'El envío automático de PayPal no está disponible. Actualiza el carrito para continuar.';
@@ -114,6 +129,8 @@
     const merchandise = items.filter(i => !shippingItem(i));
     if (!['MXN','USD'].includes(currency)) throw new Error('Invalid checkout currency');
     const selection = selectionForPayPal(currency, merchandise);
+    // A phone edited after opening PayPal must not replace the order's contact.
+    const deliveryPhone = deliveryPhoneForPayPal(currency);
     const discount = window.MJAppliedDiscount || window.cartDiscount;
     const prices = await quote(merchandise, currency, discount && discount.code);
     let cents = 0, legacyShippingCents = 0;
@@ -158,11 +175,11 @@
       }};
     }
     const result = await checkoutRequest('create', {payload,discount_code:discount && discount.code,
-      ...(nativeShippingEnabled() ? {native_shipping:true} : {shipping_quote_token:selection.quote_token})});
+      ...(nativeShippingEnabled() ? {native_shipping:true,...(deliveryPhone===undefined?{}:{delivery_phone:deliveryPhone})} : {shipping_quote_token:selection.quote_token})});
     const snapshot = options.cart ? merchandise.map(item => ({ sku:item.sku, name:item.name, qty:Number(item.quantity) })) : null;
     if (nativeShippingEnabled()) {
       if (!validCheckoutRef(result.checkout_ref) || result.shipping_state !== 'PENDING' || !/^[A-Za-z0-9-]{1,64}$/.test(result.id || '')) throw new Error('Could not prepare PayPal checkout. Please reload the page.');
-      nativeOrders.set(result.id, {checkout_ref:result.checkout_ref, currency, cart:snapshot, capturePending:false});
+      nativeOrders.set(result.id, {checkout_ref:result.checkout_ref, currency, cart:snapshot, capturePending:false,...(deliveryPhone===undefined?{}:{delivery_phone:deliveryPhone})});
       saveOrders();
     } else window.MJShippingCheckout.rememberOrder(result.id, selection);
     if (snapshot) purchasedCarts.set(result.id, snapshot);
@@ -182,7 +199,8 @@
       const safeErrors=['DISCOUNT_USD_ONLY','INVALID_ORDER','CHECKOUT_NOT_FOUND','CHECKOUT_MISMATCH','CURRENCY_MISMATCH','ORDER_NOT_APPROVED','PRICE_MISMATCH','PAYPAL_RECEIPT_UNAVAILABLE','CHECKOUT_UNAVAILABLE','ORDER_ID_MISMATCH',
         'NATIVE_SHIPPING_UNAVAILABLE','NATIVE_SHIPPING_PENDING','NATIVE_SHIPPING_EXPIRED','NATIVE_CHECKOUT_UNAUTHORIZED',
         'NATIVE_SHIPPING_UNAUTHORIZED','NATIVE_SHIPPING_SUPERSEDED','NATIVE_SHIPPING_INVALID_STATE','NATIVE_SHIPPING_NOT_READY',
-        'NATIVE_SHIPPING_INVALID','NATIVE_SHIPPING_QUOTE_INVALID','NATIVE_SHIPPING_REQUIRED','NATIVE_SHIPPING_SCOPE_INVALID','NATIVE_SHIPPING_CHECKOUT_NOT_FOUND'];
+        'NATIVE_SHIPPING_INVALID','NATIVE_SHIPPING_QUOTE_INVALID','NATIVE_SHIPPING_REQUIRED','NATIVE_SHIPPING_SCOPE_INVALID','NATIVE_SHIPPING_CHECKOUT_NOT_FOUND',
+        'NATIVE_SHIPPING_PHONE_REQUIRED','NATIVE_SHIPPING_PHONE_INVALID'];
       const code = result.error_code || result.error || '';
       if(action==='capture' && !safeErrors.includes(code) && !/^(SHIPPING_|INVALID_SHIPPING_)/.test(code))throw paymentStatusError(body.orderId);
       const error = new Error(checkoutError(result,'Could not verify payment. Please try again.'));
