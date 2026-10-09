@@ -34,9 +34,7 @@
     if(window.MJCheckoutProduct)return [{...window.MJCheckoutProduct,qty:Number(document.getElementById('co-qty')?.value || 1)}];
     return window.MJCart?.getCart() || [];
   }
-  function nativeShippingEnabled(items=currentCheckoutItems()) {
-    return configuration.nativeShipping===true && !items.some(item=>[item?.sku,item?.id].some(value=>/^BUNDLE-/i.test(String(value || '').trim())));
-  }
+  function nativeShippingEnabled() { return configuration.nativeShipping===true; }
   function refreshCheckoutMode() {
     window.MJShippingCheckout?.refresh?.();
     const native=nativeShippingEnabled();
@@ -85,18 +83,6 @@
     return initialization;
   }
   function uncertainOrder() { return [...nativeOrders,...quotedOrders].find(([, order]) => order.capturePending)?.[0]; }
-  function deliveryPhoneForPayPal(currency,native=nativeShippingEnabled()) {
-    if(!native || currency!=='MXN')return undefined;
-    const input=document.getElementById('mj-paypal-delivery-phone');
-    try {
-      if(!window.MJDeliveryPhone)throw Object.assign(new Error('NATIVE_SHIPPING_PHONE_INVALID'),{code:'NATIVE_SHIPPING_PHONE_INVALID'});
-      return window.MJDeliveryPhone.normalizeMxDeliveryPhone(input?.value);
-    } catch(error) {
-      input?.focus?.();
-      const localized=new Error(checkoutError({error_code:error.code},'Enter a valid delivery phone.'));
-      localized.code=error.code;throw localized;
-    }
-  }
   function selectionForPayPal(currency, items=currentCheckoutItems(),native=nativeShippingEnabled(items)) {
     const pending = uncertainOrder();
     if (pending) throw paymentStatusError(pending);
@@ -126,8 +112,8 @@
         try {
           const current=typeof items==='function'?items():items || currentCheckoutItems(),native=nativeShippingEnabled(current);
           if(native!==renderedNative)throw new Error(window.MJShippingCheckout.errorMessage('SHIPPING_CART_CHANGED'));
-          selectionForPayPal(currency,current);deliveryPhoneForPayPal(currency,native);
-          clickedContext={native,key:window.MJShippingCheckout.itemsKey(current),owner:contextOwner};
+          selectionForPayPal(currency,current);
+          clickedContext={native,key:window.MJShippingCheckout.itemsKey(current),cartKey:checkoutCartKey(current),owner:contextOwner};
         }
         catch (error) { alert(error.message); return actions.reject(); }
         return actions.resolve();
@@ -146,6 +132,9 @@
       if(code==='NATIVE_SHIPPING_PHONE_REQUIRED' || code==='NATIVE_SHIPPING_PHONE_INVALID')return english
         ? 'Enter a 10-digit Mexican delivery phone number, with +52 if you include the country code.'
         : 'Ingresa un teléfono de entrega de 10 dígitos. Si incluyes la clave de país, usa +52.';
+      if(code==='NATIVE_SHIPPING_PHYSICAL_MISMATCH')return english
+        ? 'The products in this order changed. Refresh your cart and open PayPal again.'
+        : 'Los productos de este pedido cambiaron. Actualiza el carrito y vuelve a abrir PayPal.';
       if (code === 'NATIVE_SHIPPING_UNAVAILABLE') return english
         ? 'Automatic PayPal shipping is unavailable. Refresh your cart to continue.'
         : 'El envío automático de PayPal no está disponible. Actualiza el carrito para continuar.';
@@ -187,6 +176,11 @@
     if(item.id!=null && String(item.id).trim())return 'id:'+String(item.id).trim().toLowerCase();
     const name=String(item.name || '').trim().toLowerCase();if(!name)changedCart();return 'name:'+name;
   }
+  function checkoutCartKey(items) {
+    const quantities=new Map();
+    for(const item of items){const key=cartIdentity(item);quantities.set(key,(quantities.get(key)||0)+cartQuantity(item));}
+    return JSON.stringify([...quantities].sort(([a],[b])=>a.localeCompare(b)));
+  }
   function priceRequestItem(item) {
     const request={...item,qty:cartQuantity(item),sku:String(item.sku || '').trim(),name:String(item.name || '').trim()};
     if(!request.sku) {
@@ -201,7 +195,7 @@
     return request;
   }
   async function refreshCart(currency) {
-    const version=++cartRefreshVersion,cart=JSON.parse(JSON.stringify(window.MJCart.getCart()));
+    const version=++cartRefreshVersion,cart=JSON.parse(JSON.stringify(window.MJCart.getCart())),clicked=clickedContext;
     if (!cart.length) return cart;
     const request=cart.map(priceRequestItem),prices=await quote(request,currency);
     if(version!==cartRefreshVersion)return window.MJCart.getCart();
@@ -232,6 +226,13 @@
     });
     const identity=quantities=>JSON.stringify([...quantities].sort(([a],[b])=>a.localeCompare(b)));
     if(identity(expected)!==identity(observed))changedCart();
+    // Native cart checkout has no storefront quote to canonicalize old IDs
+    // before its first click. Rebase only that same verified click's aliases;
+    // changed products, quantities or a newer click retain their original guard.
+    if(clicked?.native && clickedContext===clicked && clicked.cartKey===checkoutCartKey(cart)
+      && clicked.key===window.MJShippingCheckout.itemsKey(cart)) {
+      clicked.key=window.MJShippingCheckout.itemsKey(updated);clicked.cartKey=checkoutCartKey(updated);
+    }
     window.MJCart.saveCart(updated);
     return updated;
   }
@@ -249,8 +250,6 @@
     if(clickedContext && (clickedContext.native!==native || clickedContext.key!==window.MJShippingCheckout.itemsKey(merchandise)))throw new Error(window.MJShippingCheckout.errorMessage('SHIPPING_CART_CHANGED'));
     clickedContext=null;
     const selection = selectionForPayPal(currency, merchandise,native);
-    // A phone edited after opening PayPal must not replace the order's contact.
-    const deliveryPhone = deliveryPhoneForPayPal(currency,native);
     const discount = window.MJAppliedDiscount || window.cartDiscount;
     const prices = await quote(merchandise, currency, discount && discount.code);
     let cents = 0, legacyShippingCents = 0;
@@ -295,11 +294,11 @@
       }};
     }
     const result = await checkoutRequest('create', {payload,discount_code:discount && discount.code,
-      ...(native ? {native_shipping:true,...(deliveryPhone===undefined?{}:{delivery_phone:deliveryPhone})} : {shipping_quote_token:selection.quote_token})});
+      ...(native ? {native_shipping:true} : {shipping_quote_token:selection.quote_token})});
     const snapshot = options.cart ? merchandise.map(item => ({ sku:item.sku, name:item.name, qty:Number(item.quantity) })) : null;
     if (native) {
       if (!validCheckoutRef(result.checkout_ref) || result.shipping_state !== 'PENDING' || !/^[A-Za-z0-9-]{1,64}$/.test(result.id || '')) throw new Error('Could not prepare PayPal checkout. Please reload the page.');
-      nativeOrders.set(result.id, {checkout_ref:result.checkout_ref, currency, cart:snapshot, capturePending:false,...(deliveryPhone===undefined?{}:{delivery_phone:deliveryPhone})});
+      nativeOrders.set(result.id, {checkout_ref:result.checkout_ref, currency, cart:snapshot, capturePending:false});
       saveOrders();
     } else {
       window.MJShippingCheckout.rememberOrder(result.id, selection);
@@ -323,7 +322,7 @@
         'NATIVE_SHIPPING_UNAVAILABLE','NATIVE_SHIPPING_PENDING','NATIVE_SHIPPING_EXPIRED','NATIVE_CHECKOUT_UNAUTHORIZED',
         'NATIVE_SHIPPING_UNAUTHORIZED','NATIVE_SHIPPING_SUPERSEDED','NATIVE_SHIPPING_INVALID_STATE','NATIVE_SHIPPING_NOT_READY',
         'NATIVE_SHIPPING_INVALID','NATIVE_SHIPPING_QUOTE_INVALID','NATIVE_SHIPPING_REQUIRED','NATIVE_SHIPPING_SCOPE_INVALID','NATIVE_SHIPPING_CHECKOUT_NOT_FOUND',
-        'NATIVE_SHIPPING_PHONE_REQUIRED','NATIVE_SHIPPING_PHONE_INVALID'];
+        'NATIVE_SHIPPING_PHONE_REQUIRED','NATIVE_SHIPPING_PHONE_INVALID','NATIVE_SHIPPING_PHYSICAL_MISMATCH'];
       const code = result.error_code || result.error || '';
       if(action==='capture' && !safeErrors.includes(code) && !/^(SHIPPING_|INVALID_SHIPPING_)/.test(code))throw paymentStatusError(body.orderId);
       const error = new Error(checkoutError(result,'Could not verify payment. Please try again.'));
