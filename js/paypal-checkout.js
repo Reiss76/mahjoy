@@ -6,17 +6,6 @@ let rendering = null;
 const isEnCheckout = window.location.pathname.includes('/en/');
 const PAYPAL_CURRENCY = isEnCheckout ? 'USD' : 'MXN';
 
-function validateLegacyForm() {
-  if (window.MJPayPalPricing.nativeShippingEnabled()) return true;
-  const form = document.getElementById('co-form');
-  if (form?.checkValidity && !form.checkValidity()) { form.reportValidity(); return false; }
-  const email = form?.email?.value?.trim(), confirmed = form?.email_confirm?.value?.trim();
-  if (confirmed && email !== confirmed) {
-    const mismatch = document.getElementById('email-mismatch'); if (mismatch) mismatch.style.display = 'block';
-    document.getElementById('co-email-confirm')?.focus(); return false;
-  }
-  return true;
-}
 function productItems() {
   const product = window.MJCheckoutProduct;
   const qty = Number(document.getElementById('co-qty')?.value || document.getElementById('co-form')?.qty?.value || 1);
@@ -44,11 +33,9 @@ function buttonOptions() {
   const callbacks = window.MJPayPalPricing.buttonCallbacks(PAYPAL_CURRENCY, productItems);
   return {
     style:{layout:'horizontal',color:'blue',shape:'pill',label:'paypal',tagline:false,height:45},
+    // PayPal collects its own address with GET_FROM_FILE. The shared callbacks
+    // enforce the signed quote and delivery-phone policy; co-form is for cards.
     ...callbacks,
-    onClick:function(data, actions) {
-      if (!validateLegacyForm()) return actions.reject();
-      return callbacks.onClick(data, actions);
-    },
     createOrder:createProductOrder,
     onApprove:async function(data) {
       try {
@@ -74,7 +61,6 @@ async function initPayPalButton() {
 }
 async function processPayPalPayment() {
   await window.MJPayPalPricing.init();
-  if (!validateLegacyForm()) return;
   try { window.MJPayPalPricing.selectionForPayPal(PAYPAL_CURRENCY, productItems()); }
   catch (error) { alert(error.message); return; }
   if (typeof paypal === 'undefined') { alert(isEnCheckout ? 'PayPal is unavailable. Please try again shortly.' : 'PayPal no está disponible. Intenta de nuevo en unos minutos.'); return; }
