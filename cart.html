@@ -442,7 +442,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     container._paypalInitializing=true;
     try {
     await window.MJPayPalPricing.init();
-    await paypal.Buttons({
+    await window.MJPayPalPricing.renderButtons('#paypal-cart-container',function() { return {
       style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal', height: 45 },
       ...window.MJPayPalPricing.buttonCallbacks('MXN'),
       createOrder: async function(data, actions) {
@@ -471,7 +471,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         } catch(error) { alert(window.MJPayPalSync.errorMessage(error, error.message)); }
       },
       onError:function(error) { alert(window.MJPayPalSync.errorMessage(error,error.message)); }
-    }).render('#paypal-cart-container');
+    }; });
     } finally { container._paypalInitializing=false; }
   }
   window.MJShippingCheckout.subscribe(updateCartTotals);

@@ -2,8 +2,15 @@
   let configuration = { nativeShipping: false };
   let initialization = null;
   const nativeOrders = new Map();
+  const quotedOrders = new Map();
   const purchasedCarts = new Map();
   const storageKey = 'mj_paypal_native_orders_v1';
+  const quotedStorageKey = 'mj_paypal_quoted_orders_v1';
+  let checkoutItemsReader = null;
+  let appliedNativeMode = null;
+  let clickedContext = null;
+  const buttonRenderers=new Set(),mountedButtons=new Map();
+  let creatingRenderer=null;
   function loadOrders() {
     try {
       const saved = JSON.parse(window.sessionStorage?.getItem(storageKey) || '{}');
@@ -11,12 +18,58 @@
         if (/^[A-Za-z0-9-]{1,64}$/.test(id) && validCheckoutRef(order?.checkout_ref)) nativeOrders.set(id, order);
       }
     } catch (_) { /* Storage may be disabled; in-page recovery still works. */ }
+    try {
+      const saved=JSON.parse(window.sessionStorage?.getItem(quotedStorageKey) || '{}');
+      for(const [id,order] of Object.entries(saved))if(/^[A-Za-z0-9-]{1,64}$/.test(id) && typeof order?.selection?.quote_token==='string')quotedOrders.set(id,order);
+    } catch (_) {}
   }
   function saveOrders() {
     try { window.sessionStorage?.setItem(storageKey, JSON.stringify(Object.fromEntries(nativeOrders))); } catch (_) {}
+    try { window.sessionStorage?.setItem(quotedStorageKey, JSON.stringify(Object.fromEntries(quotedOrders))); } catch (_) {}
   }
   function validCheckoutRef(value) { return typeof value === 'string' && /^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$/.test(value); }
-  function nativeShippingEnabled() { return configuration.nativeShipping === true; }
+  function currentCheckoutItems() {
+    if(checkoutItemsReader)return checkoutItemsReader() || [];
+    if(/(?:^|\/)cart\.html$/.test(window.location?.pathname || ''))return window.MJCart?.getCart() || [];
+    if(window.MJCheckoutProduct)return [{...window.MJCheckoutProduct,qty:Number(document.getElementById('co-qty')?.value || 1)}];
+    return window.MJCart?.getCart() || [];
+  }
+  function nativeShippingEnabled(items=currentCheckoutItems()) {
+    return configuration.nativeShipping===true && !items.some(item=>[item?.sku,item?.id].some(value=>/^BUNDLE-/i.test(String(value || '').trim())));
+  }
+  function refreshCheckoutMode() {
+    window.MJShippingCheckout?.refresh?.();
+    const native=nativeShippingEnabled();
+    if(appliedNativeMode===native)return;
+    const previous=appliedNativeMode;appliedNativeMode=native;
+    window.MJShippingCheckout?.setPayPalNativeMode?.(native);
+    if(window.dispatchEvent && typeof Event==='function')window.dispatchEvent(new Event('mj:paypalModeChanged'));
+    if(previous!==null)for(const render of buttonRenderers)Promise.resolve().then(render).catch(error=>console.error('[PayPal]',error.message));
+  }
+  function registerButtonRenderer(render) {buttonRenderers.add(render);return ()=>buttonRenderers.delete(render);}
+  function renderButtons(target,optionsFactory) {
+    let renderer=mountedButtons.get(target);
+    if(!renderer) {
+      renderer={generation:0,buttons:null,disposers:[],running:null,again:false,optionsFactory};
+      renderer.render=function() {
+        if(renderer.running){renderer.again=true;return renderer.running;}
+        renderer.running=(async function() {
+          do {
+            renderer.again=false;renderer.generation++;
+            for(const dispose of renderer.disposers.splice(0))dispose();
+            if(renderer.buttons?.close)await renderer.buttons.close();
+            const container=document.getElementById(target.replace(/^#/,''));if(container)container.innerHTML='';
+            let options;creatingRenderer=renderer;
+            try {options=renderer.optionsFactory();} finally {creatingRenderer=null;}
+            renderer.buttons=paypal.Buttons(options);await renderer.buttons.render(target);
+          } while(renderer.again);
+        })();
+        return renderer.running.finally(()=>{renderer.running=null;});
+      };
+      mountedButtons.set(target,renderer);registerButtonRenderer(renderer.render);
+    }
+    renderer.optionsFactory=optionsFactory;return renderer.render();
+  }
   function init() {
     if (!initialization) initialization = (async function() {
       try {
@@ -25,15 +78,15 @@
         const result = await response.json();
         configuration = { nativeShipping: response.ok && result.nativeShipping === true };
       } catch (_) { configuration = { nativeShipping: false }; }
-      window.MJShippingCheckout?.setPayPalNativeMode?.(nativeShippingEnabled());
+      refreshCheckoutMode();
       if (window.dispatchEvent && typeof Event === 'function') window.dispatchEvent(new Event('mj:paypalConfigured'));
       return { ...configuration };
     })();
     return initialization;
   }
-  function uncertainOrder() { return [...nativeOrders].find(([, order]) => order.capturePending)?.[0]; }
-  function deliveryPhoneForPayPal(currency) {
-    if(!nativeShippingEnabled() || currency!=='MXN')return undefined;
+  function uncertainOrder() { return [...nativeOrders,...quotedOrders].find(([, order]) => order.capturePending)?.[0]; }
+  function deliveryPhoneForPayPal(currency,native=nativeShippingEnabled()) {
+    if(!native || currency!=='MXN')return undefined;
     const input=document.getElementById('mj-paypal-delivery-phone');
     try {
       if(!window.MJDeliveryPhone)throw Object.assign(new Error('NATIVE_SHIPPING_PHONE_INVALID'),{code:'NATIVE_SHIPPING_PHONE_INVALID'});
@@ -44,29 +97,44 @@
       localized.code=error.code;throw localized;
     }
   }
-  function selectionForPayPal(currency, items) {
+  function selectionForPayPal(currency, items=currentCheckoutItems(),native=nativeShippingEnabled(items)) {
     const pending = uncertainOrder();
     if (pending) throw paymentStatusError(pending);
-    if (nativeShippingEnabled()) return { price: 0, pending: true, currency };
+    if (native) return { price: 0, pending: true, currency };
     if (!window.MJShippingCheckout) throw new Error('Shipping must be selected before paying. Please reload the page.');
     return window.MJShippingCheckout.requireForPayment(currency, items);
   }
   // Call after init(): native shipping is updated by PayPal's server callback.
   function buttonCallbacks(currency, items) {
-    const callbacks = nativeShippingEnabled() ? {} : window.MJShippingCheckout.paypalCallbacks();
+    if(typeof items==='function')checkoutItemsReader=items;
+    else if(Array.isArray(items))checkoutItemsReader=()=>items;
+    refreshCheckoutMode();
+    const renderedNative=nativeShippingEnabled(),owner=creatingRenderer,generation=owner?.generation,contextOwner={};
+    const callbacks = renderedNative ? {} : window.MJShippingCheckout.paypalCallbacks();
     return { ...callbacks,
       onInit: function(_data, actions) {
-        if (nativeShippingEnabled() && !uncertainOrder()) actions.enable();
-        else {
-          actions.disable();
-          window.MJShippingCheckout.subscribe(function(state) { if (state.selected && !uncertainOrder()) actions.enable(); else actions.disable(); });
-        }
+        if(owner && owner.generation!==generation){actions.disable();return;}
+        const dispose=window.MJShippingCheckout.subscribe(function(state) {
+          const current=nativeShippingEnabled();
+          if((!owner || owner.generation===generation) && current===renderedNative && (current || state.selected) && !uncertainOrder())actions.enable();else actions.disable();
+        });
+        if(owner)owner.disposers.push(dispose);
       },
       onClick: function(_data, actions) {
+        if(owner && owner.generation!==generation)return actions.reject();
         if (nativeShippingEnabled()) window.MJShippingCheckout?.showPayPalFields?.();
-        try { selectionForPayPal(currency, typeof items === 'function' ? items() : items);deliveryPhoneForPayPal(currency); }
+        try {
+          const current=typeof items==='function'?items():items || currentCheckoutItems(),native=nativeShippingEnabled(current);
+          if(native!==renderedNative)throw new Error(window.MJShippingCheckout.errorMessage('SHIPPING_CART_CHANGED'));
+          selectionForPayPal(currency,current);deliveryPhoneForPayPal(currency,native);
+          clickedContext={native,key:window.MJShippingCheckout.itemsKey(current),owner:contextOwner};
+        }
         catch (error) { alert(error.message); return actions.reject(); }
         return actions.resolve();
+      },
+      onCancel:function(){
+        if(owner && owner.generation!==generation)return;
+        if(clickedContext?.owner===contextOwner)clickedContext=null;
       }
     };
   }
@@ -128,9 +196,12 @@
     const shippingItem = i => !i.sku && /^(shipping|env[ií]o)$/i.test(i.name);
     const merchandise = items.filter(i => !shippingItem(i));
     if (!['MXN','USD'].includes(currency)) throw new Error('Invalid checkout currency');
-    const selection = selectionForPayPal(currency, merchandise);
+    const native=nativeShippingEnabled(merchandise);
+    if(clickedContext && (clickedContext.native!==native || clickedContext.key!==window.MJShippingCheckout.itemsKey(merchandise)))throw new Error(window.MJShippingCheckout.errorMessage('SHIPPING_CART_CHANGED'));
+    clickedContext=null;
+    const selection = selectionForPayPal(currency, merchandise,native);
     // A phone edited after opening PayPal must not replace the order's contact.
-    const deliveryPhone = deliveryPhoneForPayPal(currency);
+    const deliveryPhone = deliveryPhoneForPayPal(currency,native);
     const discount = window.MJAppliedDiscount || window.cartDiscount;
     const prices = await quote(merchandise, currency, discount && discount.code);
     let cents = 0, legacyShippingCents = 0;
@@ -153,13 +224,13 @@
     const shipping = Number(breakdown.shipping && breakdown.shipping.value || 0);
     if (Math.round(Number(breakdown.item_total && breakdown.item_total.value) * 100) !== cents + legacyShippingCents || !Number.isFinite(shipping) || shipping < 0
       || Math.round(Number(unit.amount.value) * 100) !== cents + legacyShippingCents + Math.round(shipping * 100)) throw new Error('Invalid checkout total. Please refresh the page.');
-    const current = selectionForPayPal(currency, merchandise);
-    if (!nativeShippingEnabled() && (selection.quote_token !== current.quote_token || selection.contextKey !== current.contextKey)) throw new Error(window.MJShippingCheckout.errorMessage('SHIPPING_QUOTE_CHANGED'));
+    const current = selectionForPayPal(currency, merchandise,native);
+    if (!native && (selection.quote_token !== current.quote_token || selection.contextKey !== current.contextKey)) throw new Error(window.MJShippingCheckout.errorMessage('SHIPPING_QUOTE_CHANGED'));
     unit.items = merchandise;
     unit.amount.breakdown = { item_total: { currency_code: currency, value: (cents / 100).toFixed(2) } };
-    if (!nativeShippingEnabled()) unit.amount.breakdown.shipping = { currency_code: currency, value: selection.price.toFixed(2) };
+    if (!native) unit.amount.breakdown.shipping = { currency_code: currency, value: selection.price.toFixed(2) };
     unit.amount.value = ((cents + Math.round(selection.price * 100)) / 100).toFixed(2);
-    if (nativeShippingEnabled()) delete unit.shipping;
+    if (native) delete unit.shipping;
     else unit.shipping = { ...unit.shipping, options: [{ id: selection.id, label: ((selection.carrier_name || selection.carrier) + ' · ' + (selection.service_name || selection.service)).slice(0, 127),
       type: 'SHIPPING', selected: true, amount: { currency_code: currency, value: selection.price.toFixed(2) } }] };
     payload.application_context = { ...payload.application_context, shipping_preference: 'GET_FROM_FILE' };
@@ -175,13 +246,16 @@
       }};
     }
     const result = await checkoutRequest('create', {payload,discount_code:discount && discount.code,
-      ...(nativeShippingEnabled() ? {native_shipping:true,...(deliveryPhone===undefined?{}:{delivery_phone:deliveryPhone})} : {shipping_quote_token:selection.quote_token})});
+      ...(native ? {native_shipping:true,...(deliveryPhone===undefined?{}:{delivery_phone:deliveryPhone})} : {shipping_quote_token:selection.quote_token})});
     const snapshot = options.cart ? merchandise.map(item => ({ sku:item.sku, name:item.name, qty:Number(item.quantity) })) : null;
-    if (nativeShippingEnabled()) {
+    if (native) {
       if (!validCheckoutRef(result.checkout_ref) || result.shipping_state !== 'PENDING' || !/^[A-Za-z0-9-]{1,64}$/.test(result.id || '')) throw new Error('Could not prepare PayPal checkout. Please reload the page.');
       nativeOrders.set(result.id, {checkout_ref:result.checkout_ref, currency, cart:snapshot, capturePending:false,...(deliveryPhone===undefined?{}:{delivery_phone:deliveryPhone})});
       saveOrders();
-    } else window.MJShippingCheckout.rememberOrder(result.id, selection);
+    } else {
+      window.MJShippingCheckout.rememberOrder(result.id, selection);
+      quotedOrders.set(result.id,{selection,currency,cart:snapshot,capturePending:false});saveOrders();
+    }
     if (snapshot) purchasedCarts.set(result.id, snapshot);
     return result.id;
   }
@@ -246,13 +320,21 @@
         throw error;
       }
     }
+    const quoted=quotedOrders.get(orderId);
+    if(quoted) {
+      quoted.capturePending=true;saveOrders();
+      try {
+        const result=await checkoutRequest('capture',{orderId,shipping_quote_token:quoted.selection.quote_token});
+        quoted.capturePending=false;quoted.completed=true;saveOrders();return result;
+      } catch(error) {if(error.code!=='PAYMENT_STATUS_UNCERTAIN'){quoted.capturePending=false;saveOrders();}throw error;}
+    }
     if (nativeShippingEnabled()) throw new Error('Could not recover this PayPal checkout. Contact MAH JOY before paying again.');
     if (!window.MJShippingCheckout) throw new Error('A shipping quote is required before payment.');
     const selection = window.MJShippingCheckout.requireForCapture(orderId);
     return checkoutRequest('capture',{orderId,shipping_quote_token:selection.quote_token});
   }
   function completeCart(orderId) {
-    const purchased = purchasedCarts.get(orderId) || nativeOrders.get(orderId)?.cart;
+    const purchased = purchasedCarts.get(orderId) || nativeOrders.get(orderId)?.cart || quotedOrders.get(orderId)?.cart;
     if (!purchased || !window.MJCart?.saveCart) return;
     const quantities = new Map();
     const identity = item => item.sku ? 'sku:'+String(item.sku).trim().toLowerCase() : 'name:'+String(item.name || '').trim().toLowerCase();
@@ -265,6 +347,7 @@
     window.MJCart.saveCart(updated);
     purchasedCarts.delete(orderId);
     const native = nativeOrders.get(orderId); if (native) { native.cart = null; saveOrders(); }
+    const quoted=quotedOrders.get(orderId);if(quoted){quoted.cart=null;saveOrders();}
   }
   function shippingPrice(cost, sourceCurrency, targetCurrency) {
     const value = Number(cost);
@@ -274,10 +357,12 @@
     return Math.round(value*100)/100;
   }
   document.addEventListener('DOMContentLoaded', function() {
+    refreshCheckoutMode();
     const country=document.getElementById('co-country');
     if(country)country.addEventListener('change',function(){
       if(country.value==='US' && !window.location.pathname.startsWith('/en/'))goToUsMarket();
     });
   });
-  window.MJPayPalPricing = { init, nativeShippingEnabled, selectionForPayPal, buttonCallbacks, quote, refreshCart, create, capture, completeCart, requireMarket, shippingPrice };
+  window.addEventListener?.('mj:cartUpdated',refreshCheckoutMode);
+  window.MJPayPalPricing = { init, nativeShippingEnabled, refreshCheckoutMode, registerButtonRenderer, renderButtons, selectionForPayPal, buttonCallbacks, quote, refreshCart, create, capture, completeCart, requireMarket, shippingPrice };
 })();

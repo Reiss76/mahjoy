@@ -67,7 +67,7 @@ async function initPayPalButton() {
   rendering = (async function() {
     await window.MJPayPalPricing.init();
     container.innerHTML = '';
-    await paypal.Buttons(buttonOptions()).render('#paypal-button-container');
+    await window.MJPayPalPricing.renderButtons('#paypal-button-container',buttonOptions);
     paypalButtonRendered = true;
   })();
   try { await rendering; } finally { rendering = null; }
