@@ -173,16 +173,65 @@
     if (!response.ok) throw new Error(checkoutError(result,'Could not verify prices. Please try again.'));
     return result.items;
   }
+  let cartRefreshVersion=0;
+  function changedCart() {
+    const error=new Error(window.MJShippingCheckout?.errorMessage?.('SHIPPING_CART_CHANGED') || 'Could not verify prices. Please try again.');
+    error.code='SHIPPING_CART_CHANGED';throw error;
+  }
+  function cartQuantity(item) {
+    const qty=Number(item.qty ?? item.quantity ?? 1);
+    if(!Number.isInteger(qty) || qty<1 || qty>1000)changedCart();return qty;
+  }
+  function cartIdentity(item) {
+    const sku=String(item.sku || '').trim();if(sku)return 'sku:'+sku.toLowerCase();
+    if(item.id!=null && String(item.id).trim())return 'id:'+String(item.id).trim().toLowerCase();
+    const name=String(item.name || '').trim().toLowerCase();if(!name)changedCart();return 'name:'+name;
+  }
+  function priceRequestItem(item) {
+    const request={...item,qty:cartQuantity(item),sku:String(item.sku || '').trim(),name:String(item.name || '').trim()};
+    if(!request.sku) {
+      const bundle=String(item.id || '').trim().match(/^bundle-(\d+)$/i);
+      if(bundle)request.sku='BUNDLE-'+bundle[1];
+      else if(item.id!=null) {
+        const id=String(item.id).trim();
+        if(/^\d+$/.test(id) && Number.isSafeInteger(Number(id)) && Number(id)>0)request.id=Number(id);
+        else delete request.id;
+      }
+    }
+    return request;
+  }
   async function refreshCart(currency) {
-    const cart = window.MJCart.getCart();
+    const version=++cartRefreshVersion,cart=JSON.parse(JSON.stringify(window.MJCart.getCart()));
     if (!cart.length) return cart;
-    const prices = await quote(cart, currency);
-    // Reconcile against the latest cart in case quantities changed during the request.
-    const latest = window.MJCart.getCart();
-    const updated = latest.map(item => {
-      const p = prices.find(p => item.sku ? String(p.sku).toLowerCase() === String(item.sku).toLowerCase() : String(p.id) === String(item.id));
-      return p ? { ...item, price: p.price, price_usd: p.price_usd, sku: p.sku, name: p.name, image: p.image || item.image } : item;
+    const request=cart.map(priceRequestItem),prices=await quote(request,currency);
+    if(version!==cartRefreshVersion)return window.MJCart.getCart();
+    if(!Array.isArray(prices) || prices.length!==cart.length)changedCart();
+    // The pricing API verifies each requested identity and responds in request
+    // order. A legacy ID/name need not equal its new canonical catalog identity.
+    const byIdentity=new Map(),bySku=new Map(),expected=new Map();
+    prices.forEach((p,index)=>{
+      const sku=typeof p?.sku==='string'?p.sku.trim():'';
+      const activePrice=Number(currency==='USD'?(p?.priceUsd ?? p?.price_usd):p?.price);
+      if(!sku || !Number.isFinite(activePrice) || activePrice<=0
+        || (p.qty!==undefined && Number(p.qty)!==request[index].qty)
+        || (request[index].sku && request[index].sku.toLowerCase()!==sku.toLowerCase()))changedCart();
+      const key=sku.toLowerCase(),previous=bySku.get(key);
+      if(previous && (previous.price!==p.price || previous.price_usd!==p.price_usd))changedCart();
+      const identity=cartIdentity(cart[index]),sameRequest=byIdentity.get(identity);
+      if(sameRequest && sameRequest.sku.toLowerCase()!==key)changedCart();
+      byIdentity.set(identity,p);bySku.set(key,p);
+      expected.set(key,(expected.get(key)||0)+request[index].qty);
     });
+    const latest=window.MJCart.getCart(),observed=new Map();
+    const updated=latest.map(item=>{
+      const p=byIdentity.get(cartIdentity(item)) || (item.sku?bySku.get(String(item.sku).trim().toLowerCase()):null);
+      if(!p)changedCart();const qty=cartQuantity(item),key=p.sku.trim().toLowerCase();
+      observed.set(key,(observed.get(key)||0)+qty);
+      return {...item,id:item.id ?? p.id,qty,price:p.price,price_usd:p.priceUsd ?? p.price_usd,
+        sku:p.sku.trim(),name:p.name || item.name,image:p.image || item.image};
+    });
+    const identity=quantities=>JSON.stringify([...quantities].sort(([a],[b])=>a.localeCompare(b)));
+    if(identity(expected)!==identity(observed))changedCart();
     window.MJCart.saveCart(updated);
     return updated;
   }
