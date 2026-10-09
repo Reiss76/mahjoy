@@ -104,6 +104,16 @@ test('only the exact confirmed cart quotes the documented parcel and origin', as
   assert.equal(rate.expires_at,snapshot.expires_at);
   assert.deepEqual(f.requests[0].body.packages,snapshot.packages);
 });
+test('packing preflight needs no customer address and never calls the carrier or creates a shipping price',async()=>{
+ const f=fixture();
+ const prepared=await f.service.preflight({items,country:'MX',currency:'MXN'});
+ assert.deepEqual(prepared.items,canonicalItems(items));assert.equal(prepared.packages[0].weight,14.79);
+ assert.deepEqual(prepared.packages[0].dimensions,{length:83,width:33,height:27});
+ assert.equal(prepared.shipping_cost,undefined);assert.equal(prepared.price,undefined);assert.equal(f.requests.length,0);
+ await assert.rejects(()=>f.service.preflight({items:[{sku:'MAT-PIEL',qty:1}],country:'MX',currency:'MXN'}),/PACKAGE_PROFILE_REQUIRED/);
+ await assert.rejects(()=>f.service.preflight({items,country:'US',currency:'MXN'}),/US_REQUIRES_USD/);
+ assert.equal(f.requests.length,0);
+});
 test('currency policy preserves USD delivery to Mexico and rejects US delivery priced in MXN', async () => {
   const f=fixture({ratePrice:60,rateCurrency:'USD'});
   const result=await f.service.quote({items,destination:'00123',country:'MX',currency:'USD'});

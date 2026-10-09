@@ -9,6 +9,8 @@
   let requestNumber = 0;
   let loading = false;
   let notice = '';
+  let payPalNative = false;
+  let cardMode = false;
   const listeners = new Set();
   const orders = new Map();
   const english = () => configuration?.currency === 'USD' || window.location?.pathname?.startsWith('/en/');
@@ -50,7 +52,45 @@
     try { key = itemsKey(currentItems()); } catch (_) { key = 'empty'; }
     return JSON.stringify([destination.country, destination.postalCode, configuration?.currency, key]);
   }
-  function state() { return { rates: rates.slice(), selected: selectedRate, loading, notice, destination: { ...destination }, currency: configuration?.currency }; }
+  function state() { return { rates: rates.slice(), selected: selectedRate, loading, notice, destination: { ...destination }, currency: configuration?.currency, payPalNative, cardMode }; }
+  function applyPaymentLayout() {
+    const cardSection = document.getElementById('mj-card-checkout');
+    if (cardSection && payPalNative) cardSection.hidden = !cardMode;
+    const container = document.getElementById('mj-shipping-checkout');
+    if (container) {
+      container.hidden = payPalNative && !cardMode;
+      if (payPalNative && cardMode) {
+        const target = document.getElementById('mj-card-shipping');
+        if (target && container.parentNode !== target) target.append(container);
+      }
+    }
+    const form = document.getElementById('co-form');
+    if (form && payPalNative) form.style.display = cardMode ? 'flex' : 'none';
+    for (const id of ['mj-product-form-divider','mj-product-form-title']) {
+      const node = document.getElementById(id);
+      if (node) {
+        node.hidden = payPalNative && !cardMode;
+        if (id === 'mj-product-form-divider') node.style.display = node.hidden ? 'none' : 'flex';
+      }
+    }
+    const cardButton = document.getElementById('mj-card-open-product');
+    if (cardButton) cardButton.hidden = !payPalNative || configuration?.currency !== 'MXN' || cardMode;
+    const hint = document.getElementById('mj-paypal-shipping-note');
+    if (hint) hint.textContent = payPalNative
+      ? message('El envío se calcula con tu dirección en PayPal. Revisa el total antes de pagar.', 'Shipping is calculated using your PayPal address. Review the total before paying.')
+      : message('Calcula y selecciona el envío antes de pagar. Usa esa misma dirección en PayPal.', 'Calculate and select shipping before paying. Use that same address in PayPal.');
+  }
+  function setPayPalNativeMode(value) { payPalNative = value === true; applyPaymentLayout(); emit(); }
+  function showCardFields() {
+    cardMode = true;
+    const section = document.getElementById('mj-card-checkout'); if (section) section.hidden = false;
+    applyPaymentLayout(); emit();
+  }
+  function showPayPalFields() {
+    if (!payPalNative) return;
+    cardMode = false;
+    applyPaymentLayout(); emit();
+  }
   function emit() {
     window.MJShippingCost = selectedRate?.price || 0;
     window.MJShippingCurrency = configuration?.currency;
@@ -259,8 +299,10 @@
     });
     if (longPostal?.value) synchronize(longPostal, longCountry || country);
     window.addEventListener('mj:cartUpdated', refresh);
+    applyPaymentLayout();
   }
   window.MJShippingCheckout = { configure, setDestination, quote, selectRate, refresh, invalidate, state, subscribe,
-    requireForPayment, rememberOrder, requireForCapture, paypalCallbacks, errorMessage, itemsKey, serviceLabel };
+    requireForPayment, rememberOrder, requireForCapture, paypalCallbacks, errorMessage, itemsKey, serviceLabel,
+    setPayPalNativeMode, showCardFields, showPayPalFields };
   document.addEventListener('DOMContentLoaded', mount);
 })();

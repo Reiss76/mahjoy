@@ -155,6 +155,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       <style>#mj-card-checkout{font-size:14px;line-height:1.4;text-transform:none}#mj-card-checkout label{font-size:12px;font-weight:400;line-height:1.4;text-transform:none}#mj-card-checkout input,#mj-card-checkout button{font-size:14px;line-height:1.4;text-transform:none;font-weight:400;box-sizing:border-box}</style>
       <section id="mj-card-checkout" hidden style="border:1px solid #ddd;border-radius:12px;padding:18px;margin:18px 0;">
         <h2 style="font-size:1.2rem;margin:0 0 12px;">Domicilio para pagar con tarjeta</h2>
+        <div id="mj-card-shipping"></div>
         <form id="mj-card-form" onsubmit="proceedToCheckout(event)" style="display:grid;gap:12px;">
           <label>Nombre completo<input name="customer_name" autocomplete="name" required style="display:block;width:100%;padding:10px;"></label>
           <label>Correo electrónico<input name="customer_email" type="email" autocomplete="email" required style="display:block;width:100%;padding:10px;"></label>
@@ -255,8 +256,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       document.getElementById('mj-card-destination').textContent='Envío: '+(destination.postalCode || 'sin código postal')+' · '+destination.country;
     }
     function openCardCheckout() {
-      try { window.MJShippingCheckout.requireForPayment('MXN'); }
-      catch(error) { alert(error.message); return; }
+      window.MJShippingCheckout.showCardFields();
       document.getElementById('mj-card-checkout').hidden=false;
       updateCardReadiness(); document.getElementById('mj-card-form').elements.customer_name.focus();
     }
@@ -419,33 +419,29 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       document.getElementById('cart-discount-label').textContent='Descuento ('+cartDiscount.pct+'%)';
       document.getElementById('cart-discount-amount').textContent='-$'+saving.toFixed(2);
     }
-    var selected=window.MJShippingCheckout.state().selected;
-    document.getElementById('cart-shipping').textContent=selected ? '$'+selected.price.toFixed(2)+' MXN' : 'Selecciona un servicio de envío';
+    var native=window.MJPayPalPricing?.nativeShippingEnabled?.() && !window.MJShippingCheckout.state().cardMode;
+    var selected=native ? null : window.MJShippingCheckout.state().selected;
+    document.getElementById('cart-shipping').textContent=native ? 'Se calcula en PayPal' : selected ? '$'+selected.price.toFixed(2)+' MXN' : 'Selecciona un servicio de envío';
     document.getElementById('cart-total').textContent='$'+(subtotal+(selected ? selected.price : 0)).toFixed(2);
-    var totalLabel=document.getElementById('cart-total-label'); if(totalLabel) totalLabel.textContent=selected ? 'Total' : 'Total (sin envío)';
+    var totalLabel=document.getElementById('cart-total-label'); if(totalLabel) totalLabel.textContent=native ? 'Importe de productos' : selected ? 'Total' : 'Total (sin envío)';
   }
 
   window.addEventListener('mj:cartUpdated', updateCartTotals);
 
-  // Quote shipping before opening PayPal; callbacks only validate the selected address/service.
-  function initPayPalCart() {
+  // Choose the checkout flow only after loading the server capability.
+  async function initPayPalCart() {
     var container = document.getElementById('paypal-cart-container');
-    if (!container || typeof paypal === 'undefined') { setTimeout(initPayPalCart, 500); return; }
-    if (container.hasChildNodes()) return;
-    paypal.Buttons({
+    if (!container || typeof paypal === 'undefined') { setTimeout(function() { initPayPalCart().catch(function(error) { console.error('[PayPal]',error.message); }); }, 500); return; }
+    if (container.hasChildNodes() || container._paypalInitializing) return;
+    container._paypalInitializing=true;
+    try {
+    await window.MJPayPalPricing.init();
+    await paypal.Buttons({
       style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal', height: 45 },
-      onInit: function(data, actions) {
-        actions.disable();
-        window.MJShippingCheckout.subscribe(function(state) { if (state.selected) actions.enable(); else actions.disable(); });
-      },
-      onClick: function(data, actions) {
-        try { window.MJShippingCheckout.requireForPayment('MXN'); }
-        catch (error) { alert(error.message); return actions.reject(); }
-        return actions.resolve();
-      },
+      ...window.MJPayPalPricing.buttonCallbacks('MXN'),
       createOrder: async function(data, actions) {
         var cart = await window.MJPayPalPricing.refreshCart('MXN');
-        var selected = window.MJShippingCheckout.requireForPayment('MXN', cart);
+        var selected = window.MJPayPalPricing.selectionForPayPal('MXN', cart);
         var discountPct = cartDiscount ? cartDiscount.pct : 0;
         var items = cart.map(function(item) {
           var unitPrice = Number(item.price);
@@ -459,23 +455,23 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
             amount:{currency_code:'MXN',value:(subtotal + selected.price).toFixed(2),breakdown:{
               item_total:{currency_code:'MXN',value:subtotal.toFixed(2)},shipping:{currency_code:'MXN',value:selected.price.toFixed(2)}
             }} }],application_context:{brand_name:'MAH JOY',shipping_preference:'GET_FROM_FILE',user_action:'PAY_NOW'}
-        });
+        }, {cart:true});
       },
-      ...window.MJShippingCheckout.paypalCallbacks(),
       onApprove: async function(data) {
         try {
           var receipt = await window.MJPayPalPricing.capture(data.orderID);
           await window.MJPayPalSync.save(receipt, {discount_code:cartDiscount ? cartDiscount.code : null});
-          window.MJCart.clearCart(); window.location.href='gracias.html?order='+data.orderID;
+          window.MJPayPalPricing.completeCart(data.orderID); window.location.href='gracias.html?order='+data.orderID;
         } catch(error) { alert(window.MJPayPalSync.errorMessage(error, error.message)); }
       },
       onError:function(error) { alert(window.MJPayPalSync.errorMessage(error,error.message)); }
     }).render('#paypal-cart-container');
+    } finally { container._paypalInitializing=false; }
   }
   window.MJShippingCheckout.subscribe(updateCartTotals);
 
   document.addEventListener('DOMContentLoaded', function() {
-    initPayPalCart();
+    initPayPalCart().catch(function(error) { console.error('[PayPal]',error.message); });
     updateCartTotals();
   });
 })();

@@ -167,6 +167,17 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           </div>
         </div>
 
+        <!-- Quantity selector -->
+        <div style="background:#fff;border-radius:12px;padding:1rem 1.25rem;box-shadow:0 2px 16px rgba(107,15,42,.06);margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;font-weight:600;color:var(--burgundy);">Quantity</span>
+          <div style="display:flex;align-items:center;gap:.8rem;">
+            <button type="button" onclick="changeQty(-1)" style="width:36px;height:36px;border-radius:50%;border:2px solid var(--burgundy);background:transparent;color:var(--burgundy);font-size:1.1rem;cursor:pointer;font-weight:700;">−</button>
+            <span id="co-qty-display" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.1rem;font-weight:700;color:var(--burgundy);min-width:1.5rem;text-align:center;">1</span>
+            <button type="button" onclick="changeQty(1)" style="width:36px;height:36px;border-radius:50%;border:2px solid var(--burgundy);background:var(--burgundy);color:#fff;font-size:1.1rem;cursor:pointer;font-weight:700;">+</button>
+          </div>
+          <input type="hidden" name="qty" id="co-qty" value="1" form="co-form">
+        </div>
+
         <!-- Order total -->
         <div style="background:#fff;border-radius:12px;padding:1.25rem;box-shadow:0 2px 16px rgba(107,15,42,.06);">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
@@ -182,7 +193,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
             <span id="co-shipping-display" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.85rem;color:var(--orchid-mid);font-weight:600;">To quote</span>
           </div>
           <div style="border-top:1px solid #f0e4ec;padding-top:.75rem;display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1rem;font-weight:700;color:var(--burgundy);">Estimated total</span>
+            <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1rem;font-weight:700;color:var(--burgundy);" id="co-total-label">Estimated total</span>
             <span id="co-total" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.2rem;font-weight:800;color:var(--burgundy);"></span>
           </div>
         </div>
@@ -215,17 +226,19 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
 <div id="mj-shipping-checkout" data-kind="product" data-currency="USD"></div>
 <div id="paypal-express-container"></div>
           <p style="text-align:center;font-size:.7rem;color:#666;margin-top:.5rem;">No need to fill the form</p>
-          <p style="text-align:center;font-size:.7rem;color:#003087;margin-top:.3rem;font-style:italic;">📦 Calculate and select shipping before paying. Use that same address in PayPal.</p>
+          <p id="mj-paypal-shipping-note" style="text-align:center;font-size:.7rem;color:#003087;margin-top:.3rem;font-style:italic;">📦 Calculate and select shipping before paying. Use that same address in PayPal.</p>
         </div>
         
-        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;">
+        <div id="mj-product-form-divider" style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;">
           <div style="flex:1;height:1px;background:#ddd;"></div>
           <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.75rem;color:#999;">or fill the form</span>
           <div style="flex:1;height:1px;background:#ddd;"></div>
         </div>
         
-        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--orchid);margin-bottom:1rem;">Your info</div>
+        <div id="mj-product-form-title" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--orchid);margin-bottom:1rem;">Your info</div>
 
+        <button id="mj-card-open-product" type="button" hidden onclick="window.MJShippingCheckout.showCardFields()" style="width:100%;padding:12px;border:0;border-radius:10px;background:var(--burgundy);color:#fff;cursor:pointer;">Pay by card</button>
+        <div id="mj-card-shipping"></div>
         <form id="co-form" style="display:flex;flex-direction:column;gap:1.1rem;">
 
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
@@ -265,15 +278,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
 
           <input type="hidden" name="phone" value="">
 
-          <div>
-            <label class="mj-co-label">Quantity</label>
-            <div style="display:flex;align-items:center;gap:1rem;">
-              <button type="button" onclick="changeQty(-1)" style="width:40px;height:40px;border-radius:50%;border:2px solid var(--burgundy);background:transparent;color:var(--burgundy);font-size:1.2rem;cursor:pointer;font-weight:700;">−</button>
-              <span id="co-qty-display" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.1rem;font-weight:700;color:var(--burgundy);min-width:2rem;text-align:center;">1</span>
-              <button type="button" onclick="changeQty(1)" style="width:40px;height:40px;border-radius:50%;border:2px solid var(--burgundy);background:var(--burgundy);color:#fff;font-size:1.2rem;cursor:pointer;font-weight:700;">+</button>
-            </div>
-            <input type="hidden" name="qty" id="co-qty" value="1">
-          </div>
+
 
           <div>
             <label class="mj-co-label">Country *</label>
@@ -343,14 +348,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
             <div id="paypal-button-container" style="display:none;"></div>
             <script>
             function handlePayPalClick() {
-              var form=document.getElementById('co-form');
-              if(form && !form.checkValidity()) { form.reportValidity(); return; }
-              var email=form.email?.value.trim(), confirmed=form.email_confirm?.value.trim();
-              if(confirmed && email!==confirmed) { document.getElementById('email-mismatch').style.display='block'; return; }
-              try {
-                window.MJShippingCheckout.requireForPayment('USD');
-                window.MJPayPal.pay();
-              } catch(error) { alert(error.message); }
+              window.MJPayPal.pay().catch(function(error) { alert(error.message); });
             }
             </script>
           </div>
@@ -387,9 +385,12 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       var qty=Number(document.getElementById('co-qty')?.value || 1);
       var price=Number((product.priceUsd ?? product.price_usd) || 0);
       if (discountPct > 0) price=Math.round(price*(1-discountPct/100)*100)/100;
-      var selected=window.MJShippingCheckout.state().selected;
+      var native=window.MJPayPalPricing?.nativeShippingEnabled?.() && !window.MJShippingCheckout.state().cardMode;
+      var selected=native ? null : window.MJShippingCheckout.state().selected;
       var shippingDisplay=document.getElementById('co-shipping-display');
-      if (shippingDisplay) shippingDisplay.textContent=selected ? '$'+selected.price.toFixed(2)+' USD' : 'Select a shipping service';
+      if (shippingDisplay) shippingDisplay.textContent=native ? 'Calculated in PayPal' : selected ? '$'+selected.price.toFixed(2)+' USD' : 'Select a shipping service';
+      var totalLabel=document.getElementById('co-total-label');
+      if (totalLabel) totalLabel.textContent=native ? 'Items amount' : 'Total';
       var totalDisplay=document.getElementById('co-total');
       if (totalDisplay) totalDisplay.textContent='$'+(price*qty+(selected ? selected.price : 0)).toFixed(2);
     }
@@ -458,24 +459,20 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       }
     });
     
-    function initPayPalExpress() {
-      if (typeof paypal==='undefined' || !window.MJCheckoutProduct) { setTimeout(initPayPalExpress,500); return; }
+    async function initPayPalExpress() {
+      if (typeof paypal==='undefined' || !window.MJCheckoutProduct) { setTimeout(function() { initPayPalExpress().catch(function(error) { console.error('[PayPal]',error.message); }); },500); return; }
       var container=document.getElementById('paypal-express-container');
-      if (!container || container.hasChildNodes()) return;
-      paypal.Buttons({
+      if (!container || container.hasChildNodes() || container._paypalInitializing) return;
+      container._paypalInitializing=true;
+      try {
+      await window.MJPayPalPricing.init();
+      await paypal.Buttons({
         style:{layout:'vertical',color:'gold',shape:'pill',label:'paypal',height:50},
-        onInit:function(data,actions) {
-          actions.disable(); window.MJShippingCheckout.subscribe(function(state) { if(state.selected) actions.enable(); else actions.disable(); });
-        },
-        onClick:function(data,actions) {
-          try { window.MJShippingCheckout.requireForPayment('USD'); }
-          catch(error) { alert(error.message); return actions.reject(); }
-          return actions.resolve();
-        },
+        ...window.MJPayPalPricing.buttonCallbacks('USD'),
         createOrder:function(data,actions) {
           var product=window.MJCheckoutProduct;
           var qty=Number(document.getElementById('co-qty')?.value || 1);
-          var selected=window.MJShippingCheckout.requireForPayment('USD',[{...product,qty:qty}]);
+          var selected=window.MJPayPalPricing.selectionForPayPal('USD',[{...product,qty:qty}]);
           var price=Number((product.priceUsd ?? product.price_usd) || 0);
           var discount=window.MJAppliedDiscount;
           if(discount?.pct>0) price=Math.round(price*(1-discount.pct/100)*100)/100;
@@ -488,7 +485,6 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
               }} }],application_context:{brand_name:'MAH JOY',shipping_preference:'GET_FROM_FILE',user_action:'PAY_NOW'}
           });
         },
-        ...window.MJShippingCheckout.paypalCallbacks(),
         onApprove:async function(data) {
           try {
             var receipt=await window.MJPayPalPricing.capture(data.orderID);
@@ -498,12 +494,13 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         },
         onError:function(error) { alert(window.MJPayPalSync.errorMessage(error,error.message)); }
       }).render('#paypal-express-container');
+      } finally { container._paypalInitializing=false; }
     }
 
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function() { setTimeout(initPayPalExpress, 800); });
+      document.addEventListener('DOMContentLoaded', function() { setTimeout(function() { initPayPalExpress().catch(function(error) { console.error('[PayPal]',error.message); }); }, 800); });
     } else {
-      setTimeout(initPayPalExpress, 800);
+      setTimeout(function() { initPayPalExpress().catch(function(error) { console.error('[PayPal]',error.message); }); }, 800);
     }
   })();
   </script>
