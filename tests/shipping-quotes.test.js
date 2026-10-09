@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const {
   canonicalItems, productWeight, normalizeRate, createShippingQuoteService,
-  verifyShippingQuote, verifyShippingQuoteSignature, getStoredShippingQuote, shipmentStore, TTL_MS
+  verifyShippingQuote, verifyShippingQuoteSignature, getStoredShippingQuote, shipmentStore, shippingLabelOrderFields, proaxShippingLabelFields, TTL_MS
 } = require('../lib/shipping-quotes');
 const configured = require('../config/shipping');
 const signingSecret = 'shipping-test-fixture-signature-key';
@@ -19,9 +19,10 @@ const products = [
   {id:4, sku:'RACK-NEGRO', name:'Rack Black', price:2000},
   {id:5, sku:'TILE-CASE', name:'Tile Case', price:500}
 ];
-function memoryStore() {
+function memoryStore(overrides={}) {
   let saved, queue = Promise.resolve();
   return {
+    saved:()=>saved,
     async withLock(_id, operation) {
       const before = queue;
       let release;
@@ -32,7 +33,11 @@ function memoryStore() {
           async read() { return saved; },
           async reserve(hash) { saved = {quote_hash:hash,status:'pending'}; },
           async uncertain(result) { saved = {...saved,result}; },
-          async complete(result) { saved = {...saved,status:'complete',result}; }
+          async complete(result) {
+            if(overrides.beforeComplete)await overrides.beforeComplete();
+            saved = {...saved,status:'complete',result};
+            if(overrides.afterComplete)await overrides.afterComplete();
+          }
         });
       } finally { release(); }
     }
@@ -56,13 +61,14 @@ function fixture(overrides = {}) {
       carrier:'estafeta',service:'ground',currency:'MXN',totalPrice:overrides.ratePrice ?? 429
     }]})};
   };
+  const storage=overrides.store || memoryStore();
   const service = createShippingQuoteService({
     config, origins:{MX:configured.origin,US:configured.originUS},
     signingSecret,apiKey:'test-provider-placeholder',fetcher,
-    now:()=>currentTime,store:memoryStore(),getStoredShippingQuote:async()=>stored
+    now:()=>currentTime,store:storage,getStoredShippingQuote:async()=>stored,getPackingPlan:overrides.getPackingPlan
   });
   return {
-    service,requests,
+    service,requests,storage,
     advance(ms) { currentTime += ms; },
     store(snapshot, paid = true) {
       stored = {snapshot,paid,destination:{name:'Fixture recipient',phone:'5550000000',
@@ -70,6 +76,21 @@ function fixture(overrides = {}) {
         state:'NL',postalCode:'85219',country:'MX'}};
     }
   };
+}
+const multiPackages=[
+  {content:'First parcel',amount:1,type:'box',weight:1.2,weightUnit:'KG',lengthUnit:'CM',dimensions:{length:20,width:15,height:10}},
+  {content:'Second parcel',amount:1,type:'box',weight:1.3,weightUnit:'KG',lengthUnit:'CM',dimensions:{length:25,width:16,height:12}}
+];
+function multiRows(){return [
+  {trackingNumber:'TRACK-ONE',carrier:'estafeta',service:'ground',currency:'MXN',totalPrice:60,label:'https://carrier.test/one.pdf'},
+  {trackingNumber:'TRACK-TWO',carrier:'estafeta',service:'ground',currency:'MXN',totalPrice:39,label:'https://carrier.test/two.pdf'}
+];}
+function multiFixture(rows=multiRows(),overrides={}) {
+  return fixture({...overrides,getPackingPlan:async()=>({configured:true,revision:1,packages:overrides.packages || multiPackages,
+    physicalItems:canonicalItems(items),packing:[{boxId:'first',boxName:'First parcel',ruleId:'first',items}]}),
+    fetcher:async url=>({ok:true,json:async()=>url.endsWith('/ship/rate/')
+      ? {meta:'rate',data:[{totalPrice:99,currency:'MXN',service:'ground',deliveryEstimate:2}]}
+      : {meta:'generate',data:rows}})});
 }
 async function quoted(f) {
   const result = await f.service.quote({items,country:'MX',destination:'85219',currency:'MXN'});
@@ -209,6 +230,174 @@ test('generate reuses the paid stored parcel after TTL and is durable-idempotent
   assert.deepEqual(generated[0].body.packages,snapshot.packages);
   assert.deepEqual(generated[0].body.shipment,{type:1,carrier:'estafeta',service:'ground'});
 });
+test('all parcel rows, labels and the total 60+39 billing survive concurrent generation and durable replay',async()=>{
+  const f=multiFixture(),snapshot=await quoted(f);f.store(snapshot);
+  const [first,concurrent]=await Promise.all([f.service.generate({orderId:'FIXTURE-ORDER'}),f.service.generate({orderId:'FIXTURE-ORDER'})]);
+  assert.deepEqual(first,concurrent);assert.deepEqual(first.trackingNumbers,['TRACK-ONE','TRACK-TWO']);
+  assert.deepEqual(first.labelUrls,['https://carrier.test/one.pdf','https://carrier.test/two.pdf']);
+  assert.equal(first.trackingNumber,'TRACK-ONE');assert.equal(first.labelUrl,first.labelUrls[0]);assert.equal(first.label_cost,99);
+  assert.deepEqual(first.shipments.map(row=>row.label_cost),[60,39]);assert.equal(first.shipments.length,2);
+  assert.deepEqual(f.storage.saved().result,first);assert.equal(f.storage.saved().status,'complete');
+  assert.deepEqual(await f.service.generate({orderId:'FIXTURE-ORDER'}),first);
+  assert.equal(f.requests.filter(r=>r.url.endsWith('/ship/rate/')).length,2);
+  assert.equal(f.requests.filter(r=>r.url.endsWith('/ship/generate/')).length,1);
+  for(const request of f.requests)assert.deepEqual(request.body.packages,multiPackages);
+});
+test('one grouped provider row bills once and preserves a combined label and all package tracking numbers',async()=>{
+  const grouped={...multiRows()[0],trackingNumbers:['TRACK-ONE','TRACK-TWO'],totalPrice:99,label:'https://carrier.test/group.pdf'};
+  const f=multiFixture([grouped],{packages:[{...multiPackages[0],amount:2}]}),snapshot=await quoted(f);f.store(snapshot);
+  const result=await f.service.generate({orderId:'FIXTURE-ORDER'});
+  assert.equal(result.label_cost,99);assert.equal(result.shipments.length,1);assert.equal(result.shipments[0].label_cost,99);
+  assert.deepEqual(result.trackingNumbers,['TRACK-ONE','TRACK-TWO']);assert.deepEqual(result.labelUrls,['https://carrier.test/group.pdf']);
+  assert.deepEqual(await f.service.generate({orderId:'FIXTURE-ORDER'}),result);assert.equal(f.requests.filter(r=>r.url.endsWith('/ship/generate/')).length,1);
+});
+test('order cache and Proax update fields retain every label group without mutating its durable result',async()=>{
+  const f=multiFixture();f.store(await quoted(f));const result=await f.service.generate({orderId:'FIXTURE-ORDER'});
+  const cache=shippingLabelOrderFields(result),update=proaxShippingLabelFields(result);
+  assert.deepEqual(cache.trackingNumbers,['TRACK-ONE','TRACK-TWO']);assert.deepEqual(cache.labelUrls,result.labelUrls);
+  assert.deepEqual(update.tracking_numbers,cache.trackingNumbers);assert.deepEqual(update.label_urls,cache.labelUrls);
+  assert.equal(update.label_cost,99);assert.equal(update.label_currency,'MXN');assert.equal(update.shipments.length,2);
+  assert.equal(cache.trackingNumber,'TRACK-ONE');assert.equal(update.tracking_number,cache.trackingNumber);assert.equal(update.label_url,cache.labelUrl);
+  cache.trackingNumbers.pop();cache.labelUrls.pop();cache.shipments[0].trackingNumbers.pop();
+  assert.equal(result.trackingNumbers.length,2);assert.equal(result.labelUrls.length,2);assert.equal(result.shipments[0].trackingNumbers.length,1);
+  const legacy=shippingLabelOrderFields({trackingNumber:'OLD',labelUrl:'https://carrier.test/old.pdf',label_cost:99,currency:'MXN'});
+  assert.deepEqual(legacy.trackingNumbers,['OLD']);assert.deepEqual(legacy.labelUrls,['https://carrier.test/old.pdf']);
+});
+test('manual shipment creation forwards the full durable group and safely retries failed Proax synchronization without reissuing',async()=>{
+  const f=multiFixture();f.store(await quoted(f));const server=fs.readFileSync('server.js','utf8');
+  const helper=server.match(/async function updateProaxOrder\(orderId, updates\) \{[\s\S]*?^\}/m)?.[0];
+  const route=server.match(/app\.post\('\/api\/shipping\/create',[\s\S]*?^\}\);/m)?.[0];assert(helper && route);
+  const sent=[],orders=new Map([['FIXTURE-ORDER',{status:'paid'}]]);let handler;
+  const replies=[{ok:false,status:503},{ok:true,status:200},new Error('temporary network failure'),{ok:true,status:200}];
+  const context={shippingQuotes:f.service,pendingOrders:orders,
+    PROAX_API_URL:'https://proax.fixture.test',PROAX_NODE_ID:'31',PROAX_API_KEY:'test-only-placeholder',
+    console:{log(){},warn(){}},app:{post:(_path,fn)=>{handler=fn;}},
+    require:path=>{assert.equal(path,'./lib/shipping-quotes');return {shippingLabelOrderFields,proaxShippingLabelFields};},
+    fetch:async(url,request)=>{sent.push({url,body:JSON.parse(request.body)});const reply=replies.shift();if(reply instanceof Error)throw reply;return reply;}};
+  vm.createContext(context);vm.runInContext(helper+'\n'+route,context);
+  function response(){return {statusCode:200,set(){return this;},status(code){this.statusCode=code;return this;},json(value){this.value=value;return this;}};}
+  for(const pending of [true,false,true,false]) {
+    const res=response();await handler({body:{orderId:'FIXTURE-ORDER'}},res);assert.equal(res.statusCode,200);
+    assert.equal(res.value.proax_sync_pending,pending?true:undefined);assert.equal(res.value.label_cost,99);
+    assert.deepEqual(res.value.trackingNumbers,['TRACK-ONE','TRACK-TWO']);
+  }
+  assert.equal(sent.length,4);for(const request of sent) {
+    assert.equal(request.url,'https://proax.fixture.test/api/inventory/31/web-orders/FIXTURE-ORDER');
+    assert.deepEqual(request.body.tracking_numbers,['TRACK-ONE','TRACK-TWO']);assert.equal(request.body.label_urls.length,2);
+    assert.equal(request.body.shipments.length,2);assert.equal(request.body.label_cost,99);assert.equal(request.body.label_currency,'MXN');
+    assert.equal(request.body.tracking_number,'TRACK-ONE');assert.equal(request.body.label_url,'https://carrier.test/one.pdf');
+  }
+  assert.equal(orders.get('FIXTURE-ORDER').trackingNumbers.length,2);assert.equal(orders.get('FIXTURE-ORDER').labelUrls.length,2);
+  assert.equal(orders.get('FIXTURE-ORDER').shipments.length,2);
+  assert.equal(f.requests.filter(r=>r.url.endsWith('/ship/generate/')).length,1);
+});
+test('mixed decimal row prices sum in cents and a zero-price additional parcel never duplicates group billing',async()=>{
+  for(const prices of [['60.01','38.99'],[0,99]]) {
+    const rows=multiRows().map((row,index)=>({...row,totalPrice:prices[index]})),f=multiFixture(rows);f.store(await quoted(f));
+    assert.equal((await f.service.generate({orderId:'FIXTURE-ORDER'})).label_cost,99);
+  }
+});
+test('a group whose individual prices fit but whose summed billing exceeds the paid quote stays pending with every label',async()=>{
+  const rows=multiRows();rows[1].totalPrice=40;const f=multiFixture(rows);f.store(await quoted(f));
+  await assert.rejects(f.service.generate({orderId:'FIXTURE-ORDER'}),/SHIPPING_LABEL_STATUS_PENDING/);
+  const saved=f.storage.saved();assert.equal(saved.status,'pending');assert.equal(saved.result.requiresReview,true);
+  assert.deepEqual(saved.result.trackingNumbers,['TRACK-ONE','TRACK-TWO']);assert.equal(saved.result.labelUrls.length,2);
+  assert.deepEqual(saved.result.shipments.map(row=>row.totalPrice),[60,40]);
+  await assert.rejects(f.service.generate({orderId:'FIXTURE-ORDER'}),/SHIPPING_LABEL_STATUS_PENDING/);
+  assert.equal(f.requests.filter(r=>r.url.endsWith('/ship/generate/')).length,1);
+});
+test('partial, duplicate and mismatched additional parcel rows are preserved for review and never regenerated',async()=>{
+  const base=multiRows();
+  for(const rows of [[base[0]],[base[0],{...base[1],trackingNumber:'TRACK-ONE'}],
+    [base[0],{...base[1],currency:'USD'}],[base[0],{...base[1],carrier:'dhl'}],
+    [base[0],{...base[1],service:'express'}],[base[0],{...base[1],totalPrice:null}],
+    [base[0],{...base[1],total_price:40}],[base[0],{...base[1],trackingNumbers:[null]}]]) {
+    const f=multiFixture(rows);f.store(await quoted(f));
+    await assert.rejects(f.service.generate({orderId:'FIXTURE-ORDER'}),/SHIPPING_LABEL_STATUS_PENDING/);
+    assert.equal(f.storage.saved().status,'pending');assert.equal(f.storage.saved().result.shipments.length,rows.length);
+    assert.equal(f.storage.saved().result.labelUrls.length,rows.length);
+    if(rows.length===2 && rows[1].trackingNumber==='TRACK-TWO')assert(f.storage.saved().result.trackingNumbers.includes('TRACK-TWO'));
+    await assert.rejects(f.service.generate({orderId:'FIXTURE-ORDER'}),/SHIPPING_LABEL_STATUS_PENDING/);
+    assert.equal(f.requests.filter(r=>r.url.endsWith('/ship/generate/')).length,1);
+  }
+});
+test('every emitted row needs its own HTTP(S) PDF, while incomplete or unsafe label groups stay pending without reissue',async()=>{
+  for(const missing of [undefined,null,'','javascript:alert(1)','file:///tmp/label.pdf','https://user:password@carrier.test/label.pdf']) {
+    const rows=multiRows();rows[1].label=missing;const f=multiFixture(rows);f.store(await quoted(f));
+    await assert.rejects(f.service.generate({orderId:'FIXTURE-ORDER'}),/SHIPPING_LABEL_STATUS_PENDING/);
+    assert.equal(f.storage.saved().status,'pending');assert.deepEqual(f.storage.saved().result.trackingNumbers,['TRACK-ONE','TRACK-TWO']);
+    assert.equal(f.storage.saved().result.shipments.length,2);assert.equal(f.storage.saved().result.labelUrls.length,1);
+    await assert.rejects(f.service.generate({orderId:'FIXTURE-ORDER'}),/SHIPPING_LABEL_STATUS_PENDING/);
+    assert.equal(f.requests.filter(r=>r.url.endsWith('/ship/generate/')).length,1);
+  }
+});
+test('a grouped response whose explicit primary tracking is outside its tracking array remains pending',async()=>{
+  const f=multiFixture([{...multiRows()[0],trackingNumber:'OTHER',trackingNumbers:['TRACK-ONE','TRACK-TWO'],totalPrice:99}]);f.store(await quoted(f));
+  await assert.rejects(f.service.generate({orderId:'FIXTURE-ORDER'}),/SHIPPING_LABEL_STATUS_PENDING/);
+  assert.deepEqual(f.storage.saved().result.trackingNumbers,['OTHER','TRACK-ONE','TRACK-TWO']);
+  await assert.rejects(f.service.generate({orderId:'FIXTURE-ORDER'}),/SHIPPING_LABEL_STATUS_PENDING/);
+  assert.equal(f.requests.filter(r=>r.url.endsWith('/ship/generate/')).length,1);
+});
+test('cached completion cannot replay missing per-row PDFs, but a legacy combined PDF remains compatible',async()=>{
+  const f=multiFixture(),snapshot=await quoted(f);f.store(snapshot);const emitted=await f.service.generate({orderId:'FIXTURE-ORDER'});
+  const saved=f.storage.saved(),original=JSON.parse(JSON.stringify(emitted));
+  saved.result={...original,shipments:original.shipments.map((row,index)=>index?{...row,labelUrl:null,labelUrls:[]}:row),labelUrls:[original.labelUrls[0]]};
+  await assert.rejects(f.service.generate({orderId:'FIXTURE-ORDER'}),/SHIPPING_LABEL_STATUS_PENDING/);
+  saved.result={...original,labelUrl:'javascript:alert(1)'};
+  await assert.rejects(f.service.generate({orderId:'FIXTURE-ORDER'}),/SHIPPING_LABEL_STATUS_PENDING/);
+  saved.result={...original,trackingNumber:'OTHER'};
+  await assert.rejects(f.service.generate({orderId:'FIXTURE-ORDER'}),/SHIPPING_LABEL_STATUS_PENDING/);
+  saved.result={...original,shipments:original.shipments.map((row,index)=>index?{...row,labelUrl:'https://carrier.test/unmatched.pdf'}:row)};
+  await assert.rejects(f.service.generate({orderId:'FIXTURE-ORDER'}),/SHIPPING_LABEL_STATUS_PENDING/);
+  saved.result={...original,labelUrl:'https://carrier.test/combined.pdf',labelUrls:['https://carrier.test/combined.pdf']};delete saved.result.shipments;
+  assert.equal((await f.service.generate({orderId:'FIXTURE-ORDER'})).labelUrl,'https://carrier.test/combined.pdf');
+  assert.equal(f.requests.filter(r=>r.url.endsWith('/ship/generate/')).length,1);
+});
+test('failed persistence keeps the emitted group pending, while a lost successful write is recovered without reissue',async()=>{
+  const failed=multiFixture(multiRows(),{store:memoryStore({beforeComplete:()=>{throw Error('write unavailable');}})});failed.store(await quoted(failed));
+  await assert.rejects(failed.service.generate({orderId:'FIXTURE-ORDER'}),/SHIPPING_LABEL_STATUS_PENDING/);
+  assert.equal(failed.storage.saved().status,'pending');assert.equal(failed.storage.saved().result.label_cost,99);
+  assert.equal(failed.storage.saved().result.shipments.length,2);
+  await assert.rejects(failed.service.generate({orderId:'FIXTURE-ORDER'}),/SHIPPING_LABEL_STATUS_PENDING/);
+  assert.equal(failed.requests.filter(r=>r.url.endsWith('/ship/generate/')).length,1);
+  const lost=multiFixture(multiRows(),{store:memoryStore({afterComplete:()=>{throw Error('write reply lost');}})});lost.store(await quoted(lost));
+  const result=await lost.service.generate({orderId:'FIXTURE-ORDER'});assert.equal(result.label_cost,99);
+  assert.deepEqual(await lost.service.generate({orderId:'FIXTURE-ORDER'}),result);
+  assert.equal(lost.requests.filter(r=>r.url.endsWith('/ship/generate/')).length,1);
+});
+test('a historical completed record missing a parcel is never accepted as the complete group or regenerated',async()=>{
+  let existing;const storage={withLock:async(_id,run)=>run({read:async()=>existing,reserve:async()=>{throw Error('Must never reserve a second label group');}})};
+  const f=multiFixture(multiRows(),{store:storage}),snapshot=await quoted(f);f.store(snapshot);
+  existing={quote_hash:require('node:crypto').createHash('sha256').update(JSON.stringify(snapshot)).digest('hex'),status:'complete',
+    result:{ok:true,orderId:'FIXTURE-ORDER',trackingNumber:'TRACK-ONE',trackingNumbers:['TRACK-ONE'],carrier:'estafeta',service:'ground',currency:'MXN',label_cost:60,labelUrl:'https://carrier.test/one.pdf'}};
+  await assert.rejects(f.service.generate({orderId:'FIXTURE-ORDER'}),/SHIPPING_LABEL_STATUS_PENDING/);
+  assert.equal(f.requests.filter(r=>r.url.endsWith('/ship/generate/')).length,0);
+});
+test('an ambiguous database completion cannot be overwritten by review evidence and recovers the committed group',async()=>{
+  let row,loseComplete=true,loseRead=false,uncertainWrite=false;
+  const client={async query(text,values=[]) {
+    if(text.startsWith('SELECT quote_hash')) {
+      if(loseRead){loseRead=false;throw Error('database read temporarily unavailable');}
+      return {rows:row?[row]:[]};
+    }
+    if(text.startsWith('INSERT INTO mahjoy_shipping_labels'))row={quote_hash:values[1],status:'pending'};
+    if(text.includes("SET status='complete'")) {
+      row={...row,status:'complete',result:JSON.parse(values[1])};
+      if(loseComplete){loseComplete=false;loseRead=true;throw Error('committed write reply lost');}
+    }
+    if(text.startsWith('UPDATE mahjoy_shipping_labels SET result=')) {
+      uncertainWrite=true;assert.match(text,/AND status='pending'/);
+      if(row.status==='pending')row={...row,result:JSON.parse(values[1])};
+    }
+    return {rows:[]};
+  },release(){}};
+  const f=multiFixture(multiRows(),{store:shipmentStore({connect:async()=>client})});f.store(await quoted(f));
+  await assert.rejects(f.service.generate({orderId:'FIXTURE-ORDER'}),/SHIPPING_LABEL_STATUS_PENDING/);
+  assert(uncertainWrite);assert.equal(row.status,'complete');assert.equal(row.result.requiresReview,undefined);
+  const recovered=await f.service.generate({orderId:'FIXTURE-ORDER'});
+  assert.equal(recovered.label_cost,99);assert.deepEqual(recovered.trackingNumbers,['TRACK-ONE','TRACK-TWO']);
+  assert.equal(f.requests.filter(r=>r.url.endsWith('/ship/generate/')).length,1);
+});
 test('generate rejects unpaid order, changed address/carrier/package and increased tariff before emission', async () => {
   const f=fixture(),snapshot=await quoted(f);f.store(snapshot,false);
   await assert.rejects(f.service.generate({orderId:'FIXTURE-ORDER'}),/SHIPPING_PAYMENT_REQUIRED/);
@@ -303,7 +492,7 @@ test('Postgres fulfillment lookup uses the locked client, never a second pool co
     }};},
     fetcher:async(url)=>({ok:true,json:async()=>url.endsWith('/ship/rate/')
       ? {meta:'rate',data:[{totalPrice:429,currency:'MXN',service:'ground',deliveryEstimate:2}]}
-      : {meta:'generate',data:[{totalPrice:429,currency:'MXN',service:'ground',carrier:'estafeta',trackingNumber:'FIXTURE-LOCKED'}]}})
+      : {meta:'generate',data:[{totalPrice:429,currency:'MXN',service:'ground',carrier:'estafeta',trackingNumber:'FIXTURE-LOCKED',label:'https://carrier.test/locked.pdf'}]}})
   });
   await service.generate({orderId:'FIXTURE-ORDER'});
   assert.equal(lookupClient,client);assert.equal(client.released,true);
