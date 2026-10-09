@@ -70,12 +70,28 @@ test('normal MXN PayPal retains its destination guard and only accepts the origi
   await options.onApprove({orderID:orderId});
   assert.equal(f.requests.find(request=>request.path.endsWith('/paypal/capture')).body.shipping_quote_token,'signed-MXN');
 });
-test('normal native MXN PayPal still requires a valid delivery phone before opening or creating an order',async()=>{
-  for(const deliveryPhone of ['', '+15551234567']) {
-    const f=harness.fixture('MXN',{deliveryPhone});unusedCardForm(f);
-    const options=await harness.entrypoint(f,'normal','MXN'),clicked=actions();
-    options.onClick({},clicked);assert.equal(clicked.resolved,0);assert.equal(clicked.rejected,1);
-    await assert.rejects(()=>options.createOrder({},{}),error=>/^NATIVE_SHIPPING_PHONE_(REQUIRED|INVALID)$/.test(error.code));
-    assert(!f.requests.some(request=>request.path==='/api/checkout/prices' || request.path.endsWith('/paypal/create')));
-  }
+for(const currency of ['MXN','USD']) {
+  test(`normal native ${currency} PayPal opens without any storefront phone or card-form contact`,async()=>{
+    const f=harness.fixture(currency,{deliveryPhone:''});unusedCardForm(f);
+    f.ctx.document.getElementById=id=>id==='mj-paypal-delivery-phone' || id==='mj-paypal-delivery-contact'?null:f.node(id);
+    const options=await harness.entrypoint(f,'normal',currency),clicked=actions();
+    options.onClick({},clicked);assert.equal(clicked.resolved,1);assert.equal(clicked.rejected,0);
+    await options.createOrder({},{});
+    const created=f.requests.find(request=>request.path.endsWith('/paypal/create')).body;
+    assert.equal(created.native_shipping,true);assert.equal(created.delivery_phone,undefined);
+    assert(!JSON.stringify(created).includes('card-only@example.test'));
+    assert.equal(f.alerts.length,0);assert(!f.requests.some(request=>request.path==='/api/shipping/quote'));
+  });
+}
+test('normal native bundle PayPal ignores invalid card-form contact and sends only the bundle merchandise',async()=>{
+  const f=harness.fixture('MXN',{deliveryPhone:'invalid',cart:[harness.bundleItem()]});unusedCardForm(f);
+  const options=await harness.entrypoint(f,'normal','MXN'),clicked=actions();
+  options.onClick({},clicked);assert.equal(clicked.resolved,1);assert.equal(clicked.rejected,0);
+  await options.createOrder({},{});
+  const created=f.requests.find(request=>request.path.endsWith('/paypal/create')).body;
+  assert.equal(created.native_shipping,true);assert.equal(created.delivery_phone,undefined);
+  assert.equal(created.payload.purchase_units[0].items[0].sku,'BUNDLE-9');
+  assert.equal(created.payload.purchase_units[0].amount.value,'100.00');
+  assert.equal(created.payload.purchase_units[0].amount.breakdown.shipping,undefined);
+  assert.equal(f.alerts.length,0);assert(!f.requests.some(request=>request.path==='/api/shipping/quote'));
 });
