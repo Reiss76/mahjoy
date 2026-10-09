@@ -170,6 +170,60 @@ test('rates require provider total, matching currency and genuine service, never
     {...valid,deliveryEstimate:{min:2}}
   ]) assert.equal(normalizeRate(invalid,'estafeta','MXN'),null);
 });
+test('USPS Media is excluded by every service alias and provider label, without excluding other carriers or ground services',()=>{
+ const rate={totalPrice:30.15,currency:'USD',service:'ground_advantage',deliveryEstimate:5};
+ for(const field of ['service','serviceCode','carrier_service_code'])for(const code of ['media','media_mail','media-mail','MediaMail']){
+  assert.equal(normalizeRate({...rate,[field]:code},'usps','USD'),null);
+ }
+ for(const field of ['serviceDescription','serviceName'])assert.equal(normalizeRate({...rate,[field]:'Media (Books, Video, Playscripts)'},'USPS','USD'),null);
+ assert.equal(normalizeRate({...rate,service:'ground_advantage',serviceDescription:'USPS Ground Advantage'},'usps','USD').price,30.15);
+ assert.equal(normalizeRate({...rate,service:'ground_economy',serviceDescription:'Ground Economy'},'fedex','USD').price,30.15);
+ assert.equal(normalizeRate({...rate,service:'media_mail'},'other-carrier','USD').service,'media_mail');
+ assert.equal(normalizeRate({...rate,serviceName:'Multimedia Ground'},'usps','USD').service,'ground_advantage');
+});
+function mediaFixture(overrides={}) {
+ const requests=[],storage=overrides.store || memoryStore();let stored;
+ const service=createShippingQuoteService({config:{...configured,envia:{apiUrl:'https://carrier.test'},carriersByCountry:{US:['usps','fedex']}},
+  origins:{US:configured.originUS},signingSecret,apiKey:'test-provider-placeholder',now:()=>fixtureTime,store:storage,
+  getStoredShippingQuote:async()=>stored,
+  getPackingPlan:async()=>({configured:true,revision:1,packages:[{content:'Fixture parcel',amount:1,type:'box',weight:2,weightUnit:'KG',lengthUnit:'CM',dimensions:{length:50,width:20,height:10}}]}),
+  fetcher:async(url,request)=>{
+   if(url.includes('/catalog/products'))return {ok:true,json:async()=>({products})};
+   requests.push({url,body:JSON.parse(request.body)});
+   assert(url.endsWith('/ship/rate/'),'No provider purchase is permitted by this fixture');
+   const carrier=JSON.parse(request.body).shipment.carrier;
+   const rates=carrier==='usps'?[{service:'media_mail',serviceDescription:'Media (Books, Video, Playscripts)',totalPrice:30.15},
+     {service:'ground_advantage',serviceDescription:'USPS Ground Advantage',totalPrice:158.42}]
+     :[{service:'ground_economy',serviceDescription:'FedEx Ground Economy',totalPrice:58.92}];
+   return {ok:true,json:async()=>({meta:'rate',data:rates.map(rate=>({...rate,currency:'USD',deliveryEstimate:5}))})};
+  }});
+ return {service,requests,storage,store(snapshot){stored={snapshot,paid:true,destination:{name:'Fixture recipient',phone:'5550000000',street:'Fixture street',city:'Fixture city',state:'NY',...snapshot.destination}};}};
+}
+async function mediaSnapshot(f) {
+ const result=await f.service.quote({items:[{sku:'MAT-PIEL',qty:1}],destination:'10001',country:'US',currency:'USD'});
+ return {result,snapshot:verifyShippingQuote(result.quotes[0].quote_token,{}, {secret:signingSecret,now:fixtureTime})};
+}
+test('US quotes choose the next eligible rate at its original provider price and keep the US origin and USD',async()=>{
+ const f=mediaFixture(),{result,snapshot}=await mediaSnapshot(f);
+ assert.deepEqual(result.quotes.map(rate=>[rate.carrier,rate.service,rate.price]),[['fedex','ground_economy',58.92],['usps','ground_advantage',158.42]]);
+ assert.equal(result.cheapest_rate,58.92);assert.equal(result.shipping_cost,58.92);assert.equal(result.currency,'USD');
+ assert.equal(snapshot.price,58.92);assert.equal(snapshot.origin.country,'US');assert.equal(snapshot.origin.postalCode,configured.originUS.postalCode);assert.equal(snapshot.destination.postalCode,'10001');
+ for(const request of f.requests){assert.equal(request.body.origin.country,'US');assert.equal(request.body.destination.country,'US');assert.equal(request.body.settings.currency,'USD');}
+});
+test('a paid historical Media snapshot is blocked before rate, reservation or provider purchase without changing its price',async()=>{
+ for(const metadata of [{service:'media_mail'},{service:'legacy_code',service_name:'Media (Books, Video, Playscripts)'}]){
+  const f=mediaFixture(),{snapshot}=await mediaSnapshot(f),old={...snapshot,carrier:'usps',price:30.15,...metadata};f.store(old);f.requests.length=0;
+  await assert.rejects(()=>f.service.generate({orderId:'FIXTURE-MEDIA'}),error=>error.code==='SHIPPING_SERVICE_INELIGIBLE' && error.status===409);
+  assert.equal(f.requests.length,0);assert.equal(f.storage.saved(),undefined);assert.equal(old.price,30.15);assert.equal(old.service,metadata.service);
+ }
+});
+test('a completed Media guide still replays its original receipt with no new rate, reservation or purchase',async()=>{
+ let existing;const storage={withLock:async(_id,run)=>run({read:async()=>existing,reserve:async()=>{throw Error('A completed guide must not reserve again');}})};
+ const f=mediaFixture({store:storage}),{snapshot}=await mediaSnapshot(f),old={...snapshot,carrier:'usps',service:'media_mail',service_name:'Media (Books, Video, Playscripts)',price:30.15};f.store(old);
+ const result={ok:true,orderId:'FIXTURE-MEDIA',trackingNumber:'OLD-MEDIA-TRACKING',trackingNumbers:['OLD-MEDIA-TRACKING'],carrier:'usps',service:'media_mail',currency:'USD',label_cost:30.15,labelUrl:'https://carrier.test/old-media.pdf'};
+ existing={quote_hash:require('node:crypto').createHash('sha256').update(JSON.stringify(old)).digest('hex'),status:'complete',result};f.requests.length=0;
+ assert.deepEqual(await f.service.generate({orderId:'FIXTURE-MEDIA'}),result);assert.equal(f.requests.length,0);
+});
 test('only door-to-door rates are offered and their provider labels are signed with the quote', async () => {
   const providerRate={carrier:'paquetexpress',carrierDescription:'Paquetexpress',serviceDescription:'Paquetexpress Standard',
     currency:'MXN',deliveryEstimate:'2-4 días'};
