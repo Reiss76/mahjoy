@@ -8,6 +8,7 @@ function fixture(currency) {
     document:{readyState:'loading',addEventListener(){},getElementById:node},console:{log(){},error(){},warn(){}},alert(){},setTimeout:fn=>fn(),
     paypal:{Buttons:value=>{options=value;return{render:()=>Promise.resolve()}}},
     fetch:async(path,init)=>{
+      if(path==='/api/checkout/paypal/config')return{ok:true,json:async()=>({nativeShipping:false})};
       const body=JSON.parse(init.body);requests.push({path,body});
       if(path==='/api/shipping/quote')return{ok:true,json:async()=>({quotes:[{id:'carrier:ground',carrier:'carrier',service:'ground',carrier_name:'Fixture carrier',service_name:'Fixture home delivery',
         days:3,currency,price:currency==='USD'?30:429,quote_token:'signed-'+currency}]})};
@@ -25,12 +26,12 @@ for(const currency of ['MXN','USD'])for(const kind of ['normal','express']){
   test(`${kind} ${currency} product callback is blocked without a quote and creates once with the actual selected rate`,async()=>{
     const f=fixture(currency);
     if(kind==='normal'){
-      vm.runInContext(fs.readFileSync('js/paypal-checkout.js','utf8'),f.ctx);f.ctx.window.MJPayPal.init();
+      vm.runInContext(fs.readFileSync('js/paypal-checkout.js','utf8'),f.ctx);await f.ctx.window.MJPayPal.init();
     }else{
       f.ctx.document.readyState='complete';
       const file=currency==='USD'?'en/checkout.html':'checkout.html';
       const scripts=[...fs.readFileSync(file,'utf8').matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(match=>match[1]);
-      vm.runInContext(scripts.find(script=>script.includes('function initPayPalExpress()')),f.ctx);
+      vm.runInContext(scripts.find(script=>script.includes('function initPayPalExpress()')),f.ctx);await new Promise(setImmediate);
     }
     await assert.rejects(()=>Promise.resolve().then(()=>f.options().createOrder({},{})));
     assert.equal(f.requests.length,0);

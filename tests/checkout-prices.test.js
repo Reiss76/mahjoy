@@ -13,6 +13,7 @@ const stale = [{id:62,sku:'TILE-mythos',name:'Mythos Tile',price:6000,price_usd:
 function browser(cart = structuredClone(stale)) {
   const ctx = { window: {addEventListener() {}}, console, setTimeout, alert() {}, document: {addEventListener() {}},
     fetch: async (_url, options) => {
+      if(_url.endsWith('/paypal/config'))return {ok:true,json:async()=>({nativeShipping:false})};
       if(_url.endsWith('/paypal/create')){ctx.createdPayload=JSON.parse(options.body).payload;return {ok:true,json:async()=>({id:'ORDER-ID'})};}
       const body = JSON.parse(options.body);
       const items = quoteItems(products, body.items, body.currency, body.discount_code ? 10 : 0);
@@ -34,13 +35,13 @@ test('current Proax prices repair a legacy cart with missing USD without convert
 test('the actual English cart callback sends both products for USD475 including shipping',async()=>{
   const ctx=browser();let options,created;
   const listeners=[];
-  ctx.document={addEventListener:(_event,fn)=>listeners.push(fn),getElementById:()=>({hasChildNodes:()=>false})};
+  ctx.document={addEventListener:(_event,fn)=>listeners.push(fn),getElementById:()=>({style:{},hasChildNodes:()=>false})};
   ctx.paypal={Buttons:o=>{options=o;return {render(){}}}};
   const scripts=[...fs.readFileSync('en/cart.html','utf8').matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
   vm.runInContext(scripts.find(s=>s.includes('function initPayPalCart()')),ctx);
   // First registered listener initializes the SDK and then updates the visual summary.
   // Its summary needs the normal page elements, so catch only that unrelated render error.
-  try{listeners[0]();}catch(e){if(!options)throw e;}
+  listeners[0]();await new Promise(setImmediate);
   await options.createOrder({}, {order:{create:p=>{created=p;return 'ORDER-ID'}}});
   assert.equal(ctx.createdPayload.purchase_units[0].items[1].unit_amount.value,'70.00');
   assert.equal(ctx.createdPayload.purchase_units[0].amount.value,'475.00');
@@ -104,17 +105,17 @@ test('the USD checkout callback retains a USD60 shipping quote instead of reduci
   ctx.document={readyState:'loading',addEventListener(){},getElementById:id=>id==='co-form'?{qty:{value:'1'}}:container};
   ctx.paypal={Buttons:o=>{options=o;return {render:()=>Promise.resolve()};}};
   vm.runInContext(fs.readFileSync('js/paypal-checkout.js','utf8'),ctx);
-  ctx.window.MJPayPal.init();
+  await ctx.window.MJPayPal.init();
   await options.createOrder({}, {order:{create:p=>{created=p;return 'SIMULATED';}}});
   const unit=ctx.createdPayload.purchase_units[0];assert.equal(unit.items.length,1);assert.equal(unit.amount.breakdown.shipping.value,'60.00');assert.equal(unit.amount.value,'440.00');
 });
 test('Mexico PayPal cart uses MXN7200 even though the same items are USD450 in the US market',async()=>{
  const ctx=browser();let options,created;const listeners=[];
- ctx.document={addEventListener:(_e,fn)=>listeners.push(fn),getElementById:()=>({hasChildNodes:()=>false})};
+ ctx.document={addEventListener:(_e,fn)=>listeners.push(fn),getElementById:()=>({style:{},hasChildNodes:()=>false})};
  ctx.paypal={Buttons:o=>{options=o;return {render(){}}}};
  const scripts=[...fs.readFileSync('cart.html','utf8').matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
  vm.runInContext(scripts.find(s=>s.includes('function initPayPalCart()')),ctx);
- try{listeners[0]()}catch(e){if(!options)throw e}
+ listeners[0]();await new Promise(setImmediate);
  await options.createOrder({}, {order:{create:p=>{created=p;return 'SIMULATED';}}});
  const unit=ctx.createdPayload.purchase_units[0];assert.equal(unit.amount.currency_code,'MXN');assert.equal(unit.items[0].unit_amount.value,'6000.00');assert.equal(unit.items[1].unit_amount.value,'1200.00');assert.equal(unit.amount.breakdown.item_total.value,'7200.00');
 });

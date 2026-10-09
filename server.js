@@ -58,7 +58,9 @@ const CENTUMPAY_TOTP_SECRET= process.env.CENTUMPAY_TOTP_SECRET;
 const CENTUMPAY_API_HASH   = process.env.CENTUMPAY_API_HASH;
 const CENTUMPAY_ENV        = (process.env.CENTUMPAY_ENV || 'prod').toLowerCase();
 
-app.use(express.json());
+app.use(express.json({verify:(req,_res,buffer)=>{
+  if(req.originalUrl.split('?')[0]==='/api/checkout/paypal/shipping-quote')req.rawBody=buffer.toString('utf8');
+}}));
 app.disable('x-powered-by');
 app.use(require('./lib/web-security').operationsGuard);
 
@@ -353,6 +355,7 @@ const shippingQuotes = createShippingQuoteService({
   getStoredShippingQuote: (orderId, client) => getStoredShippingQuote(client || pool, orderId),
   store: shipmentStore(pool)
 });
+require('./lib/paypal-native-shipping-rpc').registerPayPalNativeShippingRpc(app,shippingQuotes);
 app.post('/api/shipping/quote', async (req, res) => {
   res.set('Cache-Control', 'no-store');
   try { res.json(await shippingQuotes.quote(req.body)); }
@@ -378,7 +381,7 @@ let paypalReceipts;
 require('./lib/paypal-checkout').registerPayPalCheckout(app, PROAX_API_URL, fetch, async orderId => {
   if(!paypalReceipts)throw new Error('PAYPAL_RECEIPT_UNAVAILABLE');
   await paypalReceipts.enqueue(orderId);
-});
+},undefined,{preflight:shippingQuotes.preflight});
 
 // ─── Orders Backup (File Persistence) ─────────────────────────────────────────
 const ORDERS_BACKUP_FILE = path.join(__dirname, 'data', 'orders-backup.json');
