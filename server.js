@@ -557,7 +557,7 @@ async function getTodayOrdersFromDatabase() {
 // Helper to update order in Proax
 async function updateProaxOrder(orderId, updates) {
   try {
-    await fetch(`${PROAX_API_URL}/api/inventory/${PROAX_NODE_ID}/web-orders/${orderId}`, {
+    const response = await fetch(`${PROAX_API_URL}/api/inventory/${PROAX_NODE_ID}/web-orders/${orderId}`, {
       method: 'PATCH',
       headers: { 
         'Content-Type': 'application/json',
@@ -565,9 +565,15 @@ async function updateProaxOrder(orderId, updates) {
       },
       body: JSON.stringify(updates)
     });
+    if (!response.ok) {
+      console.warn(`[proax] Order update pending for ${orderId}: HTTP ${response.status}`);
+      return false;
+    }
     console.log(`[proax] Updated order ${orderId}:`, updates);
+    return true;
   } catch (err) {
     console.warn(`[proax] Failed to update order ${orderId}:`, err.message);
+    return false;
   }
 }
 
@@ -1080,15 +1086,21 @@ app.post('/api/shipping/create', async (req, res) => {
   res.set('Cache-Control', 'no-store');
   try {
     const result = await shippingQuotes.generate(req.body);
+    let shippedAt = new Date().toISOString();
     if (pendingOrders.has(result.orderId)) {
       const order = pendingOrders.get(result.orderId);
       order.status = 'shipped';
-      order.trackingNumber = result.trackingNumber;
-      order.labelUrl = result.labelUrl;
-      order.shippedAt = new Date().toISOString();
+      Object.assign(order, require('./lib/shipping-quotes').shippingLabelOrderFields(result));
+      order.shippedAt = order.shippedAt || shippedAt;
+      shippedAt = order.shippedAt;
       pendingOrders.set(result.orderId, order);
     }
-    res.json(result);
+    // Replays read the same durable label group; retrying this PATCH cannot
+    // issue another guide, even if Proax was unavailable after generation.
+    const synced = await updateProaxOrder(result.orderId, {
+      status: 'shipped', ...require('./lib/shipping-quotes').proaxShippingLabelFields(result), shipped_at: shippedAt
+    });
+    res.json({...result, ...(!synced ? {proax_sync_pending:true} : {})});
   } catch (error) {
     res.status(error.status || 503).json({error:'Could not verify shipment. Please review the order.', error_code:error.code || 'SHIPPING_FULFILLMENT_UNAVAILABLE'});
   }
@@ -1278,8 +1290,7 @@ async function pollCentumPayTransactions() {
 
             if (shipData.ok) {
               console.log(`[poll] ✅ Shipment created! Tracking: ${shipData.trackingNumber}`);
-              order.trackingNumber = shipData.trackingNumber;
-              order.labelUrl = shipData.labelUrl;
+              Object.assign(order, require('./lib/shipping-quotes').shippingLabelOrderFields(shipData));
               order.status = 'shipped';
               order.shippedAt = new Date().toISOString();
               pendingOrders.set(orderId, order);
@@ -1287,8 +1298,7 @@ async function pollCentumPayTransactions() {
               // Update Proax
               await updateProaxOrder(orderId, {
                 status: 'shipped',
-                tracking_number: shipData.trackingNumber,
-                label_url: shipData.labelUrl,
+                ...require('./lib/shipping-quotes').proaxShippingLabelFields(shipData),
                 shipped_at: order.shippedAt
               });
               
