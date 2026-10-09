@@ -350,7 +350,16 @@ test('cached completion cannot replay missing per-row PDFs, but a legacy combine
   saved.result={...original,shipments:original.shipments.map((row,index)=>index?{...row,labelUrl:'https://carrier.test/unmatched.pdf'}:row)};
   await assert.rejects(f.service.generate({orderId:'FIXTURE-ORDER'}),/SHIPPING_LABEL_STATUS_PENDING/);
   saved.result={...original,labelUrl:'https://carrier.test/combined.pdf',labelUrls:['https://carrier.test/combined.pdf']};delete saved.result.shipments;
-  assert.equal((await f.service.generate({orderId:'FIXTURE-ORDER'})).labelUrl,'https://carrier.test/combined.pdf');
+  delete saved.result.labelUrls; // Historical records stored only the scalar PDF.
+  const legacy=await f.service.generate({orderId:'FIXTURE-ORDER'});
+  assert.equal(legacy.labelUrl,'https://carrier.test/combined.pdf');
+  const update=proaxShippingLabelFields(legacy),cache=shippingLabelOrderFields(legacy);
+  assert.equal(update.shipments.length,1);assert.deepEqual(update.shipments[0].trackingNumbers,['TRACK-ONE','TRACK-TWO']);
+  assert.deepEqual(update.label_urls,['https://carrier.test/combined.pdf']);assert.deepEqual(update.shipments[0].labelUrls,update.label_urls);
+  assert.equal(update.shipments[0].totalPrice,99);assert.equal(update.shipments[0].label_cost,99);assert.equal(update.label_cost,99);
+  assert.equal(update.shipments[0].carrier,'estafeta');assert.equal(update.shipments[0].service,'ground');assert.equal(update.shipments[0].currency,'MXN');
+  assert.equal(cache.shipments.length,1);assert.equal(legacy.shipments,undefined);
+  assert.deepEqual(proaxShippingLabelFields(await f.service.generate({orderId:'FIXTURE-ORDER'})),update);
   assert.equal(f.requests.filter(r=>r.url.endsWith('/ship/generate/')).length,1);
 });
 test('failed persistence keeps the emitted group pending, while a lost successful write is recovered without reissue',async()=>{
