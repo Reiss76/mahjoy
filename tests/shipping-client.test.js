@@ -97,6 +97,35 @@ test('a late quote response cannot restore rates for an earlier postal code',asy
   assert.equal(f.shipping.state().selected,null);
   assert.equal(f.shipping.state().rates.length,0);
 });
+test('a configured pre-quote catalog refresh canonicalizes SKUs before the shipping request',async()=>{
+  const f=browser();f.setCart([{id:'legacy-name',name:'Test product',qty:2}]);let refreshed=0;
+  f.shipping.configure({currency:'MXN',items:()=>f.getCart(),beforeQuote:async()=>{
+    refreshed++;f.setCart([{id:1,sku:'TEST-A',name:'Test product',qty:2}]);
+  }});
+  await ready(f);
+  assert.equal(refreshed,1);assert.equal(f.requests.length,1);
+  assert.equal(f.requests[0].body.items[0].sku,'TEST-A');assert.equal(f.requests[0].body.items[0].qty,2);
+  assert.equal(f.shipping.requireForPayment('MXN').quote_token,'signed-test-rate');
+});
+test('an older pre-quote refresh cannot replace the quote from a newer request',async()=>{
+  const f=browser();let resolveOld,count=0;
+  f.shipping.configure({currency:'MXN',items:()=>f.getCart(),beforeQuote:()=>++count===1?new Promise(resolve=>{resolveOld=resolve;}):Promise.resolve()});
+  const old=f.shipping.quote();
+  assert.equal(f.shipping.state().loading,true);assert.equal(f.shipping.state().selected,null);
+  await ready(f);const token=f.shipping.requireForPayment('MXN').quote_token;
+  resolveOld();await assert.rejects(()=>old,error=>error.code==='SHIPPING_DESTINATION_CHANGED');
+  assert.equal(f.requests.length,1);assert.equal(f.shipping.requireForPayment('MXN').quote_token,token);
+});
+test('a destination change or failed catalog refresh cannot publish or retain a shipping selection',async()=>{
+  const f=browser();await ready(f);let resolve;
+  f.shipping.configure({currency:'MXN',items:()=>f.getCart(),beforeQuote:()=>new Promise(done=>{resolve=done;})});
+  const pending=f.shipping.quote();f.shipping.setDestination('11111','MX');resolve();
+  await assert.rejects(()=>pending,error=>error.code==='SHIPPING_DESTINATION_CHANGED');
+  assert.equal(f.requests.length,1);assert.equal(f.shipping.state().selected,null);assert.equal(f.shipping.state().loading,false);
+  f.shipping.configure({currency:'MXN',items:()=>f.getCart(),beforeQuote:async()=>{throw Error('Catalog unavailable');}});
+  await assert.rejects(()=>f.shipping.quote(),error=>error.code==='SHIPPING_QUOTE_UNAVAILABLE');
+  assert.equal(f.requests.length,1);assert.equal(f.shipping.state().selected,null);assert.equal(f.shipping.state().loading,false);
+});
 test('the original order token is immutable and address callbacks never PATCH or re-quote',async()=>{
   const f=browser();await ready(f);
   f.shipping.rememberOrder('ORDER',f.shipping.requireForPayment('MXN'));
@@ -112,6 +141,85 @@ test('the original order token is immutable and address callbacks never PATCH or
   const response=f.ctx.fetch;f.ctx.fetch=async()=>({ok:true,json:async()=>({quotes:[rate('MXN',{quote_token:'new-token-same-postal'})]})});
   await ready(f);assert.throws(()=>f.shipping.requireForCapture('ORDER'));
   f.ctx.fetch=response;
+});
+test('a rejected PayPal default address can return to the original postal code without losing the signed selection',async()=>{
+  for(const currency of ['MXN','USD']) {
+    const f=browser({currency});await ready(f);
+    const original=f.shipping.requireForPayment(currency),country=original.country;
+    f.shipping.rememberOrder('ORDER',original);
+    const requestCount=f.requests.length;let rejected=0;
+    const actions={reject(){rejected++;return Promise.resolve();},order:{patch(){throw Error('Forbidden PATCH');}}};
+    const change=f.shipping.paypalCallbacks().onShippingAddressChange;
+    await change({orderID:'ORDER',shippingAddress:{countryCode:country,postalCode:'11111'}},actions);
+    assert.equal(rejected,1);
+    assert.equal(f.shipping.state().selected.quote_token,original.quote_token);
+    assert.throws(()=>f.shipping.requireForCapture('ORDER'),error=>error.code==='SHIPPING_ADDRESS_MISMATCH');
+    await change({orderId:'ORDER',shippingAddress:{countryCode:country,postalCode:'00000'}},actions);
+    assert.equal(rejected,1);
+    assert.equal(f.shipping.requireForCapture('ORDER').quote_token,original.quote_token);
+    // A later invalid address blocks capture again; the last valid callback wins.
+    await change({orderID:'ORDER',shippingAddress:{countryCode:country==='MX'?'US':'MX',postalCode:'00000'}},actions);
+    assert.equal(rejected,2);
+    assert.throws(()=>f.shipping.requireForCapture('ORDER'),error=>error.code==='SHIPPING_ADDRESS_MISMATCH');
+    await change({orderID:'ORDER',shipping_address:{country_code:country,postal_code:'00000'}},actions);
+    assert.equal(rejected,2);
+    assert.equal(f.shipping.requireForCapture('ORDER').quote_token,original.quote_token);
+    assert.equal(f.requests.length,requestCount,'Address recovery must never re-quote, PATCH or capture');
+  }
+});
+test('missing address data and a failed SDK rejection cannot authorize capture, but preserve the original quote',async()=>{
+  const f=browser();await ready(f);
+  const original=f.shipping.requireForPayment('MXN');f.shipping.rememberOrder('ORDER',original);
+  const change=f.shipping.paypalCallbacks().onShippingAddressChange;let rejected=0;
+  const actions={reject(){rejected++;return Promise.resolve();}};
+  for(const shippingAddress of [undefined,{}, {countryCode:'MX'}, {postalCode:'00000'}]) {
+    await change({orderID:'ORDER',shippingAddress},actions);
+    assert.throws(()=>f.shipping.requireForCapture('ORDER'),error=>error.code==='SHIPPING_ADDRESS_MISMATCH');
+    assert.equal(f.shipping.state().selected.quote_token,original.quote_token);
+  }
+  assert.equal(rejected,4);
+  assert.throws(()=>change({orderID:'ORDER',shippingAddress:{countryCode:'MX',postalCode:'11111'}},{reject(){throw Error('SDK response lost');}}),/SDK response lost/);
+  assert.throws(()=>f.shipping.requireForCapture('ORDER'),error=>error.code==='SHIPPING_ADDRESS_MISMATCH');
+  await change({orderID:'ORDER',shippingAddress:{countryCode:'MX',postalCode:'00000'}},actions);
+  assert.equal(f.shipping.requireForCapture('ORDER').quote_token,original.quote_token);
+  assert.equal(f.requests.length,1);
+});
+test('returning to the original address cannot revive an order after cart, destination, currency or token changes',async()=>{
+  for(const change of ['cart','destination','currency','token']) {
+    const f=browser();await ready(f);const original=f.shipping.requireForPayment('MXN');
+    f.shipping.rememberOrder('ORDER',original);
+    const callbacks=f.shipping.paypalCallbacks();let rejected=0;
+    const actions={reject(){rejected++;return Promise.resolve();}};
+    await callbacks.onShippingAddressChange({orderID:'ORDER',shippingAddress:{countryCode:'MX',postalCode:'11111'}},actions);
+    if(change==='cart')f.setCart([{sku:'TEST-A',name:'Test product',qty:2}]);
+    if(change==='destination')f.shipping.setDestination('11111','MX');
+    if(change==='currency')f.shipping.configure({currency:'USD',items:()=>f.getCart()});
+    if(change==='token') {
+      f.ctx.fetch=async()=>({ok:true,json:async()=>({quotes:[rate('MXN',{quote_token:'replacement-token'})]})});
+      await ready(f);
+    }
+    const requestCount=f.requests.length;
+    await callbacks.onShippingAddressChange({orderID:'ORDER',shippingAddress:{countryCode:'MX',postalCode:'00000'}},actions);
+    assert.equal(rejected,2,change);
+    assert.throws(()=>f.shipping.requireForCapture('ORDER'),change);
+    assert.equal(f.requests.length,requestCount,change);
+    if(change==='cart') {
+      f.setCart([{sku:'TEST-A',name:'Test product',qty:1}]);
+      await callbacks.onShippingAddressChange({orderID:'ORDER',shippingAddress:{countryCode:'MX',postalCode:'00000'}},actions);
+      assert.equal(rejected,3,'A cart reverted without its selected quote is still stale');
+      assert.throws(()=>f.shipping.requireForCapture('ORDER'));
+    }
+  }
+});
+test('an old order address callback cannot invalidate the newer order or replace its current token',async()=>{
+  const f=browser();await ready(f);f.shipping.rememberOrder('OLD',f.shipping.requireForPayment('MXN'));
+  f.ctx.fetch=async()=>({ok:true,json:async()=>({quotes:[rate('MXN',{quote_token:'newer-order-token'})]})});
+  await ready(f);f.shipping.rememberOrder('NEW',f.shipping.requireForPayment('MXN'));
+  let rejected=0;
+  await f.shipping.paypalCallbacks().onShippingAddressChange({orderID:'OLD',shippingAddress:{countryCode:'MX',postalCode:'00000'}},{reject(){rejected++;return Promise.resolve();}});
+  assert.equal(rejected,1);assert.throws(()=>f.shipping.requireForCapture('OLD'));
+  assert.equal(f.shipping.state().selected.quote_token,'newer-order-token');
+  assert.equal(f.shipping.requireForCapture('NEW').quote_token,'newer-order-token');
 });
 test('PayPal create/capture send the original token and normalize shipping into breakdown once',async()=>{
   const f=browser({respond:async(path,body)=>{

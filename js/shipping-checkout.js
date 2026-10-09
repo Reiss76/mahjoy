@@ -7,6 +7,7 @@
   let rates = [];
   let selectedRate = null;
   let requestNumber = 0;
+  let preparationNumber = 0;
   let loading = false;
   let notice = '';
   let payPalNative = false;
@@ -145,6 +146,29 @@
     return [rate.carrier_name, rate.service_name, rate.delivery_description].filter(Boolean).join(' · ');
   }
   async function quote() {
+    const preparation = ++preparationNumber;
+    const preparedConfiguration = configuration;
+    const preparedDestination = JSON.stringify([destination.country, destination.postalCode, configuration?.currency]);
+    if (typeof configuration?.beforeQuote === 'function') {
+      // Catalog canonicalization can change SKU aliases. Freeze the request's
+      // destination, discard older preparations and clear any previous quote.
+      invalidate();
+      loading = true;
+      notice = message('Calculando envío…', 'Calculating shipping…');
+      emit();
+      const currentPreparation = () => preparation === preparationNumber && preparedConfiguration === configuration
+        && preparedDestination === JSON.stringify([destination.country, destination.postalCode, configuration?.currency]);
+      try {
+        await preparedConfiguration.beforeQuote();
+        if (!currentPreparation()) throw shippingError('SHIPPING_DESTINATION_CHANGED');
+      } catch (error) {
+        if (currentPreparation()) invalidate(errorMessage(error.code || 'SHIPPING_QUOTE_UNAVAILABLE'));
+        if (/^(SHIPPING_|INVALID_SHIPPING_|PACKAGE_|PACKAGING_)/.test(error.code || '')) throw error;
+        throw shippingError('SHIPPING_QUOTE_UNAVAILABLE');
+      } finally {
+        if (currentPreparation()) { loading = false; emit(); }
+      }
+    }
     refresh();
     if (!configuration || !/^\d{5}$/.test(destination.postalCode) || !['MX', 'US'].includes(destination.country)) throw shippingError('SHIPPING_DESTINATION_INVALID');
     if (destination.country === 'US' && configuration.currency !== 'USD') throw shippingError('SHIPPING_MARKET_INVALID');
@@ -209,29 +233,44 @@
     return { ...selectedRate, postalCode: destination.postalCode, country: destination.country, contextKey };
   }
   function rememberOrder(orderId, selection) { orders.set(orderId, { ...selection }); }
-  function requireForCapture(orderId) {
+  function requireOrderContext(orderId) {
     const order = orders.get(orderId);
     if (!order) throw shippingError('SHIPPING_QUOTE_REQUIRED');
     refresh();
-    if (order.addressRejected || contextKey !== order.contextKey || configuration?.currency !== order.currency
+    if (contextKey !== order.contextKey || configuration?.currency !== order.currency
       || (selectedRate && selectedRate.quote_token !== order.quote_token)) throw shippingError('SHIPPING_QUOTE_CHANGED');
+    return { ...order };
+  }
+  function requireForCapture(orderId) {
+    const order = requireOrderContext(orderId);
+    if (order.addressRejected) throw shippingError('SHIPPING_ADDRESS_MISMATCH');
     // Proax distinguishes an expired APPROVED order from an already completed receipt.
     // Always preserve the original token; a retry may recover a lost completed response.
     return { ...order };
   }
   function addressChange(data, actions) {
+    const orderId = data?.orderID || data?.orderId;
     try {
-      const selection = requireForCapture(data.orderID || data.orderId);
+      const selection = requireOrderContext(orderId);
+      // A rejected default address may be corrected inside PayPal, but only
+      // against the same current signed selection that created this order.
+      if (!selectedRate || quotedKey !== contextKey || selectedRate.quote_token !== selection.quote_token) throw shippingError('SHIPPING_QUOTE_CHANGED');
       const address = data.shippingAddress || data.shipping_address || {};
       const country = String(address.countryCode || address.country_code || '').toUpperCase();
       const postalCode = normalizedPostal(address.postalCode || address.postal_code, country);
       if (country !== selection.country || postalCode !== selection.postalCode) {
-        orders.set(data.orderID || data.orderId, { ...selection, addressRejected: true });
-        invalidate(errorMessage('SHIPPING_ADDRESS_MISMATCH'));
+        orders.set(orderId, { ...selection, addressRejected: true });
+        notice = errorMessage('SHIPPING_ADDRESS_MISMATCH');
+        emit();
         return actions.reject();
       }
+      orders.set(orderId, { ...selection, addressRejected: false });
+      notice = message('Envío seleccionado. Puedes continuar al pago.', 'Shipping selected. You can continue to payment.');
+      emit();
       return Promise.resolve();
     } catch (error) {
+      const order = orders.get(orderId);
+      if (order) orders.set(orderId, { ...order, addressRejected: true });
       notice = error.message;
       emit();
       return actions.reject();
@@ -255,7 +294,7 @@
     const cart = container.dataset.kind === 'cart';
     configure({ currency, items: () => cart ? window.MJCart?.getCart() || [] : (window.MJCheckoutProduct ? [{
       ...window.MJCheckoutProduct, qty: Number(document.getElementById('co-qty')?.value || 1)
-    }] : []) });
+    }] : []), beforeQuote: cart ? () => window.MJPayPalPricing?.refreshCart(currency) : undefined });
     const countryLabel = message('País de envío', 'Shipping country');
     const postalLabel = message('Código postal', 'Postal code');
     if (!document.getElementById('mj-shipping-style')) {
