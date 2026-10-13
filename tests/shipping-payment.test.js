@@ -23,3 +23,8 @@ test('card checkout binds its address, merchandise and currency to a verified qu
   assert.throws(()=>verifyCardShipping({...body,shipping_cp:''},()=>quote),/SHIPPING_ADDRESS_MISMATCH/);
   assert.throws(()=>verifyCardShipping(body,()=>{throw Error('SHIPPING_QUOTE_EXPIRED')}),/SHIPPING_QUOTE_EXPIRED/);
 });
+test('address guard retains equivalent valid US ZIP+4 while Mexico still requires five digits',()=>{
+ const body={cart:[{sku:'A',qty:1}],currency:'USD',shipping_cp:'60601-1234',shipping_country:'US',shipping_cost:30,shipping_quote_token:'signed'};
+ assert.equal(verifyCardShipping(body,()=>({price:30,currency:'USD'})).price,30);
+ assert.throws(()=>verifyCardShipping({...body,shipping_cp:'60601-123'},()=>quote),/SHIPPING_ADDRESS_MISMATCH/);
+});

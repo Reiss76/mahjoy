@@ -358,6 +358,10 @@ const enviaReference = require('./lib/envia-reference').createEnviaReference({
   partialRateVerified:{MX:['fedex'],US:['fedex','ups','usps']}
 });
 const shippingQuotes = createShippingQuoteService({
+  getDiscountedValues:async body=>{
+    const quoted=await require('./lib/checkout-prices').resolveCheckoutQuote(process.env.PROAX_API_URL || 'https://proax.app',body);
+    return quoted.items.map(item=>({sku:item.sku,qty:item.qty,unit_amount:{value:item.unit_price,currency_code:body.currency}}));
+  },
   onRateResult:result=>console.info('[envia/rates]',result),
   resolveDestination:enviaReference.resolveDestination,
   allowPartialRate:enviaReference.allowPartialRate,

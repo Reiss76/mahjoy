@@ -64,7 +64,7 @@ function fixture(overrides = {}) {
   const storage=overrides.store || memoryStore();
   const service = createShippingQuoteService({
     resolveDestination:async address=>({city:'Fixture city',state:address.country==='US'?'NY':'NL',...address}),
-    allowPartialRate:()=>true,getPrintSettings:async()=>({printFormat:'PDF',printSize:'STOCK_4X6'}),
+    getDiscountedValues:overrides.getDiscountedValues,allowPartialRate:()=>true,getPrintSettings:async()=>({printFormat:'PDF',printSize:'STOCK_4X6'}),
     config, origins:{MX:configured.origin,US:configured.originUS},
     signingSecret,apiKey:'test-provider-placeholder',fetcher,
     now:()=>currentTime,store:storage,getStoredShippingQuote:async()=>stored,getPackingPlan:overrides.getPackingPlan
@@ -600,4 +600,10 @@ test('final recotization preserves selected service and buyer price while report
 test('HTTP 200 error-shaped rate responses cannot create an offer, even when fake rates are present',async()=>{
  const f=fixture({fetcher:async()=>({ok:true,json:async()=>({meta:'rate',success:false,data:[{dropOff:0,totalPrice:1,currency:'MXN',service:'ground'}]})})});
  await assert.rejects(quoted(f),/SHIPPING_RATES_UNAVAILABLE/);assert.equal(f.storage.saved(),undefined);
+});
+test('public discount quoting uses server verified net values and cannot use submitted product prices',async()=>{
+ let requested;const f=fixture({getDiscountedValues:async body=>{requested=body;return items.map(item=>({...item,unit_amount:{currency_code:'MXN',value:'100.00'}}));}});
+ const result=await f.service.quote({items:items.map(item=>({...item,price:1})),destination:'85219',country:'MX',currency:'MXN',discount_code:'FIXTURE'});
+ const q=verifyShippingQuote(result.quotes[0].quote_token,{}, {secret:signingSecret,now:fixtureTime});assert.equal(q.valuation.total,300);assert.equal(q.packages[0].declaredValue,300);assert.equal(requested.discount_code,'FIXTURE');
+ await assert.rejects(fixture().service.quote({items,destination:'85219',country:'MX',currency:'MXN',discount_code:'FORGED'}),/SHIPPING_DECLARED_VALUE_REQUIRED/);
 });

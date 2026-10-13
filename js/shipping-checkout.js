@@ -31,7 +31,7 @@
   }
   function normalizedPostal(value, country) {
     const text = String(value || '').trim();
-    return country === 'US' && /^\d{5}-\d{4}$/.test(text) ? text.slice(0, 5) : text;
+    return country === 'US' ? text.replace(' ','-') : text;
   }
   function merchandise(items) {
     return (items || []).filter(item => !(!item.sku && /^(shipping|env[ií]o)$/i.test(item.name || '')));
@@ -47,11 +47,12 @@
     if (!quantities.size) throw shippingError('SHIPPING_CART_INVALID');
     return JSON.stringify([...quantities].sort((a, b) => a[0].localeCompare(b[0])));
   }
+  const discountCode=()=>String((window.MJAppliedDiscount || window.cartDiscount)?.code || '').trim();
   function currentItems() { return configuration?.items?.() || []; }
   function currentKey() {
     let key;
     try { key = itemsKey(currentItems()); } catch (_) { key = 'empty'; }
-    return JSON.stringify([destination.country, destination.postalCode, configuration?.currency, key]);
+    return JSON.stringify([destination.country, destination.postalCode, configuration?.currency, key,discountCode()]);
   }
   function state() { return { rates: rates.slice(), selected: selectedRate, loading, notice, destination: { ...destination }, currency: configuration?.currency, payPalNative, cardMode }; }
   function applyPaymentLayout() {
@@ -166,7 +167,7 @@
       }
     }
     refresh();
-    if (!configuration || !/^\d{5}$/.test(destination.postalCode) || !['MX', 'US'].includes(destination.country)) throw shippingError('SHIPPING_DESTINATION_INVALID');
+    if (!configuration || !(destination.country==='US'?/^\d{5}(?:-\d{4})?$/:/^\d{5}$/).test(destination.postalCode) || !['MX', 'US'].includes(destination.country)) throw shippingError('SHIPPING_DESTINATION_INVALID');
     if (destination.country === 'US' && configuration.currency !== 'USD') throw shippingError('SHIPPING_MARKET_INVALID');
     const items = merchandise(currentItems()).map(item => ({ id: item.id, sku: item.sku, name: item.name, qty: Number(item.qty ?? item.quantity ?? 1) }));
     itemsKey(items);
@@ -179,7 +180,7 @@
     try {
       const response = await fetch('/api/shipping/quote', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ destination: destination.postalCode, country: destination.country, currency: configuration.currency, items })
+        body: JSON.stringify({ destination: destination.postalCode, country: destination.country, currency: configuration.currency, items,...(discountCode()?{discount_code:discountCode()}:{}) })
       });
       const result = await response.json();
       if (!response.ok) throw shippingError(result.error_code || 'SHIPPING_QUOTE_UNAVAILABLE');
@@ -254,7 +255,7 @@
       const address = data.shippingAddress || data.shipping_address || {};
       const country = String(address.countryCode || address.country_code || '').toUpperCase();
       const postalCode = normalizedPostal(address.postalCode || address.postal_code, country);
-      if (country !== selection.country || postalCode !== selection.postalCode) {
+      if (country !== selection.country || postalCode.slice(0,5) !== selection.postalCode.slice(0,5)) {
         orders.set(orderId, { ...selection, addressRejected: true });
         notice = errorMessage('SHIPPING_ADDRESS_MISMATCH');
         emit();
@@ -298,7 +299,7 @@
       style.textContent = '#mj-shipping-checkout{font-size:14px;line-height:1.4;text-transform:none;font-weight:400}#mj-shipping-checkout fieldset{min-width:0}#mj-shipping-checkout legend{font-size:14px;font-weight:600;text-transform:none}#mj-shipping-checkout label{font-size:12px;line-height:1.4;text-transform:none;font-weight:400;min-width:0}#mj-shipping-checkout input,#mj-shipping-checkout select,#mj-shipping-checkout button{font-size:14px;line-height:1.4;text-transform:none;font-weight:400;min-width:0}#mj-shipping-checkout .mj-shipping-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:12px;align-items:end}#mj-shipping-checkout #mj-shipping-rates span{font-size:14px;line-height:1.4;text-transform:none;font-weight:400}#mj-shipping-checkout #mj-shipping-status{font-size:12px;line-height:1.4;text-transform:none}@media(max-width:600px){#mj-shipping-checkout .mj-shipping-fields{grid-template-columns:repeat(2,minmax(0,1fr))}#mj-shipping-checkout #mj-shipping-calculate{grid-column:1/-1}}';
       document.head.append(style);
     }
-    container.innerHTML = `<fieldset style="border:1px solid #ddd;border-radius:10px;padding:14px;margin:14px 0;text-align:left;"><legend>${message('Envío', 'Shipping')}</legend><div class="mj-shipping-fields"><label>${countryLabel}<select id="mj-shipping-country" style="display:block;width:100%;padding:9px;border:1px solid #bbb;border-radius:6px;"><option value="MX">${message('México','Mexico')}</option><option value="US">United States</option></select></label><label>${postalLabel}<input id="mj-shipping-postal" inputmode="numeric" autocomplete="postal-code" maxlength="5" pattern="[0-9]{5}" style="display:block;width:100%;padding:9px;border:1px solid #bbb;border-radius:6px;"></label><button id="mj-shipping-calculate" type="button" style="padding:10px 14px;background:var(--burgundy,#6b0f2a);color:white;border:0;border-radius:6px;cursor:pointer;">${message('Calcular envío', 'Calculate shipping')}</button></div><p id="mj-shipping-status" role="status" aria-live="polite" style="margin:10px 0;"></p><div id="mj-shipping-rates" role="group" aria-label="${message('Servicios de envío', 'Shipping services')}"></div></fieldset>`;
+    container.innerHTML = `<fieldset style="border:1px solid #ddd;border-radius:10px;padding:14px;margin:14px 0;text-align:left;"><legend>${message('Envío', 'Shipping')}</legend><div class="mj-shipping-fields"><label>${countryLabel}<select id="mj-shipping-country" style="display:block;width:100%;padding:9px;border:1px solid #bbb;border-radius:6px;"><option value="MX">${message('México','Mexico')}</option><option value="US">United States</option></select></label><label>${postalLabel}<input id="mj-shipping-postal" inputmode="numeric" autocomplete="postal-code" maxlength="10" pattern="[0-9]{5}(-[0-9]{4})?" style="display:block;width:100%;padding:9px;border:1px solid #bbb;border-radius:6px;"></label><button id="mj-shipping-calculate" type="button" style="padding:10px 14px;background:var(--burgundy,#6b0f2a);color:white;border:0;border-radius:6px;cursor:pointer;">${message('Calcular envío', 'Calculate shipping')}</button></div><p id="mj-shipping-status" role="status" aria-live="polite" style="margin:10px 0;"></p><div id="mj-shipping-rates" role="group" aria-label="${message('Servicios de envío', 'Shipping services')}"></div></fieldset>`;
     const country = document.getElementById('mj-shipping-country');
     const postal = document.getElementById('mj-shipping-postal');
     const button = document.getElementById('mj-shipping-calculate');
