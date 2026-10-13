@@ -125,11 +125,11 @@ test('shipping API requests the storefront currency directly and discards mismat
  const shippingProducts=[{sku:'MAT-PIEL',name:'Mat Polo Club',price:1000,priceUsd:50},{sku:'RACK-VERDE',name:'Rack Green',price:2000,priceUsd:100},{sku:'RACK-BAG006',name:'Rack Bag Vino',price:500,priceUsd:25}];
  const shippingItems=shippingProducts.map(product=>({sku:product.sku,qty:1}));
  let requested=[];
- const service=createShippingQuoteService({config:{...configured,carriersByCountry:{MX:['estafeta']}},origins:{MX:configured.origin},
+ const service=createShippingQuoteService({resolveDestination:async address=>({city:'Fixture',state:'SO',...address}),allowPartialRate:()=>true,config:{...configured,carriersByCountry:{MX:['estafeta']}},origins:{MX:configured.origin},
   signingSecret:'currency-test-fixture',apiKey:'provider-test-placeholder',now:()=>Date.UTC(2026,9,8),fetcher:async(url,options)=>{
    if(url.includes('/catalog/products'))return{ok:true,json:async()=>({products:shippingProducts})};
    requested.push(JSON.parse(options.body).settings.currency);
-   return{ok:true,json:async()=>({meta:'rate',data:[{totalPrice:29.99,currency:'USD',service:'ground',deliveryEstimate:3},{totalPrice:999,currency:'MXN',service:'ground',deliveryEstimate:3}]})};
+   return{ok:true,json:async()=>({meta:'rate',data:[{dropOff:0,totalPrice:29.99,currency:'USD',service:'ground',deliveryEstimate:3},{dropOff:0,totalPrice:999,currency:'MXN',service:'ground',deliveryEstimate:3}]})};
   }});
  for(const currency of ['USD','MXN']){
   requested=[];

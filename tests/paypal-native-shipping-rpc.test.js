@@ -101,3 +101,18 @@ test('HTTP RPC signs physical-mismatch responses and refuses a changed frozen ma
  res=response();await handler({rawBody:JSON.stringify({...requestBody,frozenPhysicalItems:[{sku:'A',qty:1}]}),get:name=>headers[name]},res);
  assert.equal(res.statusCode,401);assert.equal(calls,1);
 });
+test('protocol 2 offers economical and fast recommendations based only on signed duration and price, binding verified net values and location',async()=>{
+ const input={...body,protocolVersion:2,city:'Fixture city',state:'SO',items:[{sku:'TEST',quantity:'1',unit_amount:{currency_code:'MXN',value:'95.00'}}]};
+ function v2(price,service,minutes) {
+  const snapshot={...quote(price),version:2,destination:{postalCode:'85219',country:'MX',city:input.city,state:input.state},origin:{...quote(price).origin,phone:'5500000000'},
+   packages:quote(price).packages.map(p=>({...p,declaredValue:95,insurance:0})),valuation:{currency:'MXN',total:95},service,delivery_minutes:minutes,delivery_status:minutes===null?'unknown':'known',delivery_estimate:minutes===null?'Unknown':'1-3 días'};
+  return {price,carrier:'estafeta',service,currency:'MXN',drop_off:0,delivery_minutes:1,quote_token:signShippingQuote(snapshot,{secret})};
+ }
+ let context,request;
+ const result=await nativeShippingQuote({quote:async (value,ctx)=>{request=value;context=ctx;return {quotes:[v2(100,'ground',4320),v2(250,'priority',1440),v2(900,'premium',1440)]};}},input,verify);
+ assert.deepEqual(result.options.map(o=>[o.kind,o.shippingQuote.service]),[['economical','ground'],['fastest','priority']]);assert.equal(result.selectedOptionId,result.options[0].option.id);
+ assert.equal(request.destination.city,input.city);assert.deepEqual(context.verifiedValues,input.items);assert.match(result.option.label,/Económico/);assert(!JSON.stringify(result).includes('quote_token'));
+ const single=await nativeShippingQuote({quote:async()=>({quotes:[v2(100,'ground',1440),v2(250,'priority',4320)]})},input,verify);
+ assert.equal(single.options.length,1);assert.equal(single.options[0].kind,'both');
+ const unknown=await nativeShippingQuote({quote:async()=>({quotes:[v2(100,'unknown',null)]})},input,verify);assert.equal(unknown.options.length,1);assert.match(unknown.option.label,/Tiempo por confirmar/);
+});

@@ -44,7 +44,7 @@ function quoteFixture(getPackingPlan){
   if(!url.endsWith('/ship/rate/'))throw Error('Unexpected financial operation');
   calls.push(JSON.parse(request.body));return{ok:true,json:async()=>({meta:'rate',data:[{service:'ground',totalPrice:150,currency:'MXN',dropOff:0,deliveryEstimate:'2-4 días'}]})};
  };
- return{calls,service:createShippingQuoteService({config,origins:{MX:origin},getPackingPlan,fetcher,apiKey:'synthetic-provider-key',signingSecret:secret,now:()=>time})};
+ return{calls,service:createShippingQuoteService({resolveDestination:async address=>({city:'Fixture city',state:'SO',...address}),allowPartialRate:()=>true,config,origins:{MX:origin},getPackingPlan,fetcher,apiKey:'synthetic-provider-key',signingSecret:secret,now:()=>time})};
 }
 test('verified Proax measurement plans replace category guesses and freeze real gross weight, boxes and assignments',async()=>{
  const f=quoteFixture(provider());

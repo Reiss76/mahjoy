@@ -265,3 +265,8 @@ test('an expired original token can recover a completed receipt, while a new cap
     assert.throws(()=>f.shipping.requireForPayment('MXN'),/caducó/); // A new payment still fails before its request.
   }
 });
+test('US fallback retains ZIP+4 and a discount-code change invalidates the previously quoted declared value',async()=>{
+ const f=browser({currency:'USD'});f.ctx.window.MJAppliedDiscount={code:'TEST-DISCOUNT'};f.shipping.setDestination('60601 1234','US');await ready(f);
+ assert.equal(f.requests[0].body.destination,'60601-1234');assert.equal(f.requests[0].body.discount_code,'TEST-DISCOUNT');assert.equal(f.shipping.state().destination.postalCode,'60601-1234');
+ f.ctx.window.MJAppliedDiscount={code:'CHANGED'};f.shipping.refresh();assert.equal(f.shipping.state().selected,null);
+});
