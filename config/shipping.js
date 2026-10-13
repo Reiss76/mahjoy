@@ -8,7 +8,6 @@ module.exports = {
   // Envia.com API Configuration
   envia: {
     apiUrl: 'https://api.envia.com',
-    apiToken: 'c541f5b32442e1505448fbdcf85f6cc4ac132a273f148242b8159234fa34432c',
   },
 
   // Origin address (warehouse/store location)

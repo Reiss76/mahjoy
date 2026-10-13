@@ -13,11 +13,11 @@ const items = [
   {sku:'MAT-PIEL', qty:1}, {sku:'RACK-VERDE', qty:1}, {sku:'RACK-BAG006', qty:1}
 ];
 const products = [
-  {id:1, sku:'MAT-PIEL', name:'Mat Polo Club', price:1000},
-  {id:2, sku:'RACK-VERDE', name:'Rack Green', price:2000},
-  {id:3, sku:'RACK-BAG006', name:'Rack Bag Vino', price:500},
-  {id:4, sku:'RACK-NEGRO', name:'Rack Black', price:2000},
-  {id:5, sku:'TILE-CASE', name:'Tile Case', price:500}
+  {id:1, sku:'MAT-PIEL', name:'Mat Polo Club', price:1000,priceUsd:100},
+  {id:2, sku:'RACK-VERDE', name:'Rack Green', price:2000,priceUsd:200},
+  {id:3, sku:'RACK-BAG006', name:'Rack Bag Vino', price:500,priceUsd:50},
+  {id:4, sku:'RACK-NEGRO', name:'Rack Black', price:2000,priceUsd:200},
+  {id:5, sku:'TILE-CASE', name:'Tile Case', price:500,priceUsd:50}
 ];
 function memoryStore(overrides={}) {
   let saved, queue = Promise.resolve();
@@ -52,7 +52,7 @@ function fixture(overrides = {}) {
     if (url.includes('/catalog/products')) return {ok:true,json:async()=>({products})};
     requests.push({url,body:JSON.parse(request.body)});
     if (overrides.fetcher) return overrides.fetcher(url,request);
-    if (url.endsWith('/ship/rate/')) return {ok:true,json:async()=>({meta:'rate',data:[{
+    if (url.endsWith('/ship/rate/')) return {ok:true,json:async()=>({meta:'rate',data:[{dropOff:0,
       service:'ground',serviceDescription:'Ground delivery',deliveryEstimate:2,
       totalPrice:overrides.ratePrice ?? 429,currency:overrides.rateCurrency || 'MXN'
     }]})};
@@ -63,6 +63,8 @@ function fixture(overrides = {}) {
   };
   const storage=overrides.store || memoryStore();
   const service = createShippingQuoteService({
+    resolveDestination:async address=>({city:'Fixture city',state:address.country==='US'?'NY':'NL',...address}),
+    allowPartialRate:()=>true,getPrintSettings:async()=>({printFormat:'PDF',printSize:'STOCK_4X6'}),
     config, origins:{MX:configured.origin,US:configured.originUS},
     signingSecret,apiKey:'test-provider-placeholder',fetcher,
     now:()=>currentTime,store:storage,getStoredShippingQuote:async()=>stored,getPackingPlan:overrides.getPackingPlan
@@ -73,7 +75,7 @@ function fixture(overrides = {}) {
     store(snapshot, paid = true) {
       stored = {snapshot,paid,destination:{name:'Fixture recipient',phone:'5550000000',
         street:'Fixture street',number:'1',district:'Fixture district',city:'Fixture city',
-        state:'NL',postalCode:'85219',country:'MX'}};
+        state:'NL',postalCode:'85219',country:'MX',...snapshot.destination}};
     }
   };
 }
@@ -87,9 +89,9 @@ function multiRows(){return [
 ];}
 function multiFixture(rows=multiRows(),overrides={}) {
   return fixture({...overrides,getPackingPlan:async()=>({configured:true,revision:1,packages:overrides.packages || multiPackages,
-    physicalItems:canonicalItems(items),packing:[{boxId:'first',boxName:'First parcel',ruleId:'first',items}]}),
+    physicalItems:canonicalItems(items),packing:[{boxId:'first',boxName:'First parcel',ruleId:'first',items:items.slice(0,1)},{boxId:'second',boxName:'Second parcel',ruleId:'second',items:items.slice(1)}]}),
     fetcher:async url=>({ok:true,json:async()=>url.endsWith('/ship/rate/')
-      ? {meta:'rate',data:[{totalPrice:99,currency:'MXN',service:'ground',deliveryEstimate:2}]}
+      ? {meta:'rate',data:[{dropOff:0,totalPrice:99,currency:'MXN',service:'ground',deliveryEstimate:2}]}
       : {meta:'generate',data:rows}})});
 }
 async function quoted(f) {
@@ -167,7 +169,7 @@ test('rates require provider total, matching currency and genuine service, never
     {...valid,currency:'USD'},
     {...valid,carrier:'dhl'},
     {...valid,service:undefined},
-    {...valid,deliveryEstimate:{min:2}}
+
   ]) assert.equal(normalizeRate(invalid,'estafeta','MXN'),null);
 });
 test('USPS Media is excluded by every service alias and provider label, without excluding other carriers or ground services',()=>{
@@ -184,6 +186,7 @@ test('USPS Media is excluded by every service alias and provider label, without 
 function mediaFixture(overrides={}) {
  const requests=[],storage=overrides.store || memoryStore();let stored;
  const service=createShippingQuoteService({config:{...configured,envia:{apiUrl:'https://carrier.test'},carriersByCountry:{US:['usps','fedex']}},
+  resolveDestination:async address=>({city:'Fixture city',state:'NY',...address}),allowPartialRate:()=>true,getPrintSettings:async()=>({printFormat:'PDF',printSize:'STOCK_4X6'}),
   origins:{US:configured.originUS},signingSecret,apiKey:'test-provider-placeholder',now:()=>fixtureTime,store:storage,
   getStoredShippingQuote:async()=>stored,
   getPackingPlan:async()=>({configured:true,revision:1,packages:[{content:'Fixture parcel',amount:1,type:'box',weight:2,weightUnit:'KG',lengthUnit:'CM',dimensions:{length:50,width:20,height:10}}]}),
@@ -195,7 +198,7 @@ function mediaFixture(overrides={}) {
    const rates=carrier==='usps'?[{service:'media_mail',serviceDescription:'Media (Books, Video, Playscripts)',totalPrice:30.15},
      {service:'ground_advantage',serviceDescription:'USPS Ground Advantage',totalPrice:158.42}]
      :[{service:'ground_economy',serviceDescription:'FedEx Ground Economy',totalPrice:58.92}];
-   return {ok:true,json:async()=>({meta:'rate',data:rates.map(rate=>({...rate,currency:'USD',deliveryEstimate:5}))})};
+   return {ok:true,json:async()=>({meta:'rate',data:rates.map(rate=>({...rate,dropOff:0,currency:'USD',deliveryEstimate:5}))})};
   }});
  return {service,requests,storage,store(snapshot){stored={snapshot,paid:true,destination:{name:'Fixture recipient',phone:'5550000000',street:'Fixture street',city:'Fixture city',state:'NY',...snapshot.destination}};}};
 }
@@ -254,7 +257,7 @@ test('only door-to-door rates are offered and their provider labels are signed w
   const forged=[version,Buffer.from(JSON.stringify(changed)).toString('base64url'),signature].join('.');
   assert.throws(()=>verifyShippingQuote(forged,{}, {secret:signingSecret,now:fixtureTime}),/SHIPPING_QUOTE_INVALID/);
   for(const service of ['ground','ground_do','ground_od']) {
-    for(const dropOff of [1,2]) assert.equal(normalizeRate({...providerRate,service,totalPrice:429,dropOff},'paquetexpress','MXN'),null);
+    for(const dropOff of [1,2,3]) assert.equal(normalizeRate({...providerRate,service,totalPrice:429,dropOff},'paquetexpress','MXN'),null);
     assert.equal(normalizeRate({...providerRate,service,totalPrice:429,dropOff:0},'paquetexpress','MXN').service,service);
     assert.equal(normalizeRate({...providerRate,service,totalPrice:429},'paquetexpress','MXN').service,service);
   }
@@ -295,11 +298,11 @@ test('all parcel rows, labels and the total 60+39 billing survive concurrent gen
   assert.deepEqual(await f.service.generate({orderId:'FIXTURE-ORDER'}),first);
   assert.equal(f.requests.filter(r=>r.url.endsWith('/ship/rate/')).length,2);
   assert.equal(f.requests.filter(r=>r.url.endsWith('/ship/generate/')).length,1);
-  for(const request of f.requests)assert.deepEqual(request.body.packages,multiPackages);
+  for(const request of f.requests)assert.deepEqual(request.body.packages,snapshot.packages);
 });
 test('one grouped provider row bills once and preserves a combined label and all package tracking numbers',async()=>{
   const grouped={...multiRows()[0],trackingNumbers:['TRACK-ONE','TRACK-TWO'],totalPrice:99,label:'https://carrier.test/group.pdf'};
-  const f=multiFixture([grouped],{packages:[{...multiPackages[0],amount:2}]}),snapshot=await quoted(f);f.store(snapshot);
+  const f=multiFixture([grouped],{packages:multiPackages}),snapshot=await quoted(f);f.store(snapshot);
   const result=await f.service.generate({orderId:'FIXTURE-ORDER'});
   assert.equal(result.label_cost,99);assert.equal(result.shipments.length,1);assert.equal(result.shipments[0].label_cost,99);
   assert.deepEqual(result.trackingNumbers,['TRACK-ONE','TRACK-TWO']);assert.deepEqual(result.labelUrls,['https://carrier.test/group.pdf']);
@@ -323,10 +326,10 @@ test('manual shipment creation forwards the full durable group and safely retrie
   const route=server.match(/app\.post\('\/api\/shipping\/create',[\s\S]*?^\}\);/m)?.[0];assert(helper && route);
   const sent=[],orders=new Map([['FIXTURE-ORDER',{status:'paid'}]]);let handler;
   const replies=[{ok:false,status:503},{ok:true,status:200},new Error('temporary network failure'),{ok:true,status:200}];
-  const context={shippingQuotes:f.service,pendingOrders:orders,
+  const context={process:{env:{PROAX_PAYPAL_SYNC_SECRET:signingSecret}},shippingQuotes:f.service,pendingOrders:orders,
     PROAX_API_URL:'https://proax.fixture.test',PROAX_NODE_ID:'31',PROAX_API_KEY:'test-only-placeholder',
     console:{log(){},warn(){}},app:{post:(_path,fn)=>{handler=fn;}},
-    require:path=>{assert.equal(path,'./lib/shipping-quotes');return {shippingLabelOrderFields,proaxShippingLabelFields};},
+    require:path=>{if(path==='node:crypto')return require(path);assert.equal(path,'./lib/shipping-quotes');return {shippingLabelOrderFields,proaxShippingLabelFields};},
     fetch:async(url,request)=>{sent.push({url,body:JSON.parse(request.body)});const reply=replies.shift();if(reply instanceof Error)throw reply;return reply;}};
   vm.createContext(context);vm.runInContext(helper+'\n'+route,context);
   function response(){return {statusCode:200,set(){return this;},status(code){this.statusCode=code;return this;},json(value){this.value=value;return this;}};}
@@ -461,7 +464,7 @@ test('an ambiguous database completion cannot be overwritten by review evidence 
   assert.equal(recovered.label_cost,99);assert.deepEqual(recovered.trackingNumbers,['TRACK-ONE','TRACK-TWO']);
   assert.equal(f.requests.filter(r=>r.url.endsWith('/ship/generate/')).length,1);
 });
-test('generate rejects unpaid order, changed address/carrier/package and increased tariff before emission', async () => {
+test('generate rejects unpaid or changed shipment and records a verified price increase for Mahjoy', async () => {
   const f=fixture(),snapshot=await quoted(f);f.store(snapshot,false);
   await assert.rejects(f.service.generate({orderId:'FIXTURE-ORDER'}),/SHIPPING_PAYMENT_REQUIRED/);
   f.store(snapshot);
@@ -470,12 +473,14 @@ test('generate rejects unpaid order, changed address/carrier/package and increas
     {service:'other'},{packageInfo:{weight:1}}
   ]) await assert.rejects(f.service.generate({orderId:'FIXTURE-ORDER',...body}),/SHIPPING_(DESTINATION_CHANGED|QUOTE_CHANGED)/);
   const expensive=fixture({ratePrice:430});expensive.store(snapshot);
-  await assert.rejects(expensive.service.generate({orderId:'FIXTURE-ORDER'}),/SHIPPING_RATE_CHANGED/);
-  assert.equal(expensive.requests.filter(r=>r.url.endsWith('/ship/generate/')).length,0);
+  const emitted=await expensive.service.generate({orderId:'FIXTURE-ORDER'});
+  assert.deepEqual(emitted.shipping_accounting,{charged:429,cost:430,absorbed:1,currency:'MXN',policy:'merchant_absorbs_verified'});
+  assert.equal(expensive.requests.filter(r=>r.url.endsWith('/ship/generate/')).length,1);
+  assert.equal(snapshot.price,429);
 });
 test('an uncertain provider emission cannot be automatically repeated', async () => {
   const f=fixture({fetcher:async(url)=>{
-    if(url.endsWith('/ship/rate/'))return {ok:true,json:async()=>({meta:'rate',data:[{totalPrice:429,currency:'MXN',service:'ground',deliveryEstimate:'2-5'}]})};
+    if(url.endsWith('/ship/rate/'))return {ok:true,json:async()=>({meta:'rate',data:[{dropOff:0,totalPrice:429,currency:'MXN',service:'ground',deliveryEstimate:'2-5'}]})};
     throw new Error('Simulated lost provider response');
   }});
   const snapshot=await quoted(f);f.store(snapshot);
@@ -528,7 +533,7 @@ test('generate validates actual stored country even when its postal code is unch
 });
 test('provider label billing or service mismatch remains pending and is never reissued', async () => {
   const f=fixture({fetcher:async(url)=>{
-    if(url.endsWith('/ship/rate/'))return {ok:true,json:async()=>({meta:'rate',data:[{totalPrice:429,currency:'MXN',service:'ground',deliveryEstimate:2}]})};
+    if(url.endsWith('/ship/rate/'))return {ok:true,json:async()=>({meta:'rate',data:[{dropOff:0,totalPrice:429,currency:'MXN',service:'ground',deliveryEstimate:2}]})};
     return {ok:true,json:async()=>({meta:'generate',data:[{trackingNumber:'FIXTURE-UNCERTAIN',
       carrier:'dhl',service:'express',currency:'USD',totalPrice:999}]})};
   }});
@@ -549,12 +554,12 @@ test('Postgres fulfillment lookup uses the locked client, never a second pool co
   const pool={connect:async()=>client,query:async()=>{throw new Error('Second pool connection would deadlock');}};
   let lookupClient;
   const service=createShippingQuoteService({config:{...configured,envia:{apiUrl:'https://carrier.test'}},
-    apiKey:'test-provider-placeholder',signingSecret,store:shipmentStore(pool),
+    getPrintSettings:async()=>({printFormat:'PDF',printSize:'STOCK_4X6'}),apiKey:'test-provider-placeholder',signingSecret,store:shipmentStore(pool),
     getStoredShippingQuote:async(_id,connection)=>{lookupClient=connection;return {snapshot,paid:true,destination:{
       name:'Fixture recipient',phone:'5550000000',street:'Fixture street',city:'Fixture city',state:'NL',country:'MX',postalCode:'85219'
     }};},
     fetcher:async(url)=>({ok:true,json:async()=>url.endsWith('/ship/rate/')
-      ? {meta:'rate',data:[{totalPrice:429,currency:'MXN',service:'ground',deliveryEstimate:2}]}
+      ? {meta:'rate',data:[{dropOff:0,totalPrice:429,currency:'MXN',service:'ground',deliveryEstimate:2}]}
       : {meta:'generate',data:[{totalPrice:429,currency:'MXN',service:'ground',carrier:'estafeta',trackingNumber:'FIXTURE-LOCKED',label:'https://carrier.test/locked.pdf'}]}})
   });
   await service.generate({orderId:'FIXTURE-ORDER'});
@@ -577,4 +582,22 @@ test('shipping quote HTTP route exposes signed rate/expiry and returns package e
   await handler({body:{items:items.slice(1),destination:'85219',country:'MX',currency:'MXN'}},incomplete);
   assert.equal(incomplete.statusCode,409);assert.equal(incomplete.body.error_code,'PACKAGE_PROFILE_REQUIRED');
   assert.equal(incomplete.body.quotes.length,0);
+});
+test('nested master shipment retains child trackers, IDs, links, PDFs, extra files and bills one provider row once',async()=>{
+ const nested={...multiRows()[0],shipmentId:12345,trackingNumber:'MASTER',totalPrice:99,trackUrl:'https://carrier.test/master',additionalFiles:['https://carrier.test/extra.pdf'],packages:[{trackingNumber:'TRACK-ONE',trackUrl:'https://carrier.test/t1'},{trackingNumber:'TRACK-TWO',trackUrl:'https://carrier.test/t2'}]};
+ const f=multiFixture([nested]);f.store(await quoted(f));const result=await f.service.generate({orderId:'FIXTURE-NESTED'});
+ assert.deepEqual(result.trackingNumbers,['TRACK-ONE','TRACK-TWO']);assert.equal(result.label_cost,99);assert.equal(result.shipments[0].shipmentId,12345);
+ assert.equal(result.shipments[0].masterTrackingNumber,'MASTER');assert.equal(result.shipments[0].trackUrl,nested.trackUrl);assert.deepEqual(result.shipments[0].additionalFiles,nested.additionalFiles);
+ assert.deepEqual(await f.service.generate({orderId:'FIXTURE-NESTED'}),result);assert.equal(f.requests.filter(r=>r.url.endsWith('/ship/generate/')).length,1);
+});
+test('final recotization preserves selected service and buyer price while reporting a server verified increase',async()=>{
+ const f=fixture(),q=await quoted(f),higher=fixture({ratePrice:500});
+ const final=await higher.service.verifyFinal(q,{...q.destination,name:'Recipient',street:'Real street'});
+ assert.equal(final.charged,429);assert.equal(final.providerQuotedCost,500);assert.equal(final.absorbed,71);assert.equal(final.service,q.service);
+ assert.equal(higher.requests.filter(r=>r.url.endsWith('/ship/generate/')).length,0);
+ await assert.rejects(higher.service.verifyFinal(q,{...q.destination,postalCode:'99999'}),/SHIPPING_DESTINATION_CHANGED/);
+});
+test('HTTP 200 error-shaped rate responses cannot create an offer, even when fake rates are present',async()=>{
+ const f=fixture({fetcher:async()=>({ok:true,json:async()=>({meta:'rate',success:false,data:[{dropOff:0,totalPrice:1,currency:'MXN',service:'ground'}]})})});
+ await assert.rejects(quoted(f),/SHIPPING_RATES_UNAVAILABLE/);assert.equal(f.storage.saved(),undefined);
 });

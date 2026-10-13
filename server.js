@@ -326,7 +326,7 @@ app.listen(PORT, () => {
 
 // ─── Envia.com Shipping API ──────────────────────────────────────────────────
 
-const ENVIA_API_KEY = process.env.ENVIA_API_KEY || 'c541f5b32442e1505448fbdcf85f6cc4ac132a273f148242b8159234fa34432c';
+const ENVIA_API_KEY = process.env.ENVIA_API_KEY;
 const ENVIA_API_URL = 'https://api.envia.com/ship/rate/';
 
 // One shipping authority supplies signed rates and the same parcel for fulfillment.
@@ -337,6 +337,9 @@ const {
 function shippingOrigin(country) {
   const configured = country === 'MX' ? shippingConfig.origin : shippingConfig.originUS;
   const completeOverride = process.env['ENVIA_ORIGIN_' + country + '_JSON'];
+  if(country==='US' && !completeOverride) {
+    const error=new Error('SHIPPING_ORIGIN_UNAVAILABLE');error.code=error.message;error.status=503;throw error;
+  }
   let origin = configured;
   if (completeOverride) {
     try { origin = JSON.parse(completeOverride); }
@@ -348,10 +351,25 @@ function shippingOrigin(country) {
   }
   return origin;
 }
+const enviaReference = require('./lib/envia-reference').createEnviaReference({
+  apiKey:ENVIA_API_KEY,
+  // Verified live regional-address compatibility on 2026-10-13. Other
+  // carriers require full real contact fields, never fabricated placeholders.
+  partialRateVerified:{MX:['fedex'],US:['fedex','ups','usps']}
+});
 const shippingQuotes = createShippingQuoteService({
+  onRateResult:result=>console.info('[envia/rates]',result),
+  resolveDestination:enviaReference.resolveDestination,
+  allowPartialRate:enviaReference.allowPartialRate,
+  getPrintSettings:enviaReference.printSettings,
   config: shippingConfig, getOrigin: shippingOrigin, apiKey: ENVIA_API_KEY,
   getPackingPlan: require('./lib/proax-shipping-plan').createProaxShippingPlanProvider(process.env.PROAX_API_URL || 'https://proax.app'),
   apiBase: ENVIA_API_URL.replace('/ship/rate/', ''),
+  getStoredValues:async(orderId,client)=>{
+    const result=await (client || pool).query('SELECT prices,currency FROM mahjoy_paypal_checkouts WHERE order_id=$1 LIMIT 1',[orderId]);
+    const row=result.rows[0];if(!row || !Array.isArray(row.prices))return null;
+    return row.prices.map(item=>({sku:item.sku,qty:item.qty,unit_amount:{value:item.unit_price,currency_code:row.currency}}));
+  },
   getStoredShippingQuote: (orderId, client) => getStoredShippingQuote(client || pool, orderId),
   store: shipmentStore(pool)
 });
@@ -557,13 +575,17 @@ async function getTodayOrdersFromDatabase() {
 // Helper to update order in Proax
 async function updateProaxOrder(orderId, updates) {
   try {
+    const raw=JSON.stringify(updates.shipping_accounting?{...updates,order_id:orderId,node_id:31}:updates);
+    const timestamp=String(Date.now()),secret=process.env.PROAX_PAYPAL_SYNC_SECRET;
+    if(updates.shipping_accounting && !secret)return false;
+    const signed=updates.shipping_accounting?{'x-mahjoy-timestamp':timestamp,'x-mahjoy-signature':require('node:crypto').createHmac('sha256',secret).update(timestamp+'.'+raw).digest('hex')}:{};
     const response = await fetch(`${PROAX_API_URL}/api/inventory/${PROAX_NODE_ID}/web-orders/${orderId}`, {
       method: 'PATCH',
       headers: { 
         'Content-Type': 'application/json',
-        'x-api-key': PROAX_API_KEY
+        'x-api-key': PROAX_API_KEY,...signed
       },
-      body: JSON.stringify(updates)
+      body: raw
     });
     if (!response.ok) {
       console.warn(`[proax] Order update pending for ${orderId}: HTTP ${response.status}`);
