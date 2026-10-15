@@ -59,7 +59,7 @@ const CENTUMPAY_API_HASH   = process.env.CENTUMPAY_API_HASH;
 const CENTUMPAY_ENV        = (process.env.CENTUMPAY_ENV || 'prod').toLowerCase();
 
 app.use(express.json({verify:(req,_res,buffer)=>{
-  if(req.originalUrl.split('?')[0]==='/api/checkout/paypal/shipping-quote')req.rawBody=buffer.toString('utf8');
+  if(['/api/checkout/paypal/shipping-quote','/api/shipping/events/envia'].includes(req.originalUrl.split('?')[0]))req.rawBody=buffer.toString('utf8');
 }}));
 app.disable('x-powered-by');
 app.use(require('./lib/web-security').operationsGuard);
@@ -398,12 +398,27 @@ const PROAX_API_URL = process.env.PROAX_API_URL || 'https://proax.app';
 const PROAX_NODE_ID = process.env.PROAX_NODE_ID || '31'; // Mahjoy node ID
 const PROAX_API_KEY = process.env.PROAX_API_KEY || 'mj-secret-2024';
 
+const shipmentNotifications=require('./lib/shipment-notifications').createShipmentNotifications(pool);
+const appleWallet=require('./lib/apple-wallet').createAppleWallet(pool,shipmentNotifications);
+shipmentNotifications.register(app);
+appleWallet.register(app);
+if(process.env.MAHJOY_SHIPMENT_NOTIFICATIONS_ENABLED==='true'){
+  let notificationsBusy=false;
+  const notify=async()=>{
+    if(notificationsBusy)return;notificationsBusy=true;
+    try{await shipmentNotifications.scanLabels();await shipmentNotifications.flush();await appleWallet.flush();}
+    catch{console.error('[shipment notifications] Processing unavailable');}
+    finally{notificationsBusy=false;}
+  };
+  setInterval(notify,30000).unref();
+}
+
 require('./lib/checkout-prices').registerCheckoutPrices(app, PROAX_API_URL);
 let paypalReceipts;
 require('./lib/paypal-checkout').registerPayPalCheckout(app, PROAX_API_URL, fetch, async orderId => {
   if(!paypalReceipts)throw new Error('PAYPAL_RECEIPT_UNAVAILABLE');
   await paypalReceipts.enqueue(orderId);
-},undefined,{preflight:shippingQuotes.preflight});
+},undefined,{preflight:shippingQuotes.preflight,onCaptured:appleWallet.setReceiptSession});
 
 // ─── Orders Backup (File Persistence) ─────────────────────────────────────────
 const ORDERS_BACKUP_FILE = path.join(__dirname, 'data', 'orders-backup.json');

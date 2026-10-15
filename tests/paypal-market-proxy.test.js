@@ -2,6 +2,18 @@ const test=require('node:test'),assert=require('node:assert/strict'),crypto=requ
 const {registerPayPalCheckout}=require('../lib/paypal-checkout');
 const fixtureQuote={version:1,price:25,currency:'USD',items:[{sku:'TEST',qty:1}],destination:{postalCode:'78852',country:'US'}};
 function verifiedFixture(token){assert.equal(token,'fixture-quote');return fixtureQuote;}
+test('optional Wallet failures never alter a completed payment, and unverified receipts cannot create a session',async()=>{
+ const before=process.env.PROAX_PAYPAL_SYNC_SECRET;process.env.PROAX_PAYPAL_SYNC_SECRET='fixture-secret';
+ try{
+  for(const receipt of [{id:'TESTORDER123456',status:'COMPLETED'},{id:'TESTORDER123456',status:'PENDING'},{id:'DIFFERENT12345',status:'COMPLETED'}]){
+   const handlers={};let called=0;
+   registerPayPalCheckout({post:(p,h)=>handlers[p]=h},'https://proax.test',async()=>({ok:true,status:200,json:async()=>receipt}),async()=>{},verifiedFixture,{onCaptured:()=>{called++;throw Error('Wallet signing unavailable');}});
+   const res={set(){},status(n){this.statusCode=n;return this},json(body){this.body=body}};
+   await handlers['/api/checkout/paypal/capture']({body:{orderId:'TESTORDER123456',shipping_quote_token:'fixture-quote'}},res);
+   assert.equal(res.statusCode,200);assert.equal(res.body,receipt);assert.equal(called,receipt.id==='TESTORDER123456'&&receipt.status==='COMPLETED'?1:0);
+  }
+ }finally{if(before===undefined)delete process.env.PROAX_PAYPAL_SYNC_SECRET;else process.env.PROAX_PAYPAL_SYNC_SECRET=before;}
+});
 test('checkout proxy obtains independent catalog prices and signs the exact approved request',async()=>{
  const previous=process.env.PROAX_PAYPAL_SYNC_SECRET;process.env.PROAX_PAYPAL_SYNC_SECRET='test-secret-for-this-fixture-only';
  try{
