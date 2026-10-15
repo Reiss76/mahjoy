@@ -11,6 +11,7 @@ Deploy the code before enabling either flag. Proax and this service must use the
 | `MAHJOY_SHIPMENT_NOTIFICATIONS_ENABLED=true` | Run the label scanner and tracking-event worker. |
 | `ENVIA_WEBHOOK_SECRET` | At least 32 characters; the signing secret for the Envia subscription, **not the Envia API key**. |
 | `MAHJOY_WALLET_ENABLED=true` | Enable Wallet only once all certificate and ownership checks pass. |
+| `MAHJOY_WALLET_PUBLIC_ENABLED=false` | Keep new checkout enrollment and browser downloads closed during private device validation. Set to `true` for public launch. Authenticated callbacks for existing Wallet orders remain available. |
 | `MAHJOY_WALLET_ORDER_TYPE_ID` | Registered `order.…` identifier for Mahjoy. |
 | `MAHJOY_WALLET_MERCHANT_ID` | Merchant identifier from the same Apple Developer team. |
 | `MAHJOY_WALLET_TEAM_ID` | Ten-character Apple Developer Team ID. |
@@ -38,6 +39,8 @@ Configure Envia's **signed** `tracking.simple` or `tracking.ecommerce` subscript
 `npm ci --ignore-scripts && node --test tests/*.test.js` runs the existing checkout/shipping checks plus signature, database event processing, multi-package association, restart/batch, customer ownership, device registration and APNs retry tests. Test certificates are generated temporarily; these tests do not demonstrate acceptance by a real iPhone or Apple production certificate.
 
 Before enabling Wallet, install a package on a test iPhone and verify registration, a simulated tracking update, package retrieval and unregistration. An authorized real shipment is required to claim end-to-end carrier delivery. Do not capture a payment or purchase a label solely to test notifications.
+
+For private device validation, enable `MAHJOY_WALLET_ENABLED` with `MAHJOY_WALLET_PUBLIC_ENABLED=false` and leave `MAHJOY_SHIPMENT_NOTIFICATIONS_ENABLED=false`. A clearly labeled synthetic order can exist only in the Wallet tables, without a sale or shipment in `web_orders`. Its signed package uses the normal authenticated callback routes and its push queue is processed independently. Do not place private signing keys or downloadable order tokens in source control. Enable public enrollment and shipment processing only after verification.
 
 Rollback: disable `MAHJOY_WALLET_ENABLED` and `MAHJOY_SHIPMENT_NOTIFICATIONS_ENABLED`; preserve the tables, tokens and paid orders for recovery. No real notifications were sent by automated tests.
 

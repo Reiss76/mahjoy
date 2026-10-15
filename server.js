@@ -402,12 +402,18 @@ const shipmentNotifications=require('./lib/shipment-notifications').createShipme
 const appleWallet=require('./lib/apple-wallet').createAppleWallet(pool,shipmentNotifications);
 shipmentNotifications.register(app);
 appleWallet.register(app);
-if(process.env.MAHJOY_SHIPMENT_NOTIFICATIONS_ENABLED==='true'){
+if(process.env.MAHJOY_SHIPMENT_NOTIFICATIONS_ENABLED==='true'||process.env.MAHJOY_WALLET_ENABLED==='true'){
   let notificationsBusy=false;
   const notify=async()=>{
     if(notificationsBusy)return;notificationsBusy=true;
-    try{await shipmentNotifications.scanLabels();await shipmentNotifications.flush();await appleWallet.flush();}
-    catch{console.error('[shipment notifications] Processing unavailable');}
+    try{
+      if(process.env.MAHJOY_SHIPMENT_NOTIFICATIONS_ENABLED==='true'){
+        try{await shipmentNotifications.scanLabels();await shipmentNotifications.flush();}
+        catch{console.error('[shipment notifications] Processing unavailable');}
+      }
+      try{await appleWallet.flush();}
+      catch{console.error('[wallet notifications] Processing unavailable');}
+    }
     finally{notificationsBusy=false;}
   };
   setInterval(notify,30000).unref();
