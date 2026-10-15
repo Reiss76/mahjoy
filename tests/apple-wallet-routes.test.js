@@ -10,12 +10,12 @@ async function fixture(fn){
  INSERT INTO web_orders(node_id,order_id,paypal_order_id,paid_at,status,items,total,currency) VALUES(31,'paypal-TESTORDER1234','TESTORDER1234',now(),'paid','[{"name":"Only my purchase","qty":1}]',100,'USD');`);
  const query=(sql,args=[])=>sql.includes('CREATE TABLE')?db.exec(sql).then(()=>({rows:[]})):db.query(sql,args);
  const pool={query};const shipments=createShipmentNotifications(pool);await shipments.ensure();
- const app=express();app.use(express.json());let available=config;let sent={status:200};
- const wallet=createAppleWallet(pool,shipments,{config:()=>available,sign:async()=>Buffer.from('test-signature'),send:async()=>sent});wallet.register(app);
+ const app=express();app.use(express.json());let available=config;let sent={status:200};let publicEnabled=true;
+ const wallet=createAppleWallet(pool,shipments,{config:()=>available,publicEnabled:()=>publicEnabled,sign:async()=>Buffer.from('test-signature'),send:async()=>sent});wallet.register(app);
  const server=await new Promise(resolve=>{const s=app.listen(0,'127.0.0.1',()=>resolve(s));});
  let cookie;setReceiptSession({body:{orderId:'TESTORDER1234'},headers:{}},{append:(_,value)=>cookie=value.split(';')[0]},{id:'TESTORDER1234',status:'COMPLETED'},config);
  const base='http://127.0.0.1:'+server.address().port;
- try{await fn({db,wallet,base,cookie,setAvailable:value=>available=value,setSent:value=>sent=value});}
+ try{await fn({db,wallet,base,cookie,setAvailable:value=>available=value,setSent:value=>sent=value,setPublicEnabled:value=>publicEnabled=value});}
  finally{server.closeAllConnections();await new Promise(resolve=>server.close(resolve));await db.close();}
 }
 test('package endpoints require the matching post-payment browser session',()=>fixture(async({base,cookie,setAvailable})=>{
@@ -37,6 +37,22 @@ test('Wallet device registration and updates require this order token; unregiste
  assert.equal((await fetch(base+path,{method:'DELETE',headers})).status,200);
  assert.equal((await fetch(base+path,{method:'DELETE',headers})).status,200);
  assert.equal((await fetch(base+'/api/wallet/v1/devices/test-device-123456/registrations/'+config.id)).status,204);
+}));
+test('private rollout hides checkout enrollment while authenticated Wallet callbacks keep working',()=>fixture(async({base,db,cookie,wallet,setPublicEnabled})=>{
+ await db.query(`INSERT INTO mj_wallet_orders(id,order_id,snapshot) VALUES($1,'wallet-demo-private',$2)`,[walletId,JSON.stringify({demo:true,orderNumber:'PRUEBA-WALLET',items:[]})]);
+ setPublicEnabled(false);
+ assert.deepEqual(await(await fetch(base+'/api/wallet/status/TESTORDER1234',{headers:{cookie}})).json(),{available:false});
+ assert.equal((await fetch(base+'/api/wallet/package/TESTORDER1234',{headers:{cookie}})).status,404);
+ let issuedCookie=false;
+ wallet.setReceiptSession({body:{orderId:'TESTORDER1234'},headers:{}},{append:()=>issuedCookie=true},{id:'TESTORDER1234',status:'COMPLETED'});
+ assert.equal(issuedCookie,false);
+ const url=base+'/api/wallet/v1/orders/'+config.id+'/'+walletId;
+ assert.equal((await fetch(url)).status,401);
+ const response=await fetch(url,{headers:{authorization:'AppleOrder '+token(config.secret,'order',walletId)}});
+ assert.equal(response.status,200);
+ assert.match(response.headers.get('content-type'),/application\/vnd.apple.finance.order/);
+ setPublicEnabled(true);
+ assert.deepEqual(await(await fetch(base+'/api/wallet/status/TESTORDER1234',{headers:{cookie}})).json(),{available:true});
 }));
 test('provider configuration errors do not delete a valid Wallet registration',()=>fixture(async({db,wallet,setSent})=>{
  await db.query(`INSERT INTO mj_wallet_orders(id,order_id,snapshot) VALUES($1,'paypal-TESTORDER1234','{}')`,[walletId]);
