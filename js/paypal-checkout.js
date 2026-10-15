@@ -85,7 +85,7 @@ function tryInitPayPal(retries) {
 function showPaymentSuccess(details) {
   const content = document.getElementById('co-content'); if (content) content.style.display = 'none';
   const thanks = document.getElementById('co-thanks');
-  if (thanks) thanks.style.display = 'block';
+  if (thanks) { thanks.style.display = 'block'; if(window.MJWallet)void window.MJWallet.attach(thanks,details.id); }
   else alert(isEnCheckout ? 'Payment received. Thank you for your purchase.' : 'Pago recibido. Gracias por tu compra.');
   window.scrollTo?.({top:0,behavior:'smooth'});
 }
