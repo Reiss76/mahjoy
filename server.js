@@ -420,6 +420,7 @@ if(process.env.MAHJOY_SHIPMENT_NOTIFICATIONS_ENABLED==='true'||process.env.MAHJO
 }
 
 require('./lib/checkout-prices').registerCheckoutPrices(app, PROAX_API_URL);
+require('./lib/checkout-prices').registerCartDisplayPrices(app, PROAX_API_URL);
 let paypalReceipts;
 require('./lib/paypal-checkout').registerPayPalCheckout(app, PROAX_API_URL, fetch, async orderId => {
   if(!paypalReceipts)throw new Error('PAYPAL_RECEIPT_UNAVAILABLE');
