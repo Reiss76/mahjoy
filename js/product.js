@@ -150,14 +150,8 @@ async function loadProduct() {
     const data = await res.json();
     products = (data.products || []).map(p => ({
       ...p,
-      primary_image_url: p.primary_image_url
-        ? (p.primary_image_url.startsWith('http')
-            ? p.primary_image_url
-            : MJ_API_BASE + p.primary_image_url.replace('/api/public/media', '/public/media'))
-        : null,
-      images: (p.images || []).map(u =>
-        u.startsWith('http') ? u : MJ_API_BASE + u.replace('/api/public/media', '/public/media')
-      ),
+      primary_image_url: resolveImageUrl(p.primary_image_url || p.image || p.images?.[0]),
+      images: (p.images || []).map(resolveImageUrl).filter(Boolean),
     }));
   } catch (e) {
     showError(); return;
@@ -359,7 +353,10 @@ async function loadProduct() {
       try {
         const cart = JSON.parse(localStorage.getItem('mj_cart') || '[]');
         const idx = cart.findIndex(i => i.id === product.id);
-        if (idx >= 0) { cart[idx].qty += 1; }
+        if (idx >= 0) {
+          cart[idx].qty += 1;
+          cart[idx].image = product.primary_image_url || mainImg || cart[idx].image || null;
+        }
         else { cart.push({ id: product.id, sku: product.sku, name: product.name,
           price: parseFloat(product.price) || 0, price_usd: parseFloat(product.priceUsd || product.price_usd) || null,
           image: product.primary_image_url || null, qty: 1 }); }

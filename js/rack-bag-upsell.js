@@ -638,7 +638,7 @@
           name: p.name,
           original_price: price,
           discount_price: Math.round(price * (1 - CONFIG.DISCOUNT_PCT / 100)),
-          image: resolveImageUrl(p.primary_image_url),
+          image: resolveImageUrl(p.primary_image_url || p.image || p.images?.[0]),
         };
       });
     } catch (e) {

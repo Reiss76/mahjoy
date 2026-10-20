@@ -23,10 +23,12 @@ function saveCart(cart) {
 function addToCart(product, qty = 1) {
   const cart = getCart();
   const idx = cart.findIndex(i => i.id === product.id);
+  const image = product.primary_image_url || product.image || product.images?.[0] || null;
   if (idx >= 0) {
     cart[idx].qty += qty;
     cart[idx].price = Number(product.price);
     cart[idx].price_usd = product.priceUsd ?? product.price_usd ?? null;
+    cart[idx].image = image || cart[idx].image || null;
   } else {
     cart.push({
       id: product.id,
@@ -34,7 +36,7 @@ function addToCart(product, qty = 1) {
       name: product.name,
       price: parseFloat(product.price) || 0,
       price_usd: parseFloat(product.priceUsd || product.price_usd) || null,
-      image: product.primary_image_url || null,
+      image,
       qty,
     });
   }
