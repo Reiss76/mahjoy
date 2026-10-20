@@ -111,16 +111,14 @@ test('both product quantity selectors remain outside the optional address form w
     assert.match(html,/<input[^>]+id="co-qty"[^>]+form="co-form"/);
   }
 });
-test('all four storefront entrypoints leave delivery contact collection inside PayPal and preserve card forms',()=>{
+test('all four storefront entrypoints keep delivery collection in PayPal and expose no separate card form',()=>{
   for(const file of ['checkout.html','en/checkout.html','cart.html','en/cart.html']) {
     const html=fs.readFileSync(file,'utf8');
     assert(!html.includes('mj-paypal-delivery-phone'));assert(!html.includes('mj-paypal-delivery-contact'));
     if(file.endsWith('checkout.html')) {
       assert.match(html,/<form[^>]+id="co-form"/);assert.match(html,/name="phone"/);
     }
-    if(file==='cart.html') {
-      assert.match(html,/id="mj-card-checkout"/);assert.match(html,/name="customer_phone"[^>]+required/);
-    }
+    assert.doesNotMatch(html,/id="mj-card-(?:checkout|open|open-product)"/);
   }
 });
 for(const currency of ['MXN','USD'])for(const kind of ['normal','express']) {
@@ -154,43 +152,31 @@ test('PayPal buttons wait for backend capability before rendering or hiding the 
   finish({ok:true,json:async()=>({nativeShipping:true})});await ready;
   assert.equal(rendered,true);assert.equal(f.node('mj-shipping-checkout').hidden,true);
 });
-test('choosing card reveals its address and quote fields but still cannot pay without a signed quote',async()=>{
+test('legacy card controls cannot leave native PayPal or expose another checkout',async()=>{
   const f=fixture(),pricing=f.ctx.window.MJPayPalPricing;await pricing.init();
-  assert.equal(f.node('co-form').style.display,'none');assert.equal(f.node('mj-shipping-checkout').hidden,true);
   f.ctx.window.MJShippingCheckout.showCardFields();
-  assert.equal(f.node('co-form').style.display,'flex');assert.equal(f.node('mj-shipping-checkout').hidden,false);
-  assert.equal(f.node('mj-shipping-checkout').parentNode,f.node('mj-card-shipping'));
-  assert.throws(()=>f.ctx.window.MJShippingCheckout.requireForPayment('MXN'),error=>error.code==='SHIPPING_QUOTE_REQUIRED');
+  assert.equal(f.ctx.window.MJShippingCheckout.state().cardMode,false);
+  assert.equal(f.node('co-form').style.display,'none');
+  assert.equal(f.node('mj-card-checkout').hidden,true);
+  assert.equal(f.node('mj-card-open-product').hidden,true);
+  assert.equal(f.node('mj-shipping-checkout').hidden,true);
 });
-test('returning from card to native PayPal hides card fields and its price without losing the prepared card checkout',async()=>{
+test('PayPal keeps prepared quotes but does not switch to a retired card checkout',async()=>{
   const f=fixture(),options=await entrypoint(f,'cart','MXN'),shipping=f.ctx.window.MJShippingCheckout;
-  const fetcher=f.ctx.fetch;
-  f.ctx.fetch=(path,init)=>path==='/api/shipping/quote'
-    ? Promise.resolve({ok:true,json:async()=>({quotes:[{id:'test-ground',carrier:'carrier',service:'ground',price:30,currency:'MXN',quote_token:'signed-card-quote'}]})})
-    : fetcher(path,init);
-  shipping.showCardFields();shipping.setDestination('00000','MX');
-  f.node('co-email').value='typed@example.test';
-  await shipping.quote();shipping.selectRate(0);
-  assert.equal(f.node('cart-shipping').textContent,'$30.00 MXN');
-  assert.equal(f.node('cart-total-label').textContent,'Total');
+  await selectQuote(f,'MXN');
+  shipping.showCardFields();
   let resolved=false;options.onClick({}, {resolve(){resolved=true;},reject(){throw Error('Native PayPal should open');}});
   assert(resolved);assert.equal(shipping.state().cardMode,false);
   assert.equal(f.node('mj-card-checkout').hidden,true);assert.equal(f.node('co-form').style.display,'none');
-  assert.equal(f.node('mj-shipping-checkout').hidden,true);
   assert.equal(f.node('cart-shipping').textContent,'Se calcula en PayPal');
   assert.equal(f.node('cart-total-label').textContent,'Importe de productos');
   assert.equal(f.node('cart-total').textContent,'$100.00');
-  assert.equal(f.node('co-email').value,'typed@example.test');
-  assert.equal(shipping.state().selected.quote_token,'signed-card-quote');
-  shipping.showCardFields();
-  assert.equal(f.node('mj-shipping-checkout').hidden,false);
-  assert.equal(shipping.requireForPayment('MXN').quote_token,'signed-card-quote');
+  assert.equal(shipping.state().selected.quote_token,'signed-MXN');
 });
-test('the PayPal layout helper leaves the classic shipping and card selection unchanged',async()=>{
+test('classic PayPal shipping remains available without enabling Centum card controls',async()=>{
   const f=fixture('MXN',{nativeShipping:false}),shipping=f.ctx.window.MJShippingCheckout;
-  await f.ctx.window.MJPayPalPricing.init();shipping.showCardFields();
-  shipping.showPayPalFields();
-  assert.equal(shipping.state().cardMode,true);assert.equal(f.node('mj-card-checkout').hidden,false);
+  await f.ctx.window.MJPayPalPricing.init();shipping.showCardFields();shipping.showPayPalFields();
+  assert.equal(shipping.state().cardMode,false);assert.equal(f.node('mj-card-checkout').hidden,true);
   assert.equal(f.node('mj-shipping-checkout').hidden,false);
 });
 test('invalid native references never reach capture',async()=>{

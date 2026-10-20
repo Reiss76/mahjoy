@@ -242,22 +242,9 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     function changeItemQty(id, qty) { window.MJCart.updateQty(id, qty); renderCart(); }
     function removeItem(id) { window.MJCart.removeFromCart(id); renderCart(); }
 
-    async function proceedToCheckout() {
-      const cart=window.MJCart.getCart();
-      if (!cart.length) return;
-      try {
-        throw new Error('Card checkout is available in MXN only. Please use PayPal for this USD order.');
-        const selected=window.MJShippingCheckout.requireForPayment('MXN',cart);
-        const res=await fetch('/api/centumpay/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-          cart:cart.map(item=>({id:item.id,sku:item.sku,name:item.name,price:item.price,qty:item.qty})),
-          orderId:`mahjoy-${Date.now()}`,shipping_cost:selected.price,shipping_cp:selected.postalCode,shipping_country:selected.country,
-          shipping_quote_token:selected.quote_token
-        })});
-        const data=await res.json();
-        if (!res.ok || !data.ok || !data.checkoutUrl) throw new Error(window.MJShippingCheckout.errorMessage(data.error_code || data.error || 'SHIPPING_QUOTE_REQUIRED'));
-        if (data.orderId) localStorage.setItem('mj_last_order_id',data.orderId);
-        window.MJCart.clearCart(); window.location.href=data.checkoutUrl;
-      } catch(error) { alert(error.message); }
+    function proceedToCheckout(event) {
+      event?.preventDefault();
+      document.getElementById('paypal-cart-container')?.scrollIntoView({block:'center',behavior:'smooth'});
     }
 
     function proceedWhatsApp() {

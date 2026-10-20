@@ -57,7 +57,7 @@
   function state() { return { rates: rates.slice(), selected: selectedRate, loading, notice, destination: { ...destination }, currency: configuration?.currency, payPalNative, cardMode }; }
   function applyPaymentLayout() {
     const cardSection = document.getElementById('mj-card-checkout');
-    if (cardSection && payPalNative) cardSection.hidden = !cardMode;
+    if (cardSection) cardSection.hidden = true;
     const container = document.getElementById('mj-shipping-checkout');
     if (container) {
       container.hidden = payPalNative && !cardMode;
@@ -76,7 +76,7 @@
       }
     }
     const cardButton = document.getElementById('mj-card-open-product');
-    if (cardButton) cardButton.hidden = !payPalNative || configuration?.currency !== 'MXN' || cardMode;
+    if (cardButton) cardButton.hidden = true;
     const hint = document.getElementById('mj-paypal-shipping-note');
     if (hint) hint.textContent = payPalNative
       ? message('El envío se calcula con tu dirección en PayPal. Revisa el total antes de pagar.', 'Shipping is calculated using your PayPal address. Review the total before paying.')
@@ -86,16 +86,16 @@
     const previous=payPalNative;payPalNative=value===true;
     if(previous && !payPalNative) {
       const form=document.getElementById('co-form');if(form)form.style.display='flex';
-      for(const id of ['mj-card-checkout','mj-product-form-divider','mj-product-form-title']) {
+      for(const id of ['mj-product-form-divider','mj-product-form-title']) {
         const node=document.getElementById(id);if(node){node.hidden=false;if(id==='mj-product-form-divider')node.style.display='flex';}
       }
     }
     applyPaymentLayout();emit();
   }
   function showCardFields() {
-    cardMode = true;
-    const section = document.getElementById('mj-card-checkout'); if (section) section.hidden = false;
+    cardMode = false;
     applyPaymentLayout(); emit();
+    document.getElementById('paypal-express-container')?.scrollIntoView?.({block:'center',behavior:'smooth'});
   }
   function showPayPalFields() {
     if (!payPalNative) return;
