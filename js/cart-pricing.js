@@ -7,12 +7,18 @@
   const key=items=>JSON.stringify(items.map(item=>[String(item.sku||item.id||item.name||'').trim().toLowerCase(),Number(item.qty)]));
   const amount=value=>value!=null&&Number.isFinite(Number(value))&&Number(value)>0?Number(value):null;
   function current(){return phase==='ready'&&verifiedKey===key(cart());}
-  function unitPrice(item){return current()?amount(currency==='USD'?(item.price_usd??item.priceUsd):item.price):null;}
-  function summary(){
+  function unitPrice(item, discountPct=0){
+    if(!current())return null;
+    const base=amount(currency==='USD'?(item.price_usd??item.priceUsd):item.price);
+    if(base==null)return null;
+    const rate=Math.max(Number(discountPct)||0,Number(item.upsell_discount_pct)||0);
+    return Math.round(base*(1-rate/100)*100)/100;
+  }
+  function summary(discountPct=0){
     const items=cart(),ready=current();
-    const complete=ready&&items.every(item=>unitPrice(item)!=null);
+    const complete=ready&&items.every(item=>unitPrice(item,discountPct)!=null);
     const unavailable=ready?items.filter(item=>item.cart_status!=='available'):[];
-    const subtotal=complete?items.reduce((sum,item)=>sum+Math.round(unitPrice(item)*100)*Number(item.qty),0)/100:null;
+    const subtotal=complete?items.reduce((sum,item)=>sum+Math.round(unitPrice(item,discountPct)*100)*Number(item.qty),0)/100:null;
     let message='';
     if(!ready)message=phase==='error'?(english?'Could not update prices. Please retry.':'No se pudieron actualizar los precios. Intenta de nuevo.'):(english?'Updating prices…':'Actualizando precios…');
     else if(unavailable.length) {
@@ -43,7 +49,7 @@
         if(!p||Number(p.qty)!==Number(snapshot[index].qty)||!['available','sold_out','unavailable','price_unavailable'].includes(p.cart_status)
           ||(snapshot[index].sku&&String(snapshot[index].sku).trim().toLowerCase()!==String(p.sku).toLowerCase()))throw new Error('Invalid prices');
         return {...snapshot[index],id:snapshot[index].id??p.id,sku:p.sku,name:p.name,price:amount(p.price),price_usd:amount(p.price_usd),
-          image:p.image||snapshot[index].image,cart_status:p.cart_status};
+          image:p.image||snapshot[index].image,cart_status:p.cart_status,upsell_discount_pct:Number(p.upsell_discount_pct)||0};
       });
       phase='ready';verifiedKey=key(updated);window.MJCart.saveCart(updated);notify();return updated;
     } catch(error) {

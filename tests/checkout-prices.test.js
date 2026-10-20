@@ -23,7 +23,7 @@ function browser(cart = structuredClone(stale)) {
   installShippingFixture(ctx);vm.createContext(ctx);vm.runInContext(fs.readFileSync('js/paypal-pricing.js','utf8'),ctx);
   return ctx;
 }
-function payload(casePrice = 70) {
+function payload(casePrice = 63) {
   const prices=[380,casePrice];return {purchase_units:[{items:products.map((p,n)=>({name:p.name,sku:p.sku,quantity:'1',unit_amount:{currency_code:'USD',value:prices[n].toFixed(2)}})),
     amount:{currency_code:'USD',value:(405+casePrice).toFixed(2),breakdown:{item_total:{currency_code:'USD',value:(380+casePrice).toFixed(2)},shipping:{currency_code:'USD',value:'25.00'}}}}]};
 }
@@ -32,7 +32,7 @@ test('current Proax prices repair a legacy cart with missing USD without convert
   assert.equal(repaired[1].price_usd,70);assert.equal(repaired[1].price,1200);
   assert.equal(repaired.reduce((t,i)=>t+i.price_usd*i.qty,0),450);
 });
-test('the actual English cart callback sends both products for USD475 including shipping',async()=>{
+test('the actual English cart callback preserves the bag offer for USD468 including shipping',async()=>{
   const ctx=browser();let options,created;
   const listeners=[];
   ctx.document={addEventListener:(_event,fn)=>listeners.push(fn),getElementById:()=>({style:{},hasChildNodes:()=>false})};
@@ -43,8 +43,8 @@ test('the actual English cart callback sends both products for USD475 including 
   // Its summary needs the normal page elements, so catch only that unrelated render error.
   listeners[0]();await new Promise(setImmediate);
   await options.createOrder({}, {order:{create:p=>{created=p;return 'ORDER-ID'}}});
-  assert.equal(ctx.createdPayload.purchase_units[0].items[1].unit_amount.value,'70.00');
-  assert.equal(ctx.createdPayload.purchase_units[0].amount.value,'475.00');
+  assert.equal(ctx.createdPayload.purchase_units[0].items[1].unit_amount.value,'63.00');
+  assert.equal(ctx.createdPayload.purchase_units[0].amount.value,'468.00');
   assert.equal(ctx.createdPayload.purchase_units[0].custom_id,undefined);
   assert.equal(ctx.createdPayload.payment_source.paypal.experience_context.contact_preference,'UPDATE_CONTACT_INFO');
 });
@@ -70,7 +70,7 @@ test('missing USD, invalid quantity, sold out and discounts giving free items fa
   assert.throws(()=>quoteItems(products,[{...stale[1],qty:0}],'USD'),/quantity/);
   assert.throws(()=>quoteItems([{...products[1],soldOutEn:true}],[stale[1]],'USD'),/sold out/);
   assert.throws(()=>quoteItems(products,stale,'USD',100),/discount/);
-  assert.equal(quoteItems(products,stale,'MXN')[1].unit_price,1200);
+  assert.equal(quoteItems(products,stale,'MXN')[1].unit_price,1080);
 });
 test('validated discount prices still pass the PayPal guard with line rounding',async()=>{
   const ctx=browser();ctx.window.cartDiscount={code:'VALID',pct:10};const p=payload();
@@ -109,7 +109,7 @@ test('the USD checkout callback retains a USD60 shipping quote instead of reduci
   await options.createOrder({}, {order:{create:p=>{created=p;return 'SIMULATED';}}});
   const unit=ctx.createdPayload.purchase_units[0];assert.equal(unit.items.length,1);assert.equal(unit.amount.breakdown.shipping.value,'60.00');assert.equal(unit.amount.value,'440.00');
 });
-test('Mexico PayPal cart uses MXN7200 even though the same items are USD450 in the US market',async()=>{
+test('Mexico PayPal cart preserves MXN catalog prices and applies the bag offer in pesos',async()=>{
  const ctx=browser();let options,created;const listeners=[];
  ctx.document={addEventListener:(_e,fn)=>listeners.push(fn),getElementById:()=>({style:{},hasChildNodes:()=>false})};
  ctx.paypal={Buttons:o=>{options=o;return {render(){}}}};
@@ -117,7 +117,7 @@ test('Mexico PayPal cart uses MXN7200 even though the same items are USD450 in t
  vm.runInContext(scripts.find(s=>s.includes('function initPayPalCart()')),ctx);
  listeners[0]();await new Promise(setImmediate);
  await options.createOrder({}, {order:{create:p=>{created=p;return 'SIMULATED';}}});
- const unit=ctx.createdPayload.purchase_units[0];assert.equal(unit.amount.currency_code,'MXN');assert.equal(unit.items[0].unit_amount.value,'6000.00');assert.equal(unit.items[1].unit_amount.value,'1200.00');assert.equal(unit.amount.breakdown.item_total.value,'7200.00');
+ const unit=ctx.createdPayload.purchase_units[0];assert.equal(unit.amount.currency_code,'MXN');assert.equal(unit.items[0].unit_amount.value,'6000.00');assert.equal(unit.items[1].unit_amount.value,'1080.00');assert.equal(unit.amount.breakdown.item_total.value,'7080.00');
 });
 test('shipping API requests the storefront currency directly and discards mismatched carrier currencies',async()=>{
  const {createShippingQuoteService}=require('../lib/shipping-quotes');

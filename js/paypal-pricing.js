@@ -229,7 +229,7 @@
       if(!p)changedCart();const qty=cartQuantity(item),key=p.sku.trim().toLowerCase();
       observed.set(key,(observed.get(key)||0)+qty);
       return {...item,id:item.id ?? p.id,qty,price:p.price,price_usd:p.priceUsd ?? p.price_usd,
-        sku:p.sku.trim(),name:p.name || item.name,image:p.image || item.image};
+        sku:p.sku.trim(),name:p.name || item.name,image:p.image || item.image,upsell_discount_pct:Number(p.upsell_discount_pct)||0};
     });
     const identity=quantities=>JSON.stringify([...quantities].sort(([a],[b])=>a.localeCompare(b)));
     if(identity(expected)!==identity(observed))changedCart();
@@ -242,6 +242,12 @@
     }
     window.MJCart.saveCart(updated);
     return updated;
+  }
+  function cartUnitPrice(item,currency,discountPct=0) {
+    const base=Number(currency==='USD'?(item.priceUsd??item.price_usd):item.price);
+    const rate=Math.max(Number(discountPct)||0,Number(item.upsell_discount_pct)||0);
+    if(!['MXN','USD'].includes(currency)||!Number.isFinite(base)||base<=0||!Number.isFinite(rate)||rate<0||rate>=100)throw new Error('Invalid product price');
+    return Math.round(base*(1-rate/100)*100)/100;
   }
   async function create(actions, inputPayload, options = {}) {
     // Freeze the clicked products before any price or shipping request can finish.
@@ -419,5 +425,5 @@
     });
   });
   window.addEventListener?.('mj:cartUpdated',refreshCheckoutMode);
-  window.MJPayPalPricing = { init, nativeShippingEnabled, refreshCheckoutMode, registerButtonRenderer, renderButtons, selectionForPayPal, buttonCallbacks, quote, refreshCart, create, capture, completeCart, requireMarket, shippingPrice };
+  window.MJPayPalPricing = { init, nativeShippingEnabled, refreshCheckoutMode, registerButtonRenderer, renderButtons, selectionForPayPal, buttonCallbacks, quote, refreshCart, cartUnitPrice, create, capture, completeCart, requireMarket, shippingPrice };
 })();

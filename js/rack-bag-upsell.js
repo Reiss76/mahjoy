@@ -15,7 +15,7 @@
   // ═══════════════════════════════════════════════════════════════════════════
   
   const CONFIG = {
-    API_URL: 'https://api-production-b888.up.railway.app/public/shop/mahjoy/products',
+    API_URL: 'https://proax.app/api/public/mahjoy/catalog/products',
     CART_KEY: 'mj_cart',
     SHOWN_KEY: 'mj_rackbag_upsell_shown',
     PROMO_CODE: 'RACKBAG10',
@@ -397,21 +397,16 @@
     return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency: currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(price) + ' ' + currency;
   }
 
   function resolveImageUrl(url) {
     if (!url) return '';
     if (url.startsWith('http')) return url;
-    const base = 'https://api-production-b888.up.railway.app';
-    if (url.startsWith('/api/public/media')) {
-      return base + url.replace('/api/public/media', '/public/media');
-    }
-    if (url.startsWith('/public/media')) {
-      return base + url;
-    }
+    const base = 'https://proax.app';
+    if (url.startsWith('/')) return base + url;
     return url;
   }
 
@@ -442,7 +437,7 @@
     overlay.innerHTML = `
       <div class="mj-rackbag-popup">
         <div class="mj-rackbag-header">
-          <button class="mj-rackbag-close" aria-label="Cerrar">×</button>
+          <button class="mj-rackbag-close" aria-label="${isEnglish ? 'Close' : 'Cerrar'}">×</button>
           <div class="mj-rackbag-badge">${TEXTS.badge}</div>
           <h2 class="mj-rackbag-title">${TEXTS.title}</h2>
           <div class="mj-rackbag-discount">${TEXTS.discount}</div>
@@ -562,7 +557,8 @@
       id: selectedProduct.id,
       sku: selectedProduct.sku,
       name: selectedProduct.name,
-      price: selectedProduct.discount_price,
+      price: selectedProduct.price,
+      price_usd: selectedProduct.price_usd,
       original_price: selectedProduct.original_price,
       image: selectedProduct.image,
       qty: 1,
@@ -571,7 +567,7 @@
     
     const existingIndex = cart.findIndex(item => item.id === newItem.id);
     if (existingIndex >= 0) {
-      cart[existingIndex].qty += 1;
+      cart[existingIndex] = { ...cart[existingIndex], ...newItem, qty: Number(cart[existingIndex].qty || 0) + 1 };
     } else {
       cart.push(newItem);
     }
@@ -622,7 +618,7 @@
   
   async function fetchRackBags() {
     try {
-      const res = await fetch(CONFIG.API_URL);
+      const res = await fetch(CONFIG.API_URL, { cache: 'no-store' });
       if (!res.ok) throw new Error('API error');
       const data = await res.json();
       
@@ -631,16 +627,22 @@
       );
       
       return rackBags.map(p => {
-        const price = parseFloat(p.price) || 0;
+        const rawUsd = p.priceUsd ?? p.price_usd;
+        const priceMxn = p.price == null ? null : Number(p.price);
+        const priceUsd = rawUsd == null ? null : Number(rawUsd);
+        const price = isEnglish ? priceUsd : priceMxn;
+        if (!Number.isFinite(price) || price <= 0 || (isEnglish ? p.soldOutEn === true : p.soldOutEs === true)) return null;
         return {
           id: p.id,
           sku: p.sku,
           name: p.name,
+          price: priceMxn,
+          price_usd: priceUsd,
           original_price: price,
-          discount_price: Math.round(price * (1 - CONFIG.DISCOUNT_PCT / 100)),
+          discount_price: Math.round(price * (1 - CONFIG.DISCOUNT_PCT / 100) * 100) / 100,
           image: resolveImageUrl(p.primary_image_url || p.image || p.images?.[0]),
         };
-      });
+      }).filter(Boolean);
     } catch (e) {
       console.error('[MJ RackBag Upsell] Error:', e);
       return [];
