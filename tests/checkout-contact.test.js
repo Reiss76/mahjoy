@@ -6,10 +6,11 @@ const vm=require('node:vm');
 test('cart update listeners refresh summary within their own scope in both markets',()=>{
   for(const file of ['cart.html','en/cart.html']) {
     const listeners=[];const node={style:{},textContent:'',innerHTML:'',addEventListener(){}};
-    const ctx={window:{MJCart:{getCart:()=>[]},MJPayPalPhone:{},addEventListener:(_,fn)=>listeners.push(fn)},document:{getElementById:()=>node,addEventListener(){}},console};
+    const ctx={window:{MJCart:{getCart:()=>[]},MJPayPalPhone:{},addEventListener:(event,fn)=>listeners.push({event,fn})},document:{getElementById:()=>node,addEventListener(){}},console};
     installShippingFixture(ctx,{currency:file.startsWith('en/')?'USD':'MXN'});vm.createContext(ctx);const scripts=[...fs.readFileSync(file,'utf8').matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
     for(const code of scripts.filter(s=>s.includes('function renderCart()')||s.includes('function initPayPalCart()')))vm.runInContext(code,ctx);
-    assert.equal(listeners.length,2);assert.doesNotThrow(()=>listeners.forEach(fn=>fn()));
+    assert.deepEqual(listeners.map(({event})=>event).sort(),['mj:cartPrices','mj:cartPrices','mj:cartUpdated','mj:cartUpdated']);
+    assert.doesNotThrow(()=>listeners.forEach(({fn})=>fn()));
   }
 });
 test('PayPal entry points have no storefront phone field or phone gate',()=>{
