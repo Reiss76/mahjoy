@@ -160,23 +160,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
 <div id="paypal-cart-container"></div>
       </div>
       
-      <style>#mj-card-checkout{font-size:14px;line-height:1.4;text-transform:none}#mj-card-checkout label{font-size:12px;font-weight:400;line-height:1.4;text-transform:none}#mj-card-checkout input,#mj-card-checkout button{font-size:14px;line-height:1.4;text-transform:none;font-weight:400;box-sizing:border-box}</style>
-      <section id="mj-card-checkout" hidden style="border:1px solid #ddd;border-radius:12px;padding:18px;margin:18px 0;">
-        <h2 style="font-size:1.2rem;margin:0 0 12px;">Domicilio para pagar con tarjeta</h2>
-        <div id="mj-card-shipping"></div>
-        <form id="mj-card-form" onsubmit="proceedToCheckout(event)" style="display:grid;gap:12px;">
-          <label>Nombre completo<input name="customer_name" autocomplete="name" required style="display:block;width:100%;padding:10px;"></label>
-          <label>Correo electrónico<input name="customer_email" type="email" autocomplete="email" required style="display:block;width:100%;padding:10px;"></label>
-          <label>Teléfono de contacto<input name="customer_phone" type="tel" autocomplete="tel" required style="display:block;width:100%;padding:10px;"></label>
-          <label>Calle y número<input name="shipping_street" autocomplete="address-line1" required style="display:block;width:100%;padding:10px;"></label>
-          <label>Ciudad<input name="shipping_city" autocomplete="address-level2" required style="display:block;width:100%;padding:10px;"></label>
-          <label>Estado<input name="shipping_state" autocomplete="address-level1" required style="display:block;width:100%;padding:10px;"></label>
-          <p id="mj-card-destination" style="font-size:.85rem;margin:0;">El código postal y país deben coincidir con el envío seleccionado.</p>
-          <button id="mj-card-submit" type="submit" class="mj-cart-btn-primary" disabled>Continuar al pago con tarjeta</button>
-        </form>
-      </section>
       <div class="mj-cart-actions">
-        <button id="mj-card-open" type="button" onclick="openCardCheckout()" class="mj-cart-btn-primary">Pagar con tarjeta</button>
         <button onclick="proceedWhatsApp()" class="mj-cart-btn-secondary">Continuar por WhatsApp</button>
         <a href="shop-mats.html" style="text-align:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;color:var(--orchid-mid);text-decoration:none;margin-top:.25rem;">← Seguir comprando</a>
       </div>
@@ -264,72 +248,10 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     function changeItemQty(id, qty) { window.MJCart.updateQty(id, qty); renderCart(); }
     function removeItem(id) { window.MJCart.removeFromCart(id); renderCart(); }
 
-    function updateCardReadiness() {
-      const form=document.getElementById('mj-card-form'),button=document.getElementById('mj-card-submit');
-      if(!form || !button) return;
-      const selected=window.MJShippingCheckout.state().selected;
-      button.disabled=!!form._checkoutPending || !!form._checkoutUncertain || !selected || !form.checkValidity();
-      const destination=window.MJShippingCheckout.state().destination;
-      document.getElementById('mj-card-destination').textContent='Envío: '+(destination.postalCode || 'sin código postal')+' · '+destination.country;
-    }
-    function openCardCheckout() {
-      window.MJShippingCheckout.showCardFields();
-      document.getElementById('mj-card-checkout').hidden=false;
-      updateCardReadiness(); document.getElementById('mj-card-form').elements.customer_name.focus();
-    }
-    async function proceedToCheckout(event) {
+    function proceedToCheckout(event) {
       event?.preventDefault();
-      const form=document.getElementById('mj-card-form');
-      if(form?._checkoutPending) return;
-      if(!form || !form.checkValidity()) { form?.reportValidity(); return; }
-      if(form._checkoutUncertain) { alert('No pudimos confirmar el checkout anterior. Contacta a MAH JOY antes de volver a intentarlo.'); return; }
-      const cart=window.MJCart.getCart();
-      if(!cart.length) return;
-      let selected;
-      try { selected=window.MJShippingCheckout.requireForPayment('MXN',cart); }
-      catch(error) { alert(error.message); return; }
-      const button=document.getElementById('mj-card-submit');form._checkoutPending=true;button.disabled=true;
-      let financialRequested=false;
-      try {
-        const field=name=>form.elements.namedItem(name).value.trim();
-        const discount=window.cartDiscount;
-        const verified=await window.MJPayPalPricing.quote(cart,'MXN',discount?.code);
-        const paymentCart=cart.map(item=>{
-          const price=Math.round(Number(item.price)*(1-(discount?.pct || 0)/100)*100)/100;
-          const actual=verified.find(product=>String(product.sku).toUpperCase()===String(item.sku).toUpperCase());
-          if(!actual || Math.round(Number(actual.unit_price)*100)!==Math.round(price*100)) {
-            const error=new Error('Los precios cambiaron. Revisa el carrito antes de continuar.');error.code='PRICE_MISMATCH';throw error;
-          }
-          return{id:item.id,sku:item.sku,name:item.name,price,qty:item.qty};
-        });
-        const current=window.MJShippingCheckout.requireForPayment('MXN',cart);
-        if(current.quote_token!==selected.quote_token || current.contextKey!==selected.contextKey) {
-          const error=new Error(window.MJShippingCheckout.errorMessage('SHIPPING_QUOTE_CHANGED'));error.code='SHIPPING_QUOTE_CHANGED';throw error;
-        }
-        financialRequested=true;
-        const res=await fetch('/api/centumpay/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-          cart:paymentCart,
-          customer_name:field('customer_name'),customer_email:field('customer_email'),customer_phone:field('customer_phone'),
-          shipping_street:field('shipping_street'),shipping_city:field('shipping_city'),shipping_state:field('shipping_state'),
-          shipping_cost:selected.price,shipping_cp:selected.postalCode,shipping_country:selected.country,shipping_quote_token:selected.quote_token,
-          discount_code:window.cartDiscount?.code || null
-        })});
-        const data=await res.json();
-        if(!res.ok || !data.ok || !data.checkoutUrl || !data.orderId) {
-          const error=new Error(window.MJShippingCheckout.errorMessage(data.error_code || data.error || 'SHIPPING_QUOTE_REQUIRED'));
-          error.code=data.error_code || data.error;throw error;
-        }
-        localStorage.setItem('mj_last_order_id',data.orderId);
-        localStorage.setItem('mj_last_cart',JSON.stringify(paymentCart));
-        localStorage.setItem('mj_checkout_data',JSON.stringify({orderId:data.orderId,shippingCost:selected.price,shippingCurrency:'MXN'}));
-        window.MJCart.clearCart();window.location.href=data.checkoutUrl;
-      } catch(error) {
-        form._checkoutUncertain=financialRequested && !/^(SHIPPING_|PRICE_|INVALID_|CART_)/.test(error.code || '');
-        alert(form._checkoutUncertain ? 'No pudimos confirmar el checkout. Contacta a MAH JOY antes de volver a intentarlo.' : error.message);
-      } finally { form._checkoutPending=false;updateCardReadiness(); }
+      document.getElementById('paypal-cart-container')?.scrollIntoView({block:'center',behavior:'smooth'});
     }
-    document.getElementById('mj-card-form')?.addEventListener('input',updateCardReadiness);
-    window.MJShippingCheckout.subscribe(updateCardReadiness);
 
     function proceedWhatsApp() {
       const cart = window.MJCart.getCart();

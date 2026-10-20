@@ -1,6 +1,6 @@
 /**
  * MAH JOY — Custom server
- * Serves static files + handles CentumPay checkout proxy server-side
+ * Serves the storefront and its PayPal checkout integrations
  */
 const express = require('express');
 const path = require('path');
@@ -9,7 +9,8 @@ const fs = require('fs');
 const { Pool } = require('pg');
 
 // ─── Neon PostgreSQL Connection ───────────────────────────────────────────────
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_x2RgNOqr1TSV@ep-sweet-dawn-aht8zmog-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require';
+const DATABASE_URL = process.env.DATABASE_URL;
+if (!DATABASE_URL) throw new Error('DATABASE_URL must be configured on the server');
 const pool = new Pool({ 
   connectionString: DATABASE_URL,
   ssl: { rejectUnauthorized: false }
@@ -63,6 +64,7 @@ app.use(express.json({verify:(req,_res,buffer)=>{
 }}));
 app.disable('x-powered-by');
 app.use(require('./lib/web-security').operationsGuard);
+require('./lib/payment-policy').registerPaymentPolicy(app);
 
 // Administrative entry point: Proax handles authentication and existing roles.
 // Register before language routing so the login also works for US visitors.
@@ -146,152 +148,6 @@ function generateTotp(secret) {
   return String(code % 1000000).padStart(6, '0');
 }
 
-// ─── CentumPay checkout endpoint ─────────────────────────────────────────────
-
-app.post('/api/centumpay/checkout', async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  try {
-    const { 
-      cart = [], 
-      orderId,
-      customer_name,
-      customer_lastname,
-      customer_email,
-      customer_phone,
-      shipping_street,
-      shipping_interior,
-      shipping_neighborhood,
-      shipping_city,
-      shipping_state,
-      shipping_cp,
-      shipping_cost,
-      webSite,
-      discount_code
-    } = req.body;
-    
-    if (!cart.length) return res.status(400).json({ error: 'Cart vacío' });
-    if(req.body.currency && req.body.currency!=='MXN')return res.status(409).json({error:'Card checkout is only available in MXN',error_code:'CARD_CURRENCY_UNAVAILABLE'});
-    if([customer_name,customer_email,customer_phone,shipping_street,shipping_city,shipping_state].some(value=>typeof value!=='string' || !value.trim())) {
-      return res.status(409).json({error:'Completa tus datos y dirección de envío antes de pagar.',error_code:'SHIPPING_ADDRESS_REQUIRED'});
-    }
-    const productQuote=await require('./lib/checkout-prices').resolveCheckoutQuote(PROAX_API_URL,{items:cart,currency:'MXN',discount_code},fetch);
-    for(let n=0;n<cart.length;n++) {
-      const shown=Number(cart[n].price);
-      if(!Number.isFinite(shown) || Math.round(shown*100)!==Math.round(productQuote.items[n].unit_price*100)) {
-        return res.status(409).json({error:'Los precios cambiaron. Actualiza el carrito y revisa el total.',error_code:'PRICE_MISMATCH'});
-      }
-    }
-    const merchandise=productQuote.items.map(p=>({id:p.id,sku:p.sku,name:p.name,qty:p.qty,price:p.unit_price}));
-    const shippingQuote=require('./lib/shipping-payment').verifyCardShipping({...req.body,cart:merchandise},require('./lib/shipping-quotes').verifyShippingQuote);
-
-    // A checkout cannot overwrite a previously frozen quote or paid order.
-    const myOrderId = 'mahjoy-'+crypto.randomUUID();
-
-    // Build cart with shipping included
-    const cartItems = merchandise.map(item => ({
-      id: item.id,
-      sku: item.sku,
-      name: item.name,
-      qty: Number(item.qty),
-      price: Number(item.price)
-    }));
-    
-    // Add shipping as cart item if present
-    if (shippingQuote.price > 0) {
-      cartItems.push({
-        name: 'Envío',
-        qty: 1,
-        price: shippingQuote.price
-      });
-    }
-
-    // Forward to Proax API with all customer data
-    const universePayload = {
-      orderId: myOrderId,
-      cart: cartItems,
-      customer_name: customer_name || '',
-      customer_lastname: customer_lastname || '',
-      customer_email: customer_email || '',
-      customer_phone: customer_phone || '',
-      shipping_street: shipping_street || '',
-      shipping_interior: shipping_interior || '',
-      shipping_neighborhood: shipping_neighborhood || '',
-      shipping_city: shipping_city || '',
-      shipping_state: shipping_state || '',
-      shipping_cp: shipping_cp || '',
-      shipping_cost: shippingQuote.price,
-      shipping_quote: shippingQuote
-    };
-
-    // BACKUP: Save order data to file AND database BEFORE calling Proax
-    const orderBackupData = {
-      orderId: myOrderId,
-      cart: merchandise,
-      customer_name,
-      customer_lastname,
-      customer_email,
-      customer_phone,
-      shipping_street,
-      shipping_interior,
-      shipping_neighborhood,
-      shipping_city,
-      shipping_state,
-      shipping_cp,
-      shipping_cost: shippingQuote.price,
-      shipping_quote: shippingQuote,
-      status: 'checkout_started',
-      source: 'centumpay',
-      discount_code: discount_code || null
-    };
-    
-    // Save to file (fallback)
-    saveOrderToBackup(orderBackupData);
-    
-    // Save to Neon database (primary)
-    if(!await saveOrderToDatabase(orderBackupData)) {
-      return res.status(503).json({error:'Could not save the shipping quote. Please try again.',error_code:'SHIPPING_QUOTE_STORAGE_UNAVAILABLE'});
-    }
-
-    console.log('[centumpay] Forwarding to Proax:', JSON.stringify(universePayload, null, 2));
-
-    const universeRes = await fetch('https://proax.app/api/payments/centumpay/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(universePayload),
-    });
-
-    const universeJson = await universeRes.json();
-    console.log('[centumpay] Universe response:', JSON.stringify(universeJson, null, 2));
-
-    if (universeJson.ok && universeJson.checkoutUrl) {
-      return res.json({ 
-        ok: true, 
-        checkoutUrl: universeJson.checkoutUrl, 
-        saleToken: universeJson.saleToken,
-        orderId: universeJson.orderId || myOrderId 
-      });
-    } else {
-      return res.status(502).json({ 
-        error: 'Universe API error',
-        error_code: universeJson.error_code || 'CHECKOUT_UNAVAILABLE',
-        detail: universeJson 
-      });
-    }
-  } catch (err) {
-    if(err.code==='DISCOUNT_USD_ONLY')return res.status(403).json({error:err.message,error_code:err.code});
-    if(/^SHIPPING_|^PACKAGE_PROFILE_/.test(err.code || err.message || ''))return res.status(409).json({error:err.code || err.message,error_code:err.code || err.message});
-    console.error('[centumpay]', err);
-    return res.status(500).json({ error: 'Error interno', detail: String(err) });
-  }
-});
-
-app.options('/api/centumpay/checkout', (_req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.sendStatus(200);
-});
-
 // ─── Explicit routes ─────────────────────────────────────────────────────────
 app.get('/cart', (req, res) => res.sendFile(path.join(__dirname, 'cart.html')));
 app.get('/product', (req, res) => res.sendFile(path.join(__dirname, 'product.html')));
@@ -316,12 +172,7 @@ app.use(express.static(path.join(__dirname), {
 app.listen(PORT, () => {
   console.log(`MAH JOY server running on port ${PORT}`);
   
-  // Start CentumPay polling after 10 seconds
-  setTimeout(() => {
-    if (typeof startPolling === 'function') {
-      startPolling();
-    }
-  }, 10000);
+
 });
 
 // ─── Envia.com Shipping API ──────────────────────────────────────────────────
@@ -1157,8 +1008,8 @@ app.post('/api/shipping/create', async (req, res) => {
 // ─── CentumPay Webhook ───────────────────────────────────────────────────────
 
 app.post('/api/centumpay/webhook', (_req, res) => {
-  // The existing authenticated polling worker verifies payments with CentumPay.
-  // Unauthenticated notifications are advisory only and cannot change payment state.
+  // Legacy notifications are advisory only. Historical Centum payments require
+  // explicit reconciliation; this endpoint never changes payment state.
   res.status(202).json({ok:true,status:'verification_pending'});
 });
 
@@ -1233,164 +1084,7 @@ app.patch('/api/orders/:orderId/status', async (req, res) => {
 // ─── CentumPay Polling (since they don't have webhooks) ──────────────────────
 
 const processedTransactions = new Set();
-const POLL_INTERVAL = 3 * 60 * 1000; // 3 minutes
-
-async function pollCentumPayTransactions() {
-  if (!CENTUMPAY_API_KEY || !CENTUMPAY_API_SECRET || !CENTUMPAY_TOTP_SECRET) {
-    console.log('[poll] CentumPay not configured, skipping');
-    return;
-  }
-
-  try {
-    console.log('[poll] Checking CentumPay for new transactions...');
-    
-    const totp = generateTotp(CENTUMPAY_TOTP_SECRET);
-    const authToken = crypto.createHmac('sha256', CENTUMPAY_API_SECRET)
-      .update(`${CENTUMPAY_API_KEY}${totp}`, 'utf8').digest('hex');
-
-    // Fetch recent transactions from CentumPay API
-    const ecommerceUrl = CENTUMPAY_ENV === 'prod'
-      ? 'https://ecommapi-centumpay.centum.mx/ecommerce'
-      : 'https://test-ecommapi-centumpay.centum.mx/ecommerce';
-
-    const payload = {
-      group: 'wmx_api',
-      method: 'get_transactions',
-      token: authToken,
-      api_key: CENTUMPAY_API_KEY,
-      data: {
-        limit: 20,
-        status: 'approved'
-      }
-    };
-
-    const response = await fetch(ecommerceUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    const result = await response.json();
-    
-    if (result?.status?.code !== '0') {
-      console.log('[poll] CentumPay API error or no transactions:', result?.status?.message || 'unknown');
-      return;
-    }
-
-    const transactions = result?.payload || [];
-    console.log(`[poll] Found ${transactions.length} approved transactions`);
-
-    for (const tx of transactions) {
-      const txId = tx.transaction_id || tx.id || tx.reference;
-      const orderId = tx.my_id || tx.order_id || tx.reference;
-      
-      // Skip if already processed
-      if (processedTransactions.has(txId)) {
-        continue;
-      }
-
-      console.log(`[poll] New transaction: ${txId} for order ${orderId}`);
-      processedTransactions.add(txId);
-
-      // Find matching order
-      const order = pendingOrders.get(orderId);
-      
-      if (order && order.status === 'pending_payment') {
-        console.log(`[poll] Processing order ${orderId}...`);
-        
-        order.status = 'paid';
-        order.paidAt = new Date().toISOString();
-        order.transactionId = txId;
-        pendingOrders.set(orderId, order);
-        
-        // Update Proax
-        await updateProaxOrder(orderId, {
-          status: 'paid',
-          paid_at: order.paidAt,
-          transaction_id: txId
-        });
-
-        // Create shipment if we have shipping data
-        if (order.shipping && order.carrier) {
-          try {
-            console.log(`[poll] Creating shipment for ${orderId}...`);
-            
-            const shipRes = await fetch(`http://localhost:${PORT}/api/shipping/create`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'x-mahjoy-admin-key': process.env.MAHJOY_OPERATIONS_SECRET || process.env.PROAX_PAYPAL_SYNC_SECRET || '' },
-              body: JSON.stringify({
-                orderId: orderId,
-                carrier: order.carrier,
-                destination: {
-                  name: order.customer?.name || order.shipping?.name,
-                  email: order.customer?.email,
-                  phone: order.shipping?.phone || order.customer?.phone,
-                  street: order.shipping?.street,
-                  neighborhood: order.shipping?.neighborhood,
-                  city: order.shipping?.city,
-                  state: order.shipping?.state,
-                  postalCode: order.shipping?.cp || order.shipping?.postalCode
-                }
-              })
-            });
-
-            const shipData = await shipRes.json();
-
-            if (shipData.ok) {
-              console.log(`[poll] ✅ Shipment created! Tracking: ${shipData.trackingNumber}`);
-              Object.assign(order, require('./lib/shipping-quotes').shippingLabelOrderFields(shipData));
-              order.status = 'shipped';
-              order.shippedAt = new Date().toISOString();
-              pendingOrders.set(orderId, order);
-              
-              // Update Proax
-              await updateProaxOrder(orderId, {
-                status: 'shipped',
-                ...require('./lib/shipping-quotes').proaxShippingLabelFields(shipData),
-                shipped_at: order.shippedAt
-              });
-              
-              // Queue WhatsApp notification
-              notifyAdmins(order, shipData.trackingNumber);
-              // Send confirmation email to customer
-              sendOrderConfirmationEmail(order);
-            } else {
-              console.error(`[poll] ❌ Shipment failed:`, shipData);
-              // Still notify about the sale, even if shipment failed
-              notifyAdmins(order, null);
-              // Send confirmation email anyway
-              sendOrderConfirmationEmail(order);
-            }
-          } catch (shipErr) {
-            console.error(`[poll] Shipment error:`, shipErr);
-          }
-        } else {
-          console.log(`[poll] Order ${orderId} paid but missing shipping data`);
-        }
-      } else if (order) {
-        console.log(`[poll] Order ${orderId} already processed (status: ${order.status})`);
-      } else {
-        console.log(`[poll] Transaction ${txId} has no matching order (my_id: ${orderId})`);
-      }
-    }
-  } catch (err) {
-    console.error('[poll] Error polling CentumPay:', err);
-  }
-}
-
-// Start polling after server is ready
-let pollInterval;
-function startPolling() {
-  console.log(`[poll] Starting CentumPay polling every ${POLL_INTERVAL / 1000}s`);
-  pollCentumPayTransactions(); // Initial poll
-  pollInterval = setInterval(pollCentumPayTransactions, POLL_INTERVAL);
-}
-
-// Manual trigger endpoint (for testing)
-app.post('/api/poll/trigger', async (req, res) => {
-  await pollCentumPayTransactions();
-  res.json({ ok: true, message: 'Poll triggered' });
-});
+// Historical provider diagnostics remain read-only; automatic reconciliation is disabled.
 
 // View processed transactions
 app.get('/api/poll/processed', (req, res) => {

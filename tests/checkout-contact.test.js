@@ -17,7 +17,7 @@ test('PayPal entry points have no storefront phone field or phone gate',()=>{
   for(const file of ['cart.html','en/cart.html','checkout.html','en/checkout.html']) {
     const html=fs.readFileSync(file,'utf8');assert(!html.includes('paypal-phone.js'));assert(!html.includes('MJPayPalPhone'));
     assert(!html.includes('paypal_phone'));
-    if(file==='cart.html')assert(html.includes('id="mj-card-checkout" hidden')); // Contact fields belong only to the optional card form.
+    assert(!html.includes('id="mj-card-checkout"')); // Online checkout is PayPal-only.
   }
   const pricing=fs.readFileSync('js/paypal-pricing.js','utf8');assert(!pricing.includes('/api/checkout/contact'));assert(!pricing.includes('requirePhone'));
 });
