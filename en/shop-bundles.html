@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <!-- Meta Pixel Code -->
-<script>
+<script src="../js/bundle-availability.js?v=1"></script>
+  <script>
 !function(f,b,e,v,n,t,s)
 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
 n.callMethod.apply(n,arguments):n.queue.push(arguments)};
@@ -156,7 +157,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   }
 
   // Load bundles from API
-  fetch(MJ_API+'/public/shop/mahjoy/bundles').then(function(r){
+  fetch(MJ_API+'/public/mahjoy/bundles').then(function(r){
     if(!r.ok)throw new Error(r.status);
     return r.json();
   }).then(function(data){
@@ -200,6 +201,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       card.innerHTML = imgHtml
         + '<div class="mj-prod-card-body">'
         + '<div class="mj-prod-card-name">' + b.name + '</div>'
+        + (MJBundleAvailability(b, true) ? '<p class="mj-bundle-availability">' + MJBundleAvailability(b, true) + '</p>' : '')
         + (b.products ? '<div style="font-size:.6rem;color:#888;margin-bottom:4px;">' + b.products.length + ' products included</div>' : '')
         + (savings > 0 ? '<div style="font-size:.65rem;font-weight:700;color:#16a34a;margin-bottom:4px;">Save ' + fmtPrice(savings) + '</div>' : '')
         + '<div class="mj-prod-card-price">' + fmtPrice(b.price_usd) + '</div>'
