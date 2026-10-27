@@ -2,7 +2,8 @@
 <html lang="es">
 <head>
 <!-- Meta Pixel Code -->
-<script>
+<script src="js/bundle-availability.js?v=1"></script>
+  <script>
 !function(f,b,e,v,n,t,s)
 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
 n.callMethod.apply(n,arguments):n.queue.push(arguments)};
@@ -138,7 +139,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       try {
         const res = await fetch(MJ_API + '/public/mahjoy/bundles');
         const data = await res.json();
-        const bundles = data.bundles || [];
+        const bundles = Array.isArray(data) ? data : (data.bundles || []);
         const bundle = bundles.find(b => b.id == bundleId);
         
         if (!bundle) {
@@ -188,6 +189,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
               <div class="mj-bundle-pricing">
                 ${originalTotal > bundlePrice ? `<div class="mj-bundle-original">Valor individual: ${fmtPrice(originalTotal)}</div>` : ''}
                 <div class="mj-bundle-price">${fmtPrice(bundlePrice)}</div>
+                ${MJBundleAvailability(bundle, false) ? `<p class="mj-bundle-availability">${MJBundleAvailability(bundle, false)}</p>` : ''}
                 ${savings > 0 ? `<span class="mj-bundle-savings">Ahorras ${fmtPrice(savings)}</span>` : ''}
               </div>
               

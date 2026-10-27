@@ -179,6 +179,8 @@ function buildBundleCard(bundle) {
   }
 
   const displayPrice = formatPrice(bundle.price, bundle.price_usd);
+  const deliveryDate = bundle.presaleDate || bundle.presale_date;
+  const availability = deliveryDate ? (isEnglishShop ? 'Pre-order · Estimated delivery: ' : 'Preventa · Entrega estimada: ') + new Date(String(deliveryDate).slice(0, 10) + 'T12:00:00Z').toLocaleDateString(isEnglishShop ? 'en-US' : 'es-MX', {timeZone: 'UTC'}) : '';
 
   return `
     <div class="mj-product-card mj-bundle-card" onclick="window.location='bundle.html#${bundle.id}'" style="cursor:pointer;">
@@ -191,6 +193,7 @@ function buildBundleCard(bundle) {
       </div>
       <div class="mj-product-info">
         <div class="mj-product-name">${bundle.name}</div>
+        ${availability ? `<p class="mj-bundle-availability">${availability}</p>` : ''}
         ${bundle.description ? `<div class="mj-product-desc">${bundle.description}</div>` : ''}
         <div class="mj-product-price">${displayPrice}</div>
       </div>
