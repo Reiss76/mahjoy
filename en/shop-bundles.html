@@ -108,6 +108,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           <div class="nav-link mj-shop-toggle" tabindex="0" role="button" onclick="var l=this.nextElementSibling;l.style.display=l.style.display==='block'?'none':'block';" style="cursor:pointer"><div class="nav-link-text">Shop ▾</div></div>
           <div class="mj-shop-list" style="display:none">
             <a href="shop-bundles.html" class="w-dropdown-link mj-shop-link" style="font-weight:700;color:#FAF6F0!important">Bundles ✦</a>
+            <a href="shop-bundles.html?type=essentials" class="w-dropdown-link mj-shop-link" style="padding-left:32px!important">Essentials</a>
+            <a href="shop-bundles.html?type=ultimate" class="w-dropdown-link mj-shop-link" style="padding-left:32px!important">Ultimate</a>
             <a href="shop-tiles.html" class="w-dropdown-link mj-shop-link">Tiles</a>
             <a href="shop-mats.html" class="w-dropdown-link mj-shop-link">Mats</a>
             <a href="shop-racks.html" class="w-dropdown-link mj-shop-link">Racks</a>
@@ -128,12 +130,17 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     <div class="mj-cat-header-deco tl"></div><div class="mj-cat-header-deco tr"></div>
     <div class="mj-cat-header-deco bl"></div><div class="mj-cat-header-deco br"></div>
     <p class="mj-cat-header-eyebrow">✦ MAH JOY — Shop ✦</p>
-    <h1 class="mj-cat-header-title">Bundles</h1>
+    <h1 class="mj-cat-header-title" id="bundle-heading">Bundles</h1>
     <p class="mj-cat-header-sub">Complete sets, thoughtfully curated for you.</p>
   </div>
 
   <section class="mj-prod-section">
     <p class="mj-prod-section-title">✦ Available Sets ✦</p>
+    <nav aria-label="Bundle collections" style="display:flex;flex-wrap:wrap;gap:20px;justify-content:center;margin:0 0 28px;font-family:inherit">
+      <a data-bundle-type="" href="shop-bundles.html">All bundles</a>
+      <a data-bundle-type="essentials" href="shop-bundles.html?type=essentials">Essentials</a>
+      <a data-bundle-type="ultimate" href="shop-bundles.html?type=ultimate">Ultimate</a>
+    </nav>
     <div id="mj-prod-grid"><div style="grid-column:1/-1;text-align:center;padding:32px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--orchid);">Loading…</div></div>
   </section>
 
@@ -148,6 +155,20 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   <script src="../js/currency-en.js"></script>
   <script>
   var MJ_API='https://proax.app/api';
+  var requestedType = new URLSearchParams(location.search).get('type');
+  var bundleType = ['essentials', 'ultimate'].indexOf(requestedType) !== -1 ? requestedType : '';
+  var collectionLabel = bundleType === 'essentials' ? 'Essentials' : 'Ultimate';
+  if (bundleType) {
+    document.getElementById('bundle-heading').textContent = 'Bundles ' + collectionLabel;
+    document.title = 'Bundles ' + collectionLabel + ' — MAH JOY';
+  }
+  document.querySelectorAll('[data-bundle-type]').forEach(function(link) {
+    if (link.getAttribute('data-bundle-type') === bundleType) {
+      link.setAttribute('aria-current', 'page');
+      link.style.fontWeight = '700';
+      link.style.textUnderlineOffset = '5px';
+    }
+  });
 
   // Format price in USD
   function fmtPrice(price) {
@@ -165,6 +186,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     // Hide specific bundles
     var hiddenBundles = ['Bundle Pink Accessories'];
     bundles = bundles.filter(function(b) { return hiddenBundles.indexOf(b.name) === -1; });
+    if (bundleType) bundles = bundles.filter(function(b) { return b.bundle_type === bundleType; });
     var grid = document.getElementById('mj-prod-grid');
     if(!bundles.length){
       grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px;font-family:Plus Jakarta Sans,sans-serif;color:var(--orchid);">✦ Coming Soon ✦</div>';
