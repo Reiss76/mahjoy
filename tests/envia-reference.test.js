@@ -2,7 +2,7 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const {createEnviaReference,providerJson}=require('../lib/envia-reference');
 const {deliveryEstimate,recommendShipping}=require('../lib/shipping-estimates');
 const {valueLines,declarePackages}=require('../lib/shipping-valuation');
-const {postalCodeOf,samePostal}=require('../lib/shipping-address');
+const {postalCodeOf,samePostal,sameLocation}=require('../lib/shipping-address');
 const reply=(data,status=200)=>({ok:status>=200&&status<300,status,json:async()=>data});
 const row=(service,price,text,structured)=>({carrier:'fixture',service,price,...{delivery_minutes:deliveryEstimate(text,structured).minutes}});
 test('delivery durations use both quantity and verified day/hrs units, retaining raw provider metadata',()=>{
@@ -53,6 +53,36 @@ test('documented Geocodes wrapper remains supported but mismatched ZIP/state and
   await assert.rejects(reference(async url=>url.includes('geocodes')?reply(geo):fetcher(url)).resolveDestination({country:'MX',postalCode:'66188',city:'Real city',state:'NL'}));
  }
  await assert.rejects(reference(fetcher).resolveDestination({country:'MX',postalCode:'66188',city:'City',state:'JA'}));
+});
+test('PayPal Mexico City aliases resolve to the official Envia state and remain valid for signed quote matching',async()=>{
+ const ref=reference(async url=>reply(url.includes('geocodes')?
+  [{zip_code:'11550',country:{code:'MX'},state:{name:'Ciudad de México',code:{'2digit':'CX'}},locality:'Miguel Hidalgo'}]:
+  {data:[{country_code:'MX',name:'Ciudad de México',code_2_digits:'CX',code_3_digits:'CMX'},
+   {country_code:'MX',name:'México',code_2_digits:'EM',code_3_digits:'MEX'}]}));
+ for(const state of ['CDMX',' cdmx ','CX','CMX','Ciudad de México','DF','D.F.','Distrito Federal']) {
+  const address={country:'MX',postalCode:'11550',city:'Miguel Hidalgo',state};
+  const normalized=await ref.resolveDestination(address);
+  assert.equal(normalized.state,'CX');
+  assert.equal(sameLocation(normalized,address),true);
+  assert(normalized.state_aliases.includes('CDMX'));
+ }
+ for(const state of ['México','MEX','EM'])await assert.rejects(
+  ref.resolveDestination({country:'MX',postalCode:'11550',city:'Miguel Hidalgo',state}),
+  {code:'SHIPPING_DESTINATION_MISMATCH'});
+ await assert.rejects(ref.resolveDestination({country:'MX',postalCode:'11550',city:'Miguel Hidalgo',state:'Unknown'}),{code:'INVALID_SHIPPING_STATE'});
+});
+test('Mexico City aliases never apply outside Mexico or bypass postal state validation',async()=>{
+ const states=[{country_code:'MX',name:'Ciudad de México',code_2_digits:'CX',code_3_digits:'CMX'},
+  {country_code:'MX',name:'México',code_2_digits:'EM',code_3_digits:'MEX'}];
+ const ref=reference(async url=>reply(url.includes('geocodes')?
+  [{zip_code:'50000',country:{code:'MX'},state:{name:'México',code:{'2digit':'EM'}},locality:'Toluca'}]:{data:states}));
+ await assert.rejects(ref.resolveDestination({country:'MX',postalCode:'50000',city:'Toluca',state:'CDMX'}),{code:'SHIPPING_DESTINATION_MISMATCH'});
+ const normalized=await ref.resolveDestination({country:'MX',postalCode:'50000',city:'Toluca',state:'MEX'});
+ assert.equal(normalized.state,'EM');assert(!normalized.state_aliases.includes('CDMX'));
+ const otherCountry=reference(async url=>reply(url.includes('geocodes')?
+  [{zip_code:'60601',country:{code:'US'},state:{name:'Fixture',code:{'2digit':'XX'}},locality:'City'}]:
+  {data:[{country_code:'US',name:'Fixture',code_2_digits:'XX',code_3_digits:'CMX'}]}));
+ await assert.rejects(otherCountry.resolveDestination({country:'US',postalCode:'60601',city:'City',state:'CDMX'}),{code:'INVALID_SHIPPING_STATE'});
 });
 test('carrier print settings prefer tested PDF combinations including UPS PAPER_7X4.75 and reject unsupported combinations',async()=>{
  const ref=reference(async url=>reply(url.includes('/carrier?')?{data:[{id:28,name:'ups',country_code:'US'}]}:{data:[{print_format:'PDF',print_size:'STOCK_4X6.5'},{print_format:'PDF',print_size:'PAPER_7X4.75'}]}));
