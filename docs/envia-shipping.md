@@ -28,10 +28,4 @@ Deploy compatible Proax readers before this producer. Enable `MAHJOY_PAYPAL_SHIP
 
 Watch sanitized `[envia/rates]`, PayPal callback errors/latency, pending guide reservations, selected service and persisted merchant absorption for the first 24 hours. A live guide requires a specific authorized shipment; tests only query rates and simulate generation.
 
-## Guest card checkout
-
-PayPal guest card approval can arrive without a server-side shipping callback. Selecting the SDK card button switches that browser tab to the signed quote flow before creating an order: the buyer selects shipping and approves the full total in PayPal. Only country and postal code are collected in the store; payment details and the complete address stay in PayPal.
-
-An explicit `NATIVE_SHIPPING_NOT_READY` or `NATIVE_SHIPPING_REQUIRED` response from capture also opens this flow without clearing the cart. It creates a new order only after the buyer selects shipping and clicks PayPal again. Unknown capture outcomes remain blocked and retain their original order reference. Reloading keeps the shipping-first mode, but still requires a fresh valid quote. This recovery does not capture or modify the original approved order.
-
 References: https://docs.envia.com/reference/shipping-rates, https://docs.envia.com/reference/create-shipping-label, https://docs.envia.com/docs/delivery-estimate, https://docs.envia.com/reference/carrier-print-options, https://developer.paypal.com/api/orders/v2/server-callback/.
