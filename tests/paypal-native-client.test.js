@@ -11,7 +11,7 @@ function fixture(currency='MXN',options={}) {
   const ctx={window:{location:{pathname:currency==='USD'?'/en/checkout.html':'/checkout.html'},
     addEventListener:(event,fn)=>(listeners[event] ||= []).push(fn),dispatchEvent:event=>{for(const fn of listeners[event.type] || [])fn(event);},MJCheckoutProduct:product,
     MJCart:{getCart:()=>cart,saveCart:next=>{cart=next;},clearCart(){throw Error('Unpaid cart items must be preserved');}},
-    sessionStorage:{getItem:key=>stored.get(key),setItem:(key,value)=>stored.set(key,value)},
+    sessionStorage:{getItem:key=>stored.get(key),setItem:(key,value)=>stored.set(key,value),removeItem:key=>stored.delete(key)},
     MJPayPalSync:{save:async()=>{},errorMessage:(_error,fallback)=>fallback}},
     document:{readyState:'loading',documentElement:{lang:currency==='USD'?'en':'es'},getElementById:node,
       addEventListener:(event,fn)=>(events[event] ||= []).push(fn)},
@@ -24,7 +24,7 @@ function fixture(currency='MXN',options={}) {
       }
       if(path==='/api/checkout/prices')return{ok:true,json:async()=>({items:body.items.map(item=>({sku:item.sku,name:item.name,
         price:100,price_usd:10,unit_price:currency==='USD'?10:100}))})};
-      if(path==='/api/checkout/paypal/create')return options.createReply ? options.createReply(body) : {ok:true,json:async()=>({id:'ORDER-'+currency,checkout_ref:options.checkoutRef || checkoutRef,shipping_state:'PENDING'})};
+      if(path==='/api/checkout/paypal/create')return{ok:true,json:async()=>({id:'ORDER-'+currency,checkout_ref:options.checkoutRef || checkoutRef,shipping_state:'PENDING'})};
       if(path==='/api/checkout/paypal/capture') {
         if(options.captureReply)return options.captureReply(body);
         return{ok:true,json:async()=>({id:body.orderId,status:'COMPLETED'})};
@@ -392,71 +392,17 @@ for(const currency of ['MXN','USD']) {
   });
 }
 
-for(const currency of ['MXN','USD'])for(const kind of ['normal','express','cart']) {
-  test(`native ${kind} ${currency} quotes before opening guest card checkout`,async()=>{
-    const f=fixture(currency),options=await entrypoint(f,kind,currency);
-    let rejected=false;
-    options.onClick({fundingSource:'card'},{resolve(){throw Error('Card checkout must include shipping before approval');},reject(){rejected=true;}});
-    assert(rejected);await new Promise(setImmediate);
-    assert.equal(f.ctx.window.MJPayPalPricing.nativeShippingEnabled(),false);
-    assert.equal(f.elements['mj-shipping-checkout'].hidden,false);
-    assert.equal(f.elements['co-form'].style.display,'none');
-    assert.equal(f.requests.filter(request=>request.path.endsWith('/create')).length,0);
-    const retry=f.rendered.at(-1);assert.notEqual(retry,options);
-    let enabled=true;retry.onInit({}, {enable(){enabled=true;},disable(){enabled=false;}});assert.equal(enabled,false);
-    await selectQuote(f,currency);assert.equal(enabled,true);
-    retry.onClick({fundingSource:'card'},{resolve(){},reject(){throw Error('The selected shipping quote allows payment');}});
-    await retry.createOrder({},{});
-    const created=f.requests.find(request=>request.path.endsWith('/paypal/create')).body;
-    assert.equal(created.native_shipping,undefined);
-    assert.equal(created.shipping_quote_token,'signed-'+currency);
-    const unit=created.payload.purchase_units[0];
-    assert.equal(unit.amount.value,currency==='USD'?'40.00':'130.00');
-    assert.equal(unit.amount.breakdown.shipping.value,'30.00');
-    assert.equal(unit.shipping.options[0].selected,true);
-    assert.equal(f.getCart().length,1);
-    const restored=fixture(currency,{stored:f.stored});await restored.ctx.window.MJPayPalPricing.init();
-    assert.equal(restored.ctx.window.MJPayPalPricing.nativeShippingEnabled(),false);
-    assert.equal(restored.elements['co-form'].style.display,'none');
-  });
-}
-for(const currency of ['MXN','USD']) {
-  test(`missing native callback ${currency} preserves the unpaid cart and obtains a new shipping-inclusive approval`,async()=>{
-    const f=fixture(currency,{
-      createReply:body=>({ok:true,json:async()=>body.native_shipping
-        ? {id:'ORDER-'+currency,checkout_ref:checkoutRef,shipping_state:'PENDING'} : {id:'RETRY-'+currency}}),
-      captureReply:body=>({ok:!body.checkout_ref,json:async()=>body.checkout_ref
-        ? {error_code:'NATIVE_SHIPPING_NOT_READY'} : {id:body.orderId,status:'COMPLETED'}})
-    });
-    const options=await entrypoint(f,'cart',currency);
-    await options.createOrder({},{});
-    await assert.rejects(()=>f.ctx.window.MJPayPalPricing.capture('ORDER-'+currency),error=>{
-      assert.equal(error.code,'NATIVE_SHIPPING_NOT_READY');
-      assert.match(error.message,currency==='USD'?/No payment was captured/:/No se realizó el cobro/);
-      return true;
-    });
-    assert.equal(f.getCart().length,1);
-    assert.equal(f.ctx.window.MJPayPalPricing.nativeShippingEnabled(),false);
-    await new Promise(setImmediate);
-    const retry=f.rendered.at(-1);await selectQuote(f,currency);
-    await retry.createOrder({},{});
-    const receipt=await f.ctx.window.MJPayPalPricing.capture('RETRY-'+currency);
-    assert.equal(receipt.status,'COMPLETED');
-    const captures=f.requests.filter(request=>request.path.endsWith('/capture'));
-    assert.equal(captures.length,2);
-    assert.equal(captures[1].body.orderId,'RETRY-'+currency);
-    assert.equal(captures[1].body.checkout_ref,undefined);
-    assert.equal(captures[1].body.shipping_quote_token,'signed-'+currency);
-    f.ctx.window.MJPayPalPricing.completeCart(receipt.id);assert.equal(f.getCart().length,0);
-  });
-}
-test('an uncertain capture never switches to a new card checkout or promises that no charge occurred',async()=>{
-  const f=fixture('MXN',{captureReply:()=>{throw Error('Connection lost');}});
-  const options=await entrypoint(f,'cart','MXN');await options.createOrder({},{});
-  await assert.rejects(()=>f.ctx.window.MJPayPalPricing.capture('ORDER-MXN'),error=>error.code==='PAYMENT_STATUS_UNCERTAIN');
-  let rejected=false;options.onClick({fundingSource:'card'},{resolve(){throw Error('Unknown payment must remain blocked');},reject(){rejected=true;}});
-  assert(rejected);assert.equal(f.ctx.window.MJPayPalPricing.nativeShippingEnabled(),true);
-  assert.equal(f.stored.get('mj_paypal_shipping_first_v1'),undefined);
-  assert.equal(f.getCart().length,1);
-  assert.match(f.alerts.at(-1),/No vuelvas a pagar/);
+test('a previous shipping-first preference cannot move card checkout out of PayPal',async()=>{
+  const stored=new Map([['mj_paypal_shipping_first_v1','true']]);
+  const f=fixture('MXN',{stored}),options=await entrypoint(f,'cart','MXN');
+  let resolved=false;
+  options.onClick({fundingSource:'card'},{resolve(){resolved=true;},reject(){throw Error('Shipping belongs inside PayPal');}});
+  assert.equal(resolved,true);
+  assert.equal(stored.has('mj_paypal_shipping_first_v1'),false);
+  assert.equal(f.ctx.window.MJPayPalPricing.nativeShippingEnabled(),true);
+  assert.equal(f.elements['mj-shipping-checkout'].hidden,true);
+  assert.equal(f.elements['co-form'].style.display,'none');
+  await options.createOrder({},{});
+  assert.equal(f.requests.find(request=>request.path.endsWith('/create')).body.native_shipping,true);
+  assert(!f.requests.some(request=>request.path==='/api/shipping/quote'));
 });
