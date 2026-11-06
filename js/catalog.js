@@ -1,5 +1,13 @@
 /** Shared Proax catalog status and calendar dates for both storefronts. */
 (function () {
+  function is2026Card(product) {
+    const text = [product.category, product.sku, product.name].filter(Boolean).join(' ')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[_-]+/g, ' ');
+    if (/card\s*holders?|porta\s*(?:tarjetas?|cartas?)|\bfolio\b/.test(text)) return false;
+    // The current National Mahjong League Card was registered in Proax as TJT, without a year.
+    if (String(product.sku || '').trim().toUpperCase() === 'TJT' && !/20(?!26)\d{2}/.test(text)) return true;
+    return /(?:^|\D)2026(?:\D|$)/.test(text) && /(?:^|[^a-z])(?:cards?|tarjetas?|cartas?)(?:[^a-z]|$)/.test(text);
+  }
   function dateLabel(raw, english) {
     const match = typeof raw === 'string' && raw.match(/^\d{4}-\d{2}-\d{2}/);
     if (!match) return '';
@@ -51,5 +59,5 @@
     const raw = Number(currency === 'USD' ? usd : product.price);
     return Number.isFinite(raw) && raw > 0 ? '$' + raw.toFixed(2) + ' ' + currency : '';
   }
-  window.MJCatalog = {dateLabel, status, prioritize, card, price};
+  window.MJCatalog = {dateLabel, status, prioritize, card, price, is2026Card};
 })();
