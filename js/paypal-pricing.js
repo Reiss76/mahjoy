@@ -1,5 +1,6 @@
 (function () {
   let configuration = { nativeShipping: false };
+  let configurationLoaded = false;
   let initialization = null;
   const nativeOrders = new Map();
   const quotedOrders = new Map();
@@ -43,7 +44,11 @@
     const native=nativeShippingEnabled();
     if(appliedNativeMode===native)return;
     const previous=appliedNativeMode;appliedNativeMode=native;
-    window.MJShippingCheckout?.setPayPalNativeMode?.(native);
+    // Checkout stays inside PayPal even when capability discovery fails.
+    // A temporary outage must not expose the retired website calculator.
+    window.MJShippingCheckout?.setPayPalNativeMode?.(true);
+    const note=document.getElementById('mj-paypal-shipping-note');
+    if(note && configurationLoaded && !native)note.textContent=checkoutError({error_code:'NATIVE_SHIPPING_UNAVAILABLE'});
     if(window.dispatchEvent && typeof Event==='function')window.dispatchEvent(new Event('mj:paypalModeChanged'));
     if(previous!==null)for(const render of buttonRenderers)Promise.resolve().then(render).catch(error=>console.error('[PayPal]',error.message));
   }
@@ -92,7 +97,7 @@
         configuration = { nativeShipping: response.ok && result.nativeShipping === true,
           clientShipping: response.ok && result.nativeShipping === true && result.clientShipping === true };
       } catch (_) { configuration = { nativeShipping: false }; }
-      refreshCheckoutMode();
+      configurationLoaded=true;refreshCheckoutMode();
       if (window.dispatchEvent && typeof Event === 'function') window.dispatchEvent(new Event('mj:paypalConfigured'));
       return { ...configuration };
     })();
@@ -134,7 +139,7 @@
     return {onShippingAddressChange:(data,actions)=>update(data,actions,'address'),
       onShippingOptionsChange:(data,actions)=>update(data,actions,'option')};
   }
-  // Call after init(): native shipping is updated by PayPal's server callback.
+  // Call after init(): shipping is collected and updated inside PayPal.
   function buttonCallbacks(currency, items) {
     if(typeof items==='function')checkoutItemsReader=items;
     else if(Array.isArray(items))checkoutItemsReader=()=>items;
@@ -149,7 +154,7 @@
           lastShippingState=state;
           const current=nativeShippingEnabled();
           const pricesReady=!window.MJCartPricing||window.MJCartPricing.summary().canPay;
-          if((!owner || owner.generation===generation) && current===renderedNative && (current || state.selected) && !uncertainOrder() && pricesReady)actions.enable();else actions.disable();
+          if((!owner || owner.generation===generation) && current===renderedNative && current && !uncertainOrder() && pricesReady)actions.enable();else actions.disable();
         };
         const dispose=window.MJShippingCheckout.subscribe(updateEnabled);
         const disposePrices=window.MJCartPricing?.subscribe(()=>updateEnabled(lastShippingState));
@@ -160,6 +165,7 @@
         if(owner && owner.generation!==generation)return actions.reject();
         if (nativeShippingEnabled()) window.MJShippingCheckout?.showPayPalFields?.();
         try {
+          if(!nativeShippingEnabled())throw new Error(checkoutError({error_code:'NATIVE_SHIPPING_UNAVAILABLE'}));
           window.MJCartPricing?.requireReady();
           const current=typeof items==='function'?items():items || currentCheckoutItems(),native=nativeShippingEnabled(current);
           if(native!==renderedNative)throw new Error(window.MJShippingCheckout.errorMessage('SHIPPING_CART_CHANGED'));
@@ -175,6 +181,7 @@
       }
     };
   }
+  window.MJShippingCheckout?.setPayPalNativeMode?.(true);
   loadOrders();
   function checkoutError(result,fallback) {
     const code = result.error_code || result.error || '';
