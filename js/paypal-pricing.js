@@ -6,12 +6,15 @@
   const purchasedCarts = new Map();
   const storageKey = 'mj_paypal_native_orders_v1';
   const quotedStorageKey = 'mj_paypal_quoted_orders_v1';
+  const shippingFirstKey = 'mj_paypal_shipping_first_v1';
+  let shippingFirst = false;
   let checkoutItemsReader = null;
   let appliedNativeMode = null;
   let clickedContext = null;
   const buttonRenderers=new Set(),mountedButtons=new Map();
   let creatingRenderer=null;
   function loadOrders() {
+    try { shippingFirst = window.sessionStorage?.getItem(shippingFirstKey) === 'true'; } catch (_) {}
     try {
       const saved = JSON.parse(window.sessionStorage?.getItem(storageKey) || '{}');
       for (const [id, order] of Object.entries(saved)) {
@@ -34,13 +37,13 @@
     if(window.MJCheckoutProduct)return [{...window.MJCheckoutProduct,qty:Number(document.getElementById('co-qty')?.value || 1)}];
     return window.MJCart?.getCart() || [];
   }
-  function nativeShippingEnabled() { return configuration.nativeShipping===true; }
+  function nativeShippingEnabled() { return configuration.nativeShipping===true && !shippingFirst; }
   function refreshCheckoutMode() {
     window.MJShippingCheckout?.refresh?.();
     const native=nativeShippingEnabled();
     if(appliedNativeMode===native)return;
     const previous=appliedNativeMode;appliedNativeMode=native;
-    window.MJShippingCheckout?.setPayPalNativeMode?.(native);
+    window.MJShippingCheckout?.setPayPalNativeMode?.(native,{shippingOnly:shippingFirst});
     if(window.dispatchEvent && typeof Event==='function')window.dispatchEvent(new Event('mj:paypalModeChanged'));
     if(previous!==null)for(const render of buttonRenderers)Promise.resolve().then(render).catch(error=>console.error('[PayPal]',error.message));
   }
@@ -83,6 +86,13 @@
     return initialization;
   }
   function uncertainOrder() { return [...nativeOrders,...quotedOrders].find(([, order]) => order.capturePending)?.[0]; }
+  function requireShippingFirst() {
+    shippingFirst = true;
+    try { window.sessionStorage?.setItem(shippingFirstKey,'true'); } catch (_) {}
+    clickedContext = null;
+    refreshCheckoutMode();
+    window.MJShippingCheckout?.focusShipping?.();
+  }
   function selectionForPayPal(currency, items=currentCheckoutItems(),native=nativeShippingEnabled(items)) {
     const pending = uncertainOrder();
     if (pending) throw paymentStatusError(pending);
@@ -114,6 +124,12 @@
       },
       onClick: function(_data, actions) {
         if(owner && owner.generation!==generation)return actions.reject();
+        // Guest card checkout can approve without sending PayPal's native
+        // shipping callback. Quote first so its approved amount includes shipping.
+        if(renderedNative && _data?.fundingSource==='card' && !uncertainOrder()) {
+          requireShippingFirst();
+          return actions.reject();
+        }
         if (nativeShippingEnabled()) window.MJShippingCheckout?.showPayPalFields?.();
         try {
           window.MJCartPricing?.requireReady();
@@ -378,6 +394,14 @@
         return result;
       } catch (error) {
         if (error.code !== 'PAYMENT_STATUS_UNCERTAIN') { native.capturePending = false; saveOrders(); }
+        // These explicit server rejections occur before any capture. Keep the
+        // original cart and obtain a new approval for the total with shipping.
+        if (['NATIVE_SHIPPING_NOT_READY','NATIVE_SHIPPING_REQUIRED'].includes(error.code) && !uncertainOrder()) {
+          requireShippingFirst();
+          error.message = window.location?.pathname?.startsWith('/en/')
+            ? 'PayPal did not confirm shipping. No payment was captured. Calculate and select shipping below, then return to PayPal to approve the complete total.'
+            : 'PayPal no confirmó el envío. No se realizó el cobro. Calcula y selecciona el envío abajo y vuelve a PayPal para aprobar el total completo.';
+        }
         throw error;
       }
     }

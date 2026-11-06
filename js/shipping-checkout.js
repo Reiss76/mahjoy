@@ -12,6 +12,7 @@
   let notice = '';
   let payPalNative = false;
   let cardMode = false;
+  let shippingOnly = false;
   const listeners = new Set();
   const orders = new Map();
   const english = () => configuration?.currency === 'USD' || window.location?.pathname?.startsWith('/en/');
@@ -67,30 +68,36 @@
       }
     }
     const form = document.getElementById('co-form');
-    if (form && payPalNative) form.style.display = cardMode ? 'flex' : 'none';
+    if (form && (payPalNative || shippingOnly)) form.style.display = shippingOnly ? 'none' : cardMode ? 'flex' : 'none';
     for (const id of ['mj-product-form-divider','mj-product-form-title']) {
       const node = document.getElementById(id);
       if (node) {
-        node.hidden = payPalNative && !cardMode;
+        node.hidden = shippingOnly || (payPalNative && !cardMode);
         if (id === 'mj-product-form-divider') node.style.display = node.hidden ? 'none' : 'flex';
       }
     }
     const cardButton = document.getElementById('mj-card-open-product');
     if (cardButton) cardButton.hidden = true;
+    const intro = document.getElementById('mj-shipping-intro');
+    if (intro) intro.hidden = !shippingOnly;
     const hint = document.getElementById('mj-paypal-shipping-note');
     if (hint) hint.textContent = payPalNative
       ? message('El envío se calcula con tu dirección en PayPal. Revisa el total antes de pagar.', 'Shipping is calculated using your PayPal address. Review the total before paying.')
       : message('Calcula y selecciona el envío antes de pagar. Usa esa misma dirección en PayPal.', 'Calculate and select shipping before paying. Use that same address in PayPal.');
   }
-  function setPayPalNativeMode(value) {
-    const previous=payPalNative;payPalNative=value===true;
-    if(previous && !payPalNative) {
+  function setPayPalNativeMode(value,options={}) {
+    const previous=payPalNative;payPalNative=value===true;shippingOnly=options.shippingOnly===true;
+    if(previous && !payPalNative && !shippingOnly) {
       const form=document.getElementById('co-form');if(form)form.style.display='flex';
       for(const id of ['mj-product-form-divider','mj-product-form-title']) {
         const node=document.getElementById(id);if(node){node.hidden=false;if(id==='mj-product-form-divider')node.style.display='flex';}
       }
     }
     applyPaymentLayout();emit();
+  }
+  function focusShipping() {
+    document.getElementById('mj-shipping-checkout')?.scrollIntoView?.({block:'center',behavior:'smooth'});
+    document.getElementById('mj-shipping-postal')?.focus?.({preventScroll:true});
   }
   function showCardFields() {
     cardMode = false;
@@ -296,10 +303,10 @@
     const postalLabel = message('Código postal', 'Postal code');
     if (!document.getElementById('mj-shipping-style')) {
       const style = document.createElement('style'); style.id = 'mj-shipping-style';
-      style.textContent = '#mj-shipping-checkout{font-size:14px;line-height:1.4;text-transform:none;font-weight:400}#mj-shipping-checkout fieldset{min-width:0}#mj-shipping-checkout legend{font-size:14px;font-weight:600;text-transform:none}#mj-shipping-checkout label{font-size:12px;line-height:1.4;text-transform:none;font-weight:400;min-width:0}#mj-shipping-checkout input,#mj-shipping-checkout select,#mj-shipping-checkout button{font-size:14px;line-height:1.4;text-transform:none;font-weight:400;min-width:0}#mj-shipping-checkout .mj-shipping-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:12px;align-items:end}#mj-shipping-checkout #mj-shipping-rates span{font-size:14px;line-height:1.4;text-transform:none;font-weight:400}#mj-shipping-checkout #mj-shipping-status{font-size:12px;line-height:1.4;text-transform:none}@media(max-width:600px){#mj-shipping-checkout .mj-shipping-fields{grid-template-columns:repeat(2,minmax(0,1fr))}#mj-shipping-checkout #mj-shipping-calculate{grid-column:1/-1}}';
+      style.textContent = '#mj-shipping-checkout{font-size:14px;line-height:1.4;text-transform:none;font-weight:400}#mj-shipping-checkout fieldset{min-width:0}#mj-shipping-checkout legend{font-size:14px;font-weight:600;text-transform:none}#mj-shipping-checkout label{font-size:14px;line-height:1.4;text-transform:none;font-weight:400;min-width:0}#mj-shipping-checkout input,#mj-shipping-checkout select,#mj-shipping-checkout button{font-size:16px;line-height:1.4;text-transform:none;font-weight:400;min-width:0}#mj-shipping-checkout .mj-shipping-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:12px;align-items:end}#mj-shipping-checkout #mj-shipping-rates span{font-size:14px;line-height:1.4;text-transform:none;font-weight:400}#mj-shipping-checkout #mj-shipping-status{font-size:14px;letter-spacing:normal;line-height:1.4;text-transform:none}@media(max-width:600px){#mj-shipping-checkout .mj-shipping-fields{grid-template-columns:repeat(2,minmax(0,1fr))}#mj-shipping-checkout #mj-shipping-calculate{grid-column:1/-1}}';
       document.head.append(style);
     }
-    container.innerHTML = `<fieldset style="border:1px solid #ddd;border-radius:10px;padding:14px;margin:14px 0;text-align:left;"><legend>${message('Envío', 'Shipping')}</legend><div class="mj-shipping-fields"><label>${countryLabel}<select id="mj-shipping-country" style="display:block;width:100%;padding:9px;border:1px solid #bbb;border-radius:6px;"><option value="MX">${message('México','Mexico')}</option><option value="US">United States</option></select></label><label>${postalLabel}<input id="mj-shipping-postal" inputmode="numeric" autocomplete="postal-code" maxlength="10" pattern="[0-9]{5}(-[0-9]{4})?" style="display:block;width:100%;padding:9px;border:1px solid #bbb;border-radius:6px;"></label><button id="mj-shipping-calculate" type="button" style="padding:10px 14px;background:var(--burgundy,#6b0f2a);color:white;border:0;border-radius:6px;cursor:pointer;">${message('Calcular envío', 'Calculate shipping')}</button></div><p id="mj-shipping-status" role="status" aria-live="polite" style="margin:10px 0;"></p><div id="mj-shipping-rates" role="group" aria-label="${message('Servicios de envío', 'Shipping services')}"></div></fieldset>`;
+    container.innerHTML = `<fieldset style="border:1px solid #ddd;border-radius:10px;padding:14px;margin:14px 0;text-align:left;"><legend>${message('Envío', 'Shipping')}</legend><p id="mj-shipping-intro" hidden style="margin:0 0 14px;color:var(--burgundy,#6b0f2a);font-size:16px;line-height:1.5;letter-spacing:normal;">${message('Calcula y selecciona el envío antes de volver a PayPal. Ahí ingresarás tu domicilio y forma de pago.', 'Calculate and select shipping before returning to PayPal. You will enter your address and payment details there.')}</p><div class="mj-shipping-fields"><label>${countryLabel}<select id="mj-shipping-country" style="display:block;width:100%;padding:9px;border:1px solid #bbb;border-radius:6px;"><option value="MX">${message('México','Mexico')}</option><option value="US">United States</option></select></label><label>${postalLabel}<input id="mj-shipping-postal" inputmode="numeric" autocomplete="postal-code" maxlength="10" pattern="[0-9]{5}(-[0-9]{4})?" style="display:block;width:100%;padding:9px;border:1px solid #bbb;border-radius:6px;"></label><button id="mj-shipping-calculate" type="button" style="padding:10px 14px;background:var(--burgundy,#6b0f2a);color:white;border:0;border-radius:6px;cursor:pointer;">${message('Calcular envío', 'Calculate shipping')}</button></div><p id="mj-shipping-status" role="status" aria-live="polite" style="margin:10px 0;"></p><div id="mj-shipping-rates" role="group" aria-label="${message('Servicios de envío', 'Shipping services')}"></div></fieldset>`;
     const country = document.getElementById('mj-shipping-country');
     const postal = document.getElementById('mj-shipping-postal');
     const button = document.getElementById('mj-shipping-calculate');
@@ -352,6 +359,6 @@
   }
   window.MJShippingCheckout = { configure, setDestination, quote, selectRate, refresh, invalidate, state, subscribe,
     requireForPayment, rememberOrder, requireForCapture, paypalCallbacks, errorMessage, itemsKey, serviceLabel,
-    setPayPalNativeMode, showCardFields, showPayPalFields };
+    setPayPalNativeMode, showCardFields, showPayPalFields, focusShipping };
   document.addEventListener('DOMContentLoaded', mount);
 })();
