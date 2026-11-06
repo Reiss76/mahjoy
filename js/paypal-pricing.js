@@ -1,5 +1,6 @@
 (function () {
   let configuration = { nativeShipping: false };
+  let configurationLoaded = false;
   let initialization = null;
   const nativeOrders = new Map();
   const quotedOrders = new Map();
@@ -43,7 +44,11 @@
     const native=nativeShippingEnabled();
     if(appliedNativeMode===native)return;
     const previous=appliedNativeMode;appliedNativeMode=native;
-    window.MJShippingCheckout?.setPayPalNativeMode?.(native);
+    // Checkout stays inside PayPal even when capability discovery fails.
+    // A temporary outage must not expose the retired website calculator.
+    window.MJShippingCheckout?.setPayPalNativeMode?.(true);
+    const note=document.getElementById('mj-paypal-shipping-note');
+    if(note && configurationLoaded && !native)note.textContent=checkoutError({error_code:'NATIVE_SHIPPING_UNAVAILABLE'});
     if(window.dispatchEvent && typeof Event==='function')window.dispatchEvent(new Event('mj:paypalModeChanged'));
     if(previous!==null)for(const render of buttonRenderers)Promise.resolve().then(render).catch(error=>console.error('[PayPal]',error.message));
   }
@@ -60,9 +65,21 @@
             for(const dispose of renderer.disposers.splice(0))dispose();
             if(renderer.buttons?.close)await renderer.buttons.close();
             const container=document.getElementById(target.replace(/^#/,''));if(container)container.innerHTML='';
-            let options;creatingRenderer=renderer;
-            try {options=renderer.optionsFactory();} finally {creatingRenderer=null;}
-            renderer.buttons=paypal.Buttons(options);await renderer.buttons.render(target);
+            let options,cardOptions;creatingRenderer=renderer;
+            try {
+              options=renderer.optionsFactory();
+              if(nativeShippingEnabled() && configuration.clientShipping)cardOptions=renderer.optionsFactory();
+            } finally {creatingRenderer=null;}
+            if(cardOptions) {
+              // Keep wallet shipping on PayPal's signed server callback. Card
+              // shipping uses the SDK events, without registering both at once.
+              const wallet=paypal.Buttons({...options,fundingSource:'paypal'});
+              const card=paypal.Buttons({...cardOptions,fundingSource:'card',
+                style:{...cardOptions.style,color:'black',layout:'vertical',tagline:false},...nativeShippingCallbacks()});
+              const buttons=[wallet,...(!card.isEligible || card.isEligible()?[card]:[])];
+              renderer.buttons={close:()=>Promise.all(buttons.map(button=>button.close?.()))};
+              for(const button of buttons)await button.render(target);
+            } else {renderer.buttons=paypal.Buttons(options);await renderer.buttons.render(target);}
           } while(renderer.again);
         })();
         return renderer.running.finally(()=>{renderer.running=null;});
@@ -77,9 +94,10 @@
         const response = await fetch('/api/checkout/paypal/config', { method: 'GET', cache: 'no-store',
           ...(typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? {signal:AbortSignal.timeout(5000)} : {}) });
         const result = await response.json();
-        configuration = { nativeShipping: response.ok && result.nativeShipping === true };
+        configuration = { nativeShipping: response.ok && result.nativeShipping === true,
+          clientShipping: response.ok && result.nativeShipping === true && result.clientShipping === true };
       } catch (_) { configuration = { nativeShipping: false }; }
-      refreshCheckoutMode();
+      configurationLoaded=true;refreshCheckoutMode();
       if (window.dispatchEvent && typeof Event === 'function') window.dispatchEvent(new Event('mj:paypalConfigured'));
       return { ...configuration };
     })();
@@ -93,7 +111,35 @@
     if (!window.MJShippingCheckout) throw new Error('Shipping must be selected before paying. Please reload the page.');
     return window.MJShippingCheckout.requireForPayment(currency, items);
   }
-  // Call after init(): native shipping is updated by PayPal's server callback.
+  function nativeShippingCallbacks() {
+    async function update(data,actions,kind) {
+      const orderId=data.orderID || data.orderId,native=nativeOrders.get(orderId);
+      try {
+        if(!native || native.capturePending || native.completed || uncertainOrder())throw new Error('NATIVE_SHIPPING_NOT_READY');
+        let change;
+        if(kind==='address') {
+          const address=data.shippingAddress || data.shipping_address || {};
+          change={shippingAddress:{countryCode:address.countryCode || address.country_code,
+            postalCode:address.postalCode || address.postal_code,city:address.city || address.admin_area_2,state:address.state || address.admin_area_1}};
+        } else {
+          const selected=data.selectedShippingOption || data.selected_shipping_option || {};
+          change={selectedShippingOption:{id:selected.id,type:selected.type,
+            ...(selected.amount?{amount:{currencyCode:selected.amount.currencyCode || selected.amount.currency_code,value:selected.amount.value}}:{})}};
+        }
+        const result=await checkoutRequest('shipping',{orderId,checkout_ref:native.checkout_ref,...change});
+        if(result.id!==orderId || result.shipping_state!=='READY')throw new Error('NATIVE_SHIPPING_NOT_READY');
+      } catch(error) {
+        // Let PayPal display the address/option error inside its own checkout.
+        // Never send the buyer to a storefront shipping form.
+        const code=error.code || error.message;
+        const issue=kind==='option'?'METHOD_UNAVAILABLE':/COUNTRY|US_REQUIRES_USD/.test(code)?'COUNTRY_ERROR':'ADDRESS_ERROR';
+        return actions.reject(data.errors?.[issue]);
+      }
+    }
+    return {onShippingAddressChange:(data,actions)=>update(data,actions,'address'),
+      onShippingOptionsChange:(data,actions)=>update(data,actions,'option')};
+  }
+  // Call after init(): shipping is collected and updated inside PayPal.
   function buttonCallbacks(currency, items) {
     if(typeof items==='function')checkoutItemsReader=items;
     else if(Array.isArray(items))checkoutItemsReader=()=>items;
@@ -108,7 +154,7 @@
           lastShippingState=state;
           const current=nativeShippingEnabled();
           const pricesReady=!window.MJCartPricing||window.MJCartPricing.summary().canPay;
-          if((!owner || owner.generation===generation) && current===renderedNative && (current || state.selected) && !uncertainOrder() && pricesReady)actions.enable();else actions.disable();
+          if((!owner || owner.generation===generation) && current===renderedNative && current && !uncertainOrder() && pricesReady)actions.enable();else actions.disable();
         };
         const dispose=window.MJShippingCheckout.subscribe(updateEnabled);
         const disposePrices=window.MJCartPricing?.subscribe(()=>updateEnabled(lastShippingState));
@@ -119,11 +165,12 @@
         if(owner && owner.generation!==generation)return actions.reject();
         if (nativeShippingEnabled()) window.MJShippingCheckout?.showPayPalFields?.();
         try {
+          if(!nativeShippingEnabled())throw new Error(checkoutError({error_code:'NATIVE_SHIPPING_UNAVAILABLE'}));
           window.MJCartPricing?.requireReady();
           const current=typeof items==='function'?items():items || currentCheckoutItems(),native=nativeShippingEnabled(current);
           if(native!==renderedNative)throw new Error(window.MJShippingCheckout.errorMessage('SHIPPING_CART_CHANGED'));
           selectionForPayPal(currency,current);
-          clickedContext={native,key:window.MJShippingCheckout.itemsKey(current),cartKey:checkoutCartKey(current),owner:contextOwner};
+          clickedContext={native,clientShipping:configuration.clientShipping && _data?.fundingSource==='card',key:window.MJShippingCheckout.itemsKey(current),cartKey:checkoutCartKey(current),owner:contextOwner};
         }
         catch (error) { alert(error.message); return actions.reject(); }
         return actions.resolve();
@@ -134,6 +181,7 @@
       }
     };
   }
+  window.MJShippingCheckout?.setPayPalNativeMode?.(true);
   loadOrders();
   function checkoutError(result,fallback) {
     const code = result.error_code || result.error || '';
@@ -264,6 +312,7 @@
     if (!['MXN','USD'].includes(currency)) throw new Error('Invalid checkout currency');
     const native=nativeShippingEnabled(merchandise);
     if(clickedContext && (clickedContext.native!==native || clickedContext.key!==window.MJShippingCheckout.itemsKey(merchandise)))throw new Error(window.MJShippingCheckout.errorMessage('SHIPPING_CART_CHANGED'));
+    const clientShipping=clickedContext?.clientShipping===true;
     clickedContext=null;
     const selection = selectionForPayPal(currency, merchandise,native);
     const discount = window.MJAppliedDiscount || window.cartDiscount;
@@ -310,7 +359,7 @@
       }};
     }
     const result = await checkoutRequest('create', {payload,discount_code:discount && discount.code,
-      ...(native ? {native_shipping:true} : {shipping_quote_token:selection.quote_token})});
+      ...(native ? {native_shipping:true,...(clientShipping?{client_shipping:true}:{})} : {shipping_quote_token:selection.quote_token})});
     const snapshot = options.cart ? merchandise.map(item => ({ sku:item.sku, name:item.name, qty:Number(item.quantity) })) : null;
     if (native) {
       if (!validCheckoutRef(result.checkout_ref) || result.shipping_state !== 'PENDING' || !/^[A-Za-z0-9-]{1,64}$/.test(result.id || '')) throw new Error('Could not prepare PayPal checkout. Please reload the page.');

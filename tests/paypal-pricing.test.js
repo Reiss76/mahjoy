@@ -25,21 +25,20 @@ for(const currency of ['MXN','USD'])for(const legacy of [
   {id:'fixture-product',name:'Fixture product'},
   {id:'bundle-9',name:'Fixture bundle'},
 ]) {
-  test(`actual ${currency} cart callback pays a legacy ${legacy.id || 'name-only'} identity after one canonical quote`,async()=>{
-    const f=setup(currency,[{...legacy,price:100,price_usd:10,qty:1}]),options=await harness.entrypoint(f,'cart',currency);
-    let enabled=false;options.onInit({}, {enable(){enabled=true;},disable(){enabled=false;}});assert.equal(enabled,false);
-    await harness.selectQuote(f,currency);assert(enabled);
+  test(`actual ${currency} native cart canonicalizes a legacy ${legacy.id || 'name-only'} identity without a website shipping quote`,async()=>{
+    const f=setup(currency,[{...legacy,price:100,price_usd:10,qty:1}],{nativeShipping:true}),options=await harness.entrypoint(f,'cart',currency);
+    let enabled=false;options.onInit({}, {enable(){enabled=true;},disable(){enabled=false;}});assert(enabled);
+    options.onClick({}, {resolve(){},reject(){throw Error('Native checkout should open');}});
+    await options.createOrder({},{});
     const expected=legacy.id==='bundle-9'?'BUNDLE-9':'TEST';assert.equal(f.getCart()[0].sku,expected);
     assert.equal(f.prices[0].items[0].qty,1);
     if(legacy.id==='bundle-9')assert.equal(f.prices[0].items[0].sku,'BUNDLE-9');
     if(legacy.id==='fixture-product')assert.equal(f.prices[0].items[0].id,undefined);
-    options.onClick({}, {resolve(){},reject(){throw Error('Canonical quote should enable PayPal');}});
-    await options.createOrder({},{});
-    assert.equal(f.requests.filter(r=>r.path==='/api/shipping/quote').length,1);
-    assert(f.ctx.window.MJShippingCheckout.state().selected);
+    assert.equal(f.requests.filter(r=>r.path==='/api/shipping/quote').length,0);
+    assert.equal(f.ctx.window.MJShippingCheckout.state().selected,null);
     const created=f.requests.find(r=>r.path.endsWith('/paypal/create')).body;
-    assert.equal(created.payload.purchase_units[0].items[0].sku,expected);assert.equal(created.shipping_quote_token,'signed-'+currency);
-    assert.equal(created.payload.purchase_units[0].amount.value,currency==='USD'?'40.00':'130.00');
+    assert.equal(created.payload.purchase_units[0].items[0].sku,expected);assert.equal(created.shipping_quote_token,undefined);assert.equal(created.native_shipping,true);
+    assert.equal(created.payload.purchase_units[0].amount.value,currency==='USD'?'10.00':'100.00');
   });
 }
 test('canonical price correlation follows verified response order even when catalog IDs and names differ',async()=>{

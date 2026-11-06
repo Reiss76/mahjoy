@@ -18,21 +18,19 @@ function actions() {
   return result;
 }
 for(const currency of ['MXN','USD']) {
-  test(`normal ${currency} PayPal first click uses its signed quote with a hidden, invalid card form`,async()=>{
-    const f=harness.fixture(currency,{nativeShipping:false}),form=unusedCardForm(f);
-    const options=await harness.entrypoint(f,'normal',currency);await harness.selectQuote(f,currency);
+  test(`normal ${currency} PayPal first click and capture ignore a hidden, invalid card form`,async()=>{
+    const f=harness.fixture(currency),form=unusedCardForm(f);
+    const options=await harness.entrypoint(f,'normal',currency);
     let enabled=false;options.onInit({}, {enable(){enabled=true;},disable(){enabled=false;}});assert(enabled);
     const clicked=actions();options.onClick({},clicked);assert.equal(clicked.resolved,1);assert.equal(clicked.rejected,0);
     const orderId=await options.createOrder({},{});
     const created=f.requests.find(request=>request.path.endsWith('/paypal/create')).body;
-    assert.equal(created.shipping_quote_token,'signed-'+currency);assert.equal(created.native_shipping,undefined);
+    assert.equal(created.shipping_quote_token,undefined);assert.equal(created.native_shipping,true);
     assert.equal(created.payload.application_context.shipping_preference,'GET_FROM_FILE');
     assert(!JSON.stringify(created).includes('card-only@example.test'));
-    const address=currency==='USD'?{countryCode:'US',postalCode:'10001'}:{countryCode:'MX',postalCode:'85219'};
-    const accepted=actions();await options.onShippingAddressChange({orderID:orderId,shippingAddress:address},accepted);
-    assert.equal(accepted.rejected,0);await options.onApprove({orderID:orderId});
+    assert.equal(options.onShippingAddressChange,undefined);await options.onApprove({orderID:orderId});
     const captured=f.requests.find(request=>request.path.endsWith('/paypal/capture')).body;
-    assert.equal(captured.orderId,orderId);assert.equal(captured.shipping_quote_token,created.shipping_quote_token);
+    assert.equal(captured.orderId,orderId);assert.equal(captured.shipping_quote_token,undefined);assert(captured.checkout_ref);
     assert.equal(form.email.value,'card-only@example.test');assert.equal(form.email_confirm.value,'different-card-only@example.test');
     assert.equal(f.alerts.length,0);assert(!f.requests.some(request=>request.path.startsWith('/api/centumpay/')));
   });
@@ -45,8 +43,8 @@ for(const currency of ['MXN','USD']) {
     assert(f.alerts.length>0);
   });
   test(`normal ${currency} static PayPal entry delegates to shared callbacks with no card-form validation`,async()=>{
-    const f=harness.fixture(currency,{nativeShipping:false});unusedCardForm(f);
-    const options=await harness.entrypoint(f,'normal',currency);await harness.selectQuote(f,currency);
+    const f=harness.fixture(currency);unusedCardForm(f);
+    const options=await harness.entrypoint(f,'normal',currency);
     const clicked=actions();let buttonClicks=0;
     f.ctx.document.querySelector=selector=>{
       assert.equal(selector,'#paypal-button-container .paypal-button');

@@ -45,7 +45,7 @@ test('capability discovery is disabled when configuration is absent or fails',()
   },undefined,undefined,{preflight:async()=>{}});const res=response();await handlers['/api/checkout/paypal/config']({},res);assert.equal(res.value.nativeShipping,nativeShipping===true);
  }
  const handlers={};registerPayPalCheckout({post(){},get:(p,h)=>handlers[p]=h},'https://proax.test',async()=>{throw Error('private config unavailable');});
- const res=response();await handlers['/api/checkout/paypal/config']({},res);assert.deepEqual(res.value,{nativeShipping:false});
+ const res=response();await handlers['/api/checkout/paypal/config']({},res);assert.equal(res.value.nativeShipping,false);
 }));
 test('physical preflight fails before PayPal creation without asking for a postal code or falling back to 250',()=>fixture(async()=>{
  const handlers={},events=[];
@@ -61,7 +61,7 @@ test('physical preflight fails before PayPal creation without asking for a posta
 }));
 test('native capability is unavailable until this merchant deployment supplies packing preflight',()=>fixture(async()=>{
  const handlers={};registerPayPalCheckout({post(){},get:(p,h)=>handlers[p]=h},'https://proax.test',async()=>({ok:true,json:async()=>({nativeShipping:true})}));
- const res=response();await handlers['/api/checkout/paypal/config']({},res);assert.deepEqual(res.value,{nativeShipping:false});
+ const res=response();await handlers['/api/checkout/paypal/config']({},res);assert.equal(res.value.nativeShipping,false);
 }));
 test('native phone is absent by default in both markets and any supplied legacy phone is still validated',()=>fixture(async()=>{
  const handlers={};let forwarded=0,packed=0,lastBody;
@@ -128,3 +128,13 @@ test('a physical mismatch from Proax is a pre-capture rejection while storage or
   assert.deepEqual(events,['persist','forward']);assert.equal(res.value.error_code,code);assert.equal(res.statusCode,pending?503:409);
  }
 }));
+
+test('SDK shipping updates are signed, bound to the checkout reference, and never queue a capture',async()=>{
+ const old=process.env.PROAX_PAYPAL_SYNC_SECRET;process.env.PROAX_PAYPAL_SYNC_SECRET='fixture-client-shipping';
+ try {
+  const handlers={};let sent,receipts=0;
+  registerPayPalCheckout({post:(path,fn)=>handlers[path]=fn},'https://proax.test',async(_url,options)=>{sent=JSON.parse(options.body);return{ok:true,status:200,json:async()=>({id:sent.orderId,shipping_state:'READY'})};},async()=>receipts++);
+  const res=response();await handlers['/api/checkout/paypal/shipping']({body:{orderId:'SDKORDER12345678',checkout_ref:'A'.repeat(43),shippingAddress:{countryCode:'MX',postalCode:'64000',city:'Monterrey',state:'NL'},amount:'1.00',payload:{forged:true}}},res);
+  assert.equal(res.statusCode,200);assert.equal(sent.action,'shipping');assert.equal(sent.checkout_ref,'A'.repeat(43));assert.equal(sent.amount,undefined);assert.equal(sent.payload,undefined);assert.equal(receipts,0);
+ } finally {if(old===undefined)delete process.env.PROAX_PAYPAL_SYNC_SECRET;else process.env.PROAX_PAYPAL_SYNC_SECRET=old;}
+});

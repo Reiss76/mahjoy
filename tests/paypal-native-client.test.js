@@ -20,11 +20,12 @@ function fixture(currency='MXN',options={}) {
       const body=init.body ? JSON.parse(init.body) : undefined;requests.push({path,body});
       if(path==='/api/checkout/paypal/config') {
         if(options.configReply)return options.configReply();
-        return{ok:true,json:async()=>({nativeShipping:options.nativeShipping!==false})};
+        return{ok:true,json:async()=>({nativeShipping:options.nativeShipping!==false,clientShipping:options.clientShipping===true})};
       }
       if(path==='/api/checkout/prices')return{ok:true,json:async()=>({items:body.items.map(item=>({sku:item.sku,name:item.name,
         price:100,price_usd:10,unit_price:currency==='USD'?10:100}))})};
       if(path==='/api/checkout/paypal/create')return{ok:true,json:async()=>({id:'ORDER-'+currency,checkout_ref:options.checkoutRef || checkoutRef,shipping_state:'PENDING'})};
+      if(path==='/api/checkout/paypal/shipping')return options.shippingReply ? options.shippingReply(body) : {ok:true,json:async()=>({id:body.orderId,shipping_state:'READY'})};
       if(path==='/api/checkout/paypal/capture') {
         if(options.captureReply)return options.captureReply(body);
         return{ok:true,json:async()=>({id:body.orderId,status:'COMPLETED'})};
@@ -137,18 +138,20 @@ test('capability is cached and cannot enable native shipping on errors or a nonb
     const f=fixture('MXN',{configReply:reply}),pricing=f.ctx.window.MJPayPalPricing;
     await Promise.all([pricing.init(),pricing.init()]);assert.equal(pricing.nativeShippingEnabled(),false);
     assert.equal(f.requests.filter(request=>request.path.endsWith('/paypal/config')).length,1);
-    assert.equal(f.elements['mj-shipping-checkout'].hidden,false);
+    assert.equal(f.elements['mj-shipping-checkout'].hidden,true);
+    assert.equal(f.elements['co-form'].style.display,'none');
+    assert.match(f.elements['mj-paypal-shipping-note'].textContent,/no está disponible/);
     await assert.rejects(()=>pricing.create({},payload()),error=>error.code==='SHIPPING_QUOTE_REQUIRED');
     assert(!f.requests.some(request=>request.path.endsWith('/paypal/create')));
   }
 });
-test('PayPal buttons wait for backend capability before rendering or hiding the quote widget',async()=>{
+test('PayPal buttons wait for backend capability while the website quote widget stays hidden',async()=>{
   let finish;
   const f=fixture('MXN',{configReply:()=>new Promise(resolve=>{finish=resolve;})});let rendered=false;
   f.ctx.paypal={Buttons:()=>{rendered=true;return{render:()=>Promise.resolve()}}};
   vm.runInContext(fs.readFileSync('js/paypal-checkout.js','utf8'),f.ctx);
   const ready=f.ctx.window.MJPayPal.init();await new Promise(setImmediate);
-  assert.equal(rendered,false);assert.equal(f.node('mj-shipping-checkout').hidden,false);
+  assert.equal(rendered,false);assert.equal(f.node('mj-shipping-checkout').hidden,true);
   finish({ok:true,json:async()=>({nativeShipping:true})});await ready;
   assert.equal(rendered,true);assert.equal(f.node('mj-shipping-checkout').hidden,true);
 });
@@ -173,11 +176,11 @@ test('PayPal keeps prepared quotes but does not switch to a retired card checkou
   assert.equal(f.node('cart-total').textContent,'$100.00');
   assert.equal(shipping.state().selected.quote_token,'signed-MXN');
 });
-test('classic PayPal shipping remains available without enabling Centum card controls',async()=>{
+test('disabled native capability never exposes the website shipping calculator',async()=>{
   const f=fixture('MXN',{nativeShipping:false}),shipping=f.ctx.window.MJShippingCheckout;
   await f.ctx.window.MJPayPalPricing.init();shipping.showCardFields();shipping.showPayPalFields();
   assert.equal(shipping.state().cardMode,false);assert.equal(f.node('mj-card-checkout').hidden,true);
-  assert.equal(f.node('mj-shipping-checkout').hidden,false);
+  assert.equal(f.node('mj-shipping-checkout').hidden,true);
 });
 test('invalid native references never reach capture',async()=>{
   const f=fixture('MXN',{checkoutRef:'invalid'}),pricing=f.ctx.window.MJPayPalPricing;await pricing.init();
@@ -268,19 +271,16 @@ test('an approved checkout stopped before charge retains its reference without m
   }
 });
 for(const currency of ['MXN','USD'])for(const kind of ['normal','express','cart']) {
-  test(`configured classic ${kind} ${currency} bundle still requires its original signed quote`,async()=>{
+  test(`disabled native ${kind} ${currency} blocks new payment even with an old signed quote`,async()=>{
     const f=fixture(currency,{cart:[bundleItem()],nativeShipping:false}),options=await entrypoint(f,kind,currency);
     assert.equal(typeof options.onShippingAddressChange,'function');assert.equal(typeof options.onShippingOptionsChange,'function');
     let enabled=true,rejected=false;
     options.onInit({}, {enable(){enabled=true;},disable(){enabled=false;}});assert.equal(enabled,false);
-    options.onClick({}, {resolve(){throw Error('Classic bundle needs its signed quote');},reject(){rejected=true;}});assert(rejected);
-    await selectQuote(f,currency);assert(enabled);
-    options.onClick({}, {resolve(){},reject(){throw Error('Quoted classic bundle must open');}});await options.createOrder({},{});
-    const sent=f.requests.find(r=>r.path.endsWith('/paypal/create')).body,unit=sent.payload.purchase_units[0];
-    assert.equal(sent.native_shipping,undefined);assert.equal(sent.shipping_quote_token,'signed-'+currency);assert.equal(sent.delivery_phone,undefined);
-    assert.equal(unit.amount.breakdown.shipping.value,'30.00');assert.equal(unit.amount.value,currency==='USD'?'40.00':'130.00');
-    await f.ctx.window.MJPayPalPricing.capture('ORDER-'+currency);
-    assert.deepEqual(f.requests.find(r=>r.path.endsWith('/paypal/capture')).body,{orderId:'ORDER-'+currency,shipping_quote_token:'signed-'+currency});
+    options.onClick({}, {resolve(){throw Error('Unavailable native shipping must block payment');},reject(){rejected=true;}});assert(rejected);
+    await selectQuote(f,currency);assert.equal(enabled,false);
+    rejected=false;options.onClick({}, {resolve(){throw Error('An old quote must not re-enable checkout');},reject(){rejected=true;}});assert(rejected);
+    assert.equal(f.node('mj-shipping-checkout').hidden,true);assert.equal(f.node('co-form').style.display,'none');
+    assert(!f.requests.some(r=>r.path.endsWith('/paypal/create')));
   });
   test(`configured native ${kind} ${currency} bundle opens without a storefront quote or contact`,async()=>{
     const f=fixture(currency,{cart:[bundleItem()],deliveryPhone:''}),options=await entrypoint(f,kind,currency),pricing=f.ctx.window.MJPayPalPricing;
@@ -405,4 +405,30 @@ test('a previous shipping-first preference cannot move card checkout out of PayP
   await options.createOrder({},{});
   assert.equal(f.requests.find(request=>request.path.endsWith('/create')).body.native_shipping,true);
   assert(!f.requests.some(request=>request.path==='/api/shipping/quote'));
+});
+
+for(const currency of ['MXN','USD'])for(const kind of ['normal','express','cart']) {
+ test(`native ${kind} ${currency} quotes shipping through PayPal SDK callbacks without a storefront form`,async()=>{
+  const f=fixture(currency,{clientShipping:true}),options=await entrypoint(f,kind,currency);
+  assert.equal(typeof options.onShippingAddressChange,'function');assert.equal(typeof options.onShippingOptionsChange,'function');
+  const wallet=f.rendered.find(options=>options.fundingSource==='paypal');assert(wallet);assert.equal(wallet.onShippingAddressChange,undefined);
+  assert.equal(options.fundingSource,'card');options.onClick({fundingSource:'card'},{resolve(){},reject(){throw Error('Card must stay in PayPal');}});
+  await options.createOrder({},{});
+  assert.equal(f.requests.find(request=>request.path.endsWith('/create')).body.client_shipping,true);
+  await options.onShippingAddressChange({orderID:'ORDER-'+currency,shippingAddress:{countryCode:currency==='USD'?'US':'MX',postalCode:'64000',city:'Monterrey',state:'NL'}},{reject(){throw Error('Valid shipping stays in PayPal');}});
+  await options.onShippingOptionsChange({orderID:'ORDER-'+currency,selectedShippingOption:{id:'verified-service',type:'SHIPPING',amount:{currency_code:currency,value:'429.00'}}},{reject(){throw Error('Valid service stays in PayPal');}});
+  const updates=f.requests.filter(request=>request.path.endsWith('/shipping'));
+  assert.equal(updates.length,2);assert.equal(updates[0].body.checkout_ref,checkoutRef);
+  assert.equal(updates[0].body.shippingAddress.postalCode,'64000');
+  assert.deepEqual(updates[1].body.selectedShippingOption.amount,{currencyCode:currency,value:'429.00'});
+  assert.equal(f.elements['mj-shipping-checkout'].hidden,true);assert.equal(f.elements['co-form'].style.display,'none');
+  assert(!f.requests.some(request=>request.path==='/api/shipping/quote' || request.path.endsWith('/capture')));
+ });
+}
+test('a failed or foreign PayPal shipping callback rejects inside PayPal without exposing the web calculator',async()=>{
+ const f=fixture('MXN',{clientShipping:true,shippingReply:()=>({ok:false,json:async()=>({error_code:'NATIVE_SHIPPING_UPDATE_FAILED'})})}),options=await entrypoint(f,'cart','MXN');
+ await options.createOrder({},{});let rejected=0;
+ for(const orderID of ['FOREIGN','ORDER-MXN'])await options.onShippingAddressChange({orderID,shippingAddress:{countryCode:'MX',postalCode:'64000',city:'Monterrey',state:'NL'},errors:{ADDRESS_ERROR:'ADDRESS_ERROR'}},{reject(issue){assert.equal(issue,'ADDRESS_ERROR');rejected++;}});
+ assert.equal(rejected,2);assert.equal(f.requests.filter(request=>request.path.endsWith('/shipping')).length,1);
+ assert.equal(f.ctx.window.MJPayPalPricing.nativeShippingEnabled(),true);assert.equal(f.elements['mj-shipping-checkout'].hidden,true);assert.equal(f.alerts.length,0);
 });

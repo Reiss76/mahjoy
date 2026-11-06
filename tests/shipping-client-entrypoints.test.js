@@ -2,7 +2,7 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 function fixture(currency) {
   const product={id:1,sku:'TEST-SINGLE',name:'Fixture product',price:4370,price_usd:250,priceUsd:250};
   const requests=[];let options;
-  const form={qty:{value:'1'},checkValidity:()=>true};const elements={};
+  const form={style:{},qty:{value:'1'},checkValidity:()=>true};const elements={};
   const node=id=>id==='co-form'?form:id==='co-qty'?form.qty:elements[id]||(elements[id]={style:{},textContent:'',hasChildNodes:()=>false});
   const ctx={window:{location:{pathname:currency==='USD'?'/en/checkout.html':'/checkout.html'},MJCheckoutProduct:product},
     document:{readyState:'loading',addEventListener(){},getElementById:node},console:{log(){},error(){},warn(){}},alert(){},setTimeout:fn=>fn(),
@@ -23,7 +23,7 @@ function fixture(currency) {
   return{ctx,requests,options:()=>options};
 }
 for(const currency of ['MXN','USD'])for(const kind of ['normal','express']){
-  test(`${kind} ${currency} product callback is blocked without a quote and creates once with the actual selected rate`,async()=>{
+  test(`${kind} ${currency} product callback stays disabled when native PayPal is unavailable, even with a previous quote`,async()=>{
     const f=fixture(currency);
     if(kind==='normal'){
       vm.runInContext(fs.readFileSync('js/paypal-checkout.js','utf8'),f.ctx);await f.ctx.window.MJPayPal.init();
@@ -33,18 +33,17 @@ for(const currency of ['MXN','USD'])for(const kind of ['normal','express']){
       const scripts=[...fs.readFileSync(file,'utf8').matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(match=>match[1]);
       vm.runInContext(scripts.find(script=>script.includes('function initPayPalExpress()')),f.ctx);await new Promise(setImmediate);
     }
-    await assert.rejects(()=>Promise.resolve().then(()=>f.options().createOrder({},{})));
+    let enabled=true,rejected=0;
+    f.options().onInit({}, {enable(){enabled=true;},disable(){enabled=false;}});assert.equal(enabled,false);
+    f.options().onClick({}, {resolve(){throw Error('Unavailable native checkout must not open');},reject(){rejected++;}});
+    assert.equal(rejected,1);
     assert.equal(f.requests.length,0);
     await f.ctx.window.MJShippingCheckout.quote();f.ctx.window.MJShippingCheckout.selectRate(0);
-    await f.options().createOrder({},{});
-    const create=f.requests.find(request=>request.path==='/api/checkout/paypal/create').body;
-    const unit=create.payload.purchase_units[0];
-    assert.equal(create.shipping_quote_token,'signed-'+currency);
-    assert.equal(unit.items.length,1);assert.equal(unit.items[0].sku,'TEST-SINGLE');
-    assert.equal(unit.amount.breakdown.shipping.value,currency==='USD'?'30.00':'429.00');
-    assert.equal(unit.amount.value,currency==='USD'?'280.00':'4799.00');
-    assert.equal(unit.shipping.options[0].label,'Fixture carrier · Fixture home delivery');
-    assert(f.options().onShippingAddressChange);assert.equal(f.options().onShippingChange,undefined);
+    assert.equal(enabled,false);
+    f.options().onClick({}, {resolve(){throw Error('Previous quote must not enable checkout');},reject(){rejected++;}});
+    assert.equal(rejected,2);
+    assert(!f.requests.some(request=>request.path==='/api/checkout/paypal/create'));
+    assert.equal(f.ctx.document.getElementById('mj-shipping-checkout').hidden,true);
   });
 }
 test('all storefront payment pages load the signed shipping widget before the payment helper',()=>{
