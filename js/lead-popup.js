@@ -3,7 +3,9 @@
  * Shows 3s after load; once per session (localStorage flag).
  * Sends email + whatsapp to Proax API.
  */
-(function () {
+(function(run) {
+  if(window.MJBuenFin) window.MJBuenFin.whenNormal(run); else run();
+})(function() {
   const API = 'https://api-production-b888.up.railway.app/public/shop/mahjoy/leads';
   const KEY = 'mj_lead_submitted';
   const KEY_SEEN = 'mj_lead_seen';
@@ -152,4 +154,4 @@
     if (navOverlay) navOverlay.style.display = 'none';
     document.body.appendChild(overlay);
   }, 3000);
-})();
+});

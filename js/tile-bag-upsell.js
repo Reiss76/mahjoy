@@ -7,7 +7,9 @@
  * Funciona en ES y EN.
  */
 
-(function() {
+(function(run) {
+  if(window.MJBuenFin) window.MJBuenFin.whenNormal(run); else run();
+})(function() {
   'use strict';
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -492,6 +494,7 @@
   }
 
   function showPopup(products, checkoutUrl = null) {
+    if(window.MJBuenFin?.active()) {if(checkoutUrl) window.location.href=checkoutUrl;return;}
     // Only skip if user explicitly clicked "No, gracias" this session
     if (sessionStorage.getItem(CONFIG.SHOWN_KEY + '_declined')) return;
     
@@ -656,6 +659,7 @@
   // ═══════════════════════════════════════════════════════════════════════════
   
   async function checkAndShowUpsell(checkoutUrl = null) {
+    if(window.MJBuenFin?.active()) return;
     // Only skip if user explicitly declined this session
     if (sessionStorage.getItem(CONFIG.SHOWN_KEY + '_declined')) return;
     
@@ -703,6 +707,7 @@
   function interceptBuyNow() {
     // Intercept clicks on "Comprar ahora" / "Buy now" buttons
     document.addEventListener('click', async (e) => {
+      if(window.MJBuenFin?.active()) return;
       const link = e.target.closest('a[href*="checkout.html"]');
       if (!link) return;
       
@@ -746,4 +751,4 @@
     init();
   }
 
-})();
+});

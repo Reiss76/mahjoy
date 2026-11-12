@@ -34,7 +34,10 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
   <script>WebFont.load({ google: { families: ["Plus Jakarta Sans:300,400,500,600,700,800"] } });</script>
   <link href="images/icon-burgundy.svg" rel="shortcut icon" type="image/svg+xml">
-<script src="js/geo-redirect.js"></script></head>
+<script src="js/geo-redirect.js"></script>
+  <link rel="stylesheet" href="/css/buen-fin.css?v=20261113">
+  <script src="/js/buen-fin.js?v=20261113"></script>
+</head>
 <body style="background:#fdf8fb;">
 
   <!-- NAV -->
@@ -380,6 +383,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           </div>
           
           <p style="font-size:.8rem;text-align:center;color:var(--burgundy);">Los envíos a Estados Unidos usan los precios publicados en USD. Tu carrito se conserva al cambiar de mercado.</p>
+<div id="mj-buen-fin-checkout"></div>
 <div id="mj-shipping-checkout" data-kind="product" data-currency="MXN"></div>
 <div id="paypal-express-container"></div>
           <p style="text-align:center;font-size:.7rem;color:#666;margin-top:.5rem;">No necesitas llenar el formulario</p>
@@ -719,6 +723,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
             expressDiscMsg.textContent = '✗ Error validando código';
             expressDiscBtn.textContent = 'Aplicar';
             expressDiscBtn.disabled = false;
+          } finally {
+            window.dispatchEvent?.(new CustomEvent('mj:discountChanged'));
           }
         });
         

@@ -459,6 +459,7 @@ const newUpdateTotals = function() {
   }
   window.MJShippingCost = selectedShippingCost;
   window.MJShippingCheckout.refresh();
+  if(window.MJBuenFin)window.dispatchEvent?.(new CustomEvent('mj:discountChanged'));
 };
 
 // Override updateTotals

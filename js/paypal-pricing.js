@@ -184,6 +184,10 @@
   window.MJShippingCheckout?.setPayPalNativeMode?.(true);
   loadOrders();
   function checkoutError(result,fallback) {
+    const promotionCode=result.error_code || result.error;
+    if(promotionCode==='BUEN_FIN_EXPIRED')return 'El Buen Fin terminó. Vuelve al carrito para revisar tu pedido sin el regalo antes de pagar.';
+    if(promotionCode==='BUEN_FIN_GIFT_UNAVAILABLE')return 'El regalo de Buen Fin está agotado. Vuelve al carrito para revisar la disponibilidad.';
+    if(promotionCode==='BUEN_FIN_GIFT_CHANGED')return 'Tu nivel o color de regalo cambió. Vuelve al carrito y revisa tu regalo de Buen Fin.';
     const code = result.error_code || result.error || '';
     if (/^(NATIVE_SHIPPING_|NATIVE_CHECKOUT_)/.test(code)) {
       const english=window.location?.pathname?.startsWith('/en/');
@@ -359,6 +363,7 @@
       }};
     }
     const result = await checkoutRequest('create', {payload,discount_code:discount && discount.code,
+      ...(currency==='MXN' && window.MJBuenFin?.selectedGift() ? {buen_fin_gift_sku:window.MJBuenFin.selectedGift()} : {}),
       ...(native ? {native_shipping:true,...(clientShipping?{client_shipping:true}:{})} : {shipping_quote_token:selection.quote_token})});
     const snapshot = options.cart ? merchandise.map(item => ({ sku:item.sku, name:item.name, qty:Number(item.quantity) })) : null;
     if (native) {
@@ -383,7 +388,7 @@
     }
     if(!response.ok) {
       if(result.error==='US_REQUIRES_USD'){goToUsMarket();return new Promise(function(){});}
-      const safeErrors=['DISCOUNT_USD_ONLY','INVALID_ORDER','CHECKOUT_NOT_FOUND','CHECKOUT_MISMATCH','CURRENCY_MISMATCH','ORDER_NOT_APPROVED','PRICE_MISMATCH','PAYPAL_RECEIPT_UNAVAILABLE','CHECKOUT_UNAVAILABLE','ORDER_ID_MISMATCH',
+      const safeErrors=['BUEN_FIN_EXPIRED','BUEN_FIN_GIFT_UNAVAILABLE','BUEN_FIN_GIFT_CHANGED','DISCOUNT_USD_ONLY','INVALID_ORDER','CHECKOUT_NOT_FOUND','CHECKOUT_MISMATCH','CURRENCY_MISMATCH','ORDER_NOT_APPROVED','PRICE_MISMATCH','PAYPAL_RECEIPT_UNAVAILABLE','CHECKOUT_UNAVAILABLE','ORDER_ID_MISMATCH',
         'NATIVE_SHIPPING_UNAVAILABLE','NATIVE_SHIPPING_PENDING','NATIVE_SHIPPING_EXPIRED','NATIVE_CHECKOUT_UNAUTHORIZED',
         'NATIVE_SHIPPING_UNAUTHORIZED','NATIVE_SHIPPING_SUPERSEDED','NATIVE_SHIPPING_INVALID_STATE','NATIVE_SHIPPING_NOT_READY',
         'NATIVE_SHIPPING_INVALID','NATIVE_SHIPPING_QUOTE_INVALID','NATIVE_SHIPPING_REQUIRED','NATIVE_SHIPPING_SCOPE_INVALID','NATIVE_SHIPPING_CHECKOUT_NOT_FOUND',
