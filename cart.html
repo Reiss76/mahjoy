@@ -359,12 +359,16 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   function updateCartTotals() {
     var cart = window.MJCart ? window.MJCart.getCart() : [];
     var subtotal = window.MJCartPricing ? window.MJCartPricing.summary().subtotal : cart.every(item=>Number(item.price)>0) ? cart.reduce(function(sum,item) { return sum + Number(item.price) * item.qty; },0) : null;
+    var campaignPct=window.MJBuenFin?.discountPct?.() || 0;
+    var listedSubtotal=campaignPct>0 && subtotal!==null ? cart.reduce(function(sum,item){return sum+Math.round(Number(item.price)*100)*Number(item.qty);},0)/100 : subtotal;
+    if(campaignPct>0)document.getElementById('cart-subtotal').textContent=listedSubtotal===null?'—':'$'+listedSubtotal.toFixed(2);
     var row=document.getElementById('cart-discount-row'); if (row) row.style.display='none';
-    if (subtotal!==null && cartDiscount && cartDiscount.pct > 0) {
-      var discounted=window.MJCartPricing ? window.MJCartPricing.summary(cartDiscount.pct).subtotal : Math.round(subtotal*(1-cartDiscount.pct/100)*100)/100;
-      var saving=subtotal-discounted; subtotal=discounted;
+    if (subtotal!==null && (campaignPct>0 || cartDiscount && cartDiscount.pct > 0)) {
+      var pct=Math.max(campaignPct,cartDiscount?.pct || 0);
+      var discounted=window.MJCartPricing ? window.MJCartPricing.summary(cartDiscount?.pct || 0).subtotal : Math.round(listedSubtotal*(1-pct/100)*100)/100;
+      var saving=listedSubtotal-discounted; subtotal=discounted;
       if (row) row.style.display='flex';
-      document.getElementById('cart-discount-label').textContent='Descuento ('+cartDiscount.pct+'%)';
+      document.getElementById('cart-discount-label').textContent=campaignPct >= (cartDiscount?.pct || 0) ? 'Buen Fin (10%)' : 'Descuento ('+pct+'%)';
       document.getElementById('cart-discount-amount').textContent='-$'+saving.toFixed(2);
     }
     var native=window.MJPayPalPricing?.nativeShippingEnabled?.() && !window.MJShippingCheckout.state().cardMode;

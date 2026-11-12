@@ -16,9 +16,8 @@ function createProductOrder(data, actions) {
   if (!product) throw new Error(isEnCheckout ? 'Product unavailable. Please reload the page.' : 'Producto no disponible. Recarga la página.');
   const qty = productItems()[0].qty;
   const selected = window.MJPayPalPricing.selectionForPayPal(PAYPAL_CURRENCY, [{...product, qty}]);
-  const basePrice = Number(isEnCheckout ? (product.priceUsd ?? product.price_usd) : product.price);
   const discount = window.MJAppliedDiscount;
-  const unitPrice = discount?.pct > 0 ? Math.round(basePrice * (1-discount.pct/100) * 100)/100 : basePrice;
+  const unitPrice = window.MJPayPalPricing.cartUnitPrice(product,PAYPAL_CURRENCY,discount?.pct || 0);
   const subtotal = unitPrice * qty;
   return window.MJPayPalPricing.create(actions, {
     intent:'CAPTURE', purchase_units:[{description:'MAH JOY - '+product.name,

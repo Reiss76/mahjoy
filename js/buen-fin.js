@@ -4,13 +4,14 @@
   if (window.location.pathname.startsWith('/en/')) return;
   const START = Date.parse('2026-11-12T16:58:00Z');
   const END = Date.parse('2026-11-18T06:00:00Z');
-  const KEY = 'mj_buen_fin_2026_seen';
+  const KEY = 'mj_buen_fin_2026_discount_seen';
   let data = null, anchor = Date.now(), tick = performance.now(), modal = null, priorFocus = null;
-  let loaded = false, wasActive = false, quoteSequence = 0, panelTimer, modalTimer, boundaryTimer;
+  let loaded = false, wasActive = false, wasDiscount = 0, quoteSequence = 0, panelTimer, modalTimer, boundaryTimer;
   const baseline = [];
   const money = value => new Intl.NumberFormat('es-MX', { style:'currency', currency:'MXN', maximumFractionDigits:0 }).format(value);
   const clock = () => anchor + performance.now() - tick;
   const active = () => clock() >= START && clock() < END;
+  const discountPct = () => active() ? Number(data?.discount_pct) || 0 : 0;
   const storage = (key,value) => { try { if(value === undefined) return sessionStorage.getItem(key); sessionStorage.setItem(key,value); } catch (_) {} };
   function node(tag,className,text) {
     const element=document.createElement(tag);
@@ -18,7 +19,7 @@
     if(text !== undefined) element.textContent=text;
     return element;
   }
-  function emit() { window.dispatchEvent(new CustomEvent('mj:buen-fin', {detail:{active:active()}})); }
+  function emit() { window.dispatchEvent(new CustomEvent('mj:buen-fin', {detail:{active:active(),discount_pct:discountPct()}})); }
   function close() {
     if(!modal) return;
     modal.remove(); modal=null;
@@ -36,7 +37,7 @@
     dialog.appendChild(dismiss);
     heading(dialog,'p','mj-bf-eyebrow','MAH JOY · MÉXICO');
     const title=heading(dialog,'h2','mj-bf-title','Buen Fin');title.id='mj-bf-title';
-    heading(dialog,'p','mj-bf-intro','Más juego. Un regalo para ti.');
+    heading(dialog,'p','mj-bf-intro','10% de descuento en todo + regalos');
     heading(dialog,'p','mj-bf-dates','Hasta el 17 de noviembre de 2026');
     const tiers=node('ol','mj-bf-tiers');
     for(const tier of data.tiers || []) {
@@ -48,7 +49,7 @@
       heading(card,'p','mj-bf-free','DE REGALO');tiers.appendChild(card);
     }
     dialog.appendChild(tiers);
-    heading(dialog,'p','mj-bf-terms','Recibe el regalo del nivel más alto que alcance tu compra. Sobre productos después de descuentos, sin incluir envío. Un regalo por pedido; colores sujetos a disponibilidad.');
+    heading(dialog,'p','mj-bf-terms','10% automático en productos y bundles al pagar. Se aplica el mayor descuento disponible, sin acumular porcentajes. Además, recibe el regalo del nivel más alto que alcance tu compra después del descuento, sin incluir envío. Un regalo por pedido; colores sujetos a disponibilidad.');
     const shop=node('a','mj-bf-shop','Elegir mis productos');shop.href='/shop-tiles.html';dialog.appendChild(shop);
     const more=node('button','mj-bf-later','Seguir viendo');more.type='button';more.addEventListener('click',close);dialog.appendChild(more);
     heading(dialog,'p','mj-bf-cutoff','Válido al completar el pago antes de las 00:00 del 18 de noviembre, hora de Ciudad de México.');
@@ -71,12 +72,12 @@
     document.body.classList.toggle('mj-buen-fin-active',enabled);
     let launcher=document.getElementById('mj-bf-launcher');
     if(enabled && !launcher) {
-      launcher=node('button','mj-bf-launcher','Buen Fin · Regalos por tu compra');launcher.id='mj-bf-launcher';launcher.type='button';launcher.addEventListener('click',open);document.body.appendChild(launcher);
+      launcher=node('button','mj-bf-launcher','Buen Fin · 10% + regalos');launcher.id='mj-bf-launcher';launcher.type='button';launcher.addEventListener('click',open);document.body.appendChild(launcher);
     } else if(!enabled) {
       launcher?.remove();close();document.getElementById('mj-bf-cart')?.remove();
       clearTimeout(modalTimer);baseline.splice(0).forEach(run=>run());
     }
-    if(enabled !== wasActive) {wasActive=enabled;emit();}
+    if(enabled !== wasActive || discountPct() !== wasDiscount) {wasActive=enabled;wasDiscount=discountPct();emit();}
     if(enabled && data) {
       if(!storage(KEY) && !modalTimer && !document.getElementById('mj-shipping-checkout')) modalTimer=setTimeout(open,1500);
     }
@@ -124,6 +125,7 @@
       if(!promotion?.active) {panel.remove();return;}
       panel.replaceChildren();
       heading(panel,'p','mj-bf-eyebrow','BUEN FIN · HASTA EL 17 NOV');
+      heading(panel,'p','mj-bf-panel-copy','10% automático en productos y bundles. Ya incluido en tu total; sin código.');
       const tier=promotion.eligible;
       if(!tier) {
         heading(panel,'h2','mj-bf-panel-title','Tu próxima partida viene con regalo');
@@ -154,7 +156,7 @@
       const retry=node('button','mj-bf-retry','Reintentar');retry.type='button';retry.addEventListener('click',updatePanel);panel.appendChild(retry);
     }
   }
-  window.MJBuenFin={active,ready,whenNormal,open,selectedGift:()=>active()?storage('mj_buen_fin_2026_gift') || undefined:undefined};
+  window.MJBuenFin={active,discountPct,ready,whenNormal,open,selectedGift:()=>active()?storage('mj_buen_fin_2026_gift') || undefined:undefined};
   document.addEventListener('DOMContentLoaded',()=>{ready.then(setState);schedulePanel();window.MJShippingCheckout?.subscribe(schedulePanel);});
   for(const event of ['mj:cartUpdated','mj:cartPrices','mj:discountChanged'])window.addEventListener(event,schedulePanel);
   document.addEventListener('change',event=>{if(event.target.id==='co-qty')schedulePanel();});

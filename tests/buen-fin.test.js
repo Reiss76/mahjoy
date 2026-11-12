@@ -19,11 +19,11 @@ test('the browser and checkout server agree on the campaign window',()=>{
  assert.equal(Date.parse(source.match(/const END = Date\.parse\('([^']+)'\)/)[1]),END);
 });
 test('gift eligibility uses independently verified net merchandise, never browser prices or shipping',async()=>{
- const q=await resolveCheckoutQuote('https://catalog.test',{items:[{sku:'TILE-TEST',qty:1,price:999999}],currency:'MXN'},fetcher);
- assert.equal(q.items[0].unit_price,6000);assert.equal(JSON.stringify(q).includes('_catalog'),false);
+ const q=await resolveCheckoutQuote('https://catalog.test',{items:[{sku:'TILE-TEST',qty:1,price:999999}],currency:'MXN'},fetcher,START);
+ assert.equal(q.items[0].unit_price,5400);assert.equal(JSON.stringify(q).includes('_catalog'),false);
  assert.equal(summary(q._catalog,q.items,'MXN',START).eligible.minimum,4000);
- const p=payload();const before=structuredClone(p);const result=applyGift(p,q,undefined,START);
- assert.deepEqual(p,before);assert.equal(result.payload.purchase_units[0].items.length,2);assert.equal(result.payload.purchase_units[0].amount.value,'6000.00');
+ const p=payload(5400);const before=structuredClone(p);const result=applyGift(p,q,undefined,START);
+ assert.deepEqual(p,before);assert.equal(result.payload.purchase_units[0].items.length,2);assert.equal(result.payload.purchase_units[0].amount.value,'5400.00');
  assert.equal(result.prices.at(-1).unit_price,0);assert.equal(result.prices.at(-1).sku,'LINE-005');
  assert.equal(result.payload.purchase_units[0].items.at(-1).unit_amount.value,'0.00');
 });
@@ -44,9 +44,9 @@ test('native checkout signs the zero-price gift and includes it in the physical 
    forwarded=JSON.parse(options.body);return{status:200,ok:true,json:async()=>({id:'TESTORDER12345'})};
   },undefined,undefined,{now:()=>START,preflight:async body=>{packed=body.items;return{physical_items:body.items.map(p=>({sku:p.sku,qty:p.qty}))};}});
   const response={set(){},status(n){this.statusCode=n;return this;},json(body){this.body=body;}};
-  await routes['/api/checkout/paypal/create']({body:{native_shipping:true,payload:payload(),buen_fin_gift_sku:'LINE-003',prices:[{sku:'FORGED',unit_price:0}]}},response);
+  await routes['/api/checkout/paypal/create']({body:{native_shipping:true,payload:payload(5400),buen_fin_gift_sku:'LINE-003',prices:[{sku:'FORGED',unit_price:0}]}},response);
   assert.equal(response.statusCode,200);assert.equal(packed.length,2);assert.equal(packed.at(-1).sku,'LINE-003');assert.equal(forwarded.physicalItems.length,2);assert.equal(forwarded.prices.at(-1).promotion,'buen-fin-2026');
-  assert.equal(forwarded.payload.purchase_units[0].amount.value,'6000.00');
+  assert.equal(forwarded.payload.purchase_units[0].amount.value,'5400.00');assert.equal(forwarded.buenFinVersion,1);
  }finally{if(previous===undefined)delete process.env.PROAX_PAYPAL_SYNC_SECRET;else process.env.PROAX_PAYPAL_SYNC_SECRET=previous;}
 });
 

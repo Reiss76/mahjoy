@@ -640,8 +640,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     function updateExpressSummary(discountPct) {
       var product=window.MJCheckoutProduct; if (!product) return;
       var qty=Number(document.getElementById('co-qty')?.value || 1);
-      var price=Number(product.price || 0);
-      if (discountPct > 0) price=Math.round(price*(1-discountPct/100)*100)/100;
+      var price=window.MJPayPalPricing.cartUnitPrice(product,'MXN',discountPct || 0);
       var native=window.MJPayPalPricing?.nativeShippingEnabled?.() && !window.MJShippingCheckout.state().cardMode;
       var selected=native ? null : window.MJShippingCheckout.state().selected;
       var shippingDisplay=document.getElementById('co-shipping-display');
@@ -749,9 +748,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           var product=window.MJCheckoutProduct;
           var qty=Number(document.getElementById('co-qty')?.value || 1);
           var selected=window.MJPayPalPricing.selectionForPayPal('MXN',[{...product,qty:qty}]);
-          var price=Number(product.price || 0);
           var discount=window.MJAppliedDiscount;
-          if(discount?.pct>0) price=Math.round(price*(1-discount.pct/100)*100)/100;
+          var price=window.MJPayPalPricing.cartUnitPrice(product,'MXN',discount?.pct || 0);
           var subtotal=price*qty;
           return window.MJPayPalPricing.create(actions,{
             intent:'CAPTURE',purchase_units:[{description:'MAH JOY - '+product.name,

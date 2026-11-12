@@ -185,7 +185,7 @@
   loadOrders();
   function checkoutError(result,fallback) {
     const promotionCode=result.error_code || result.error;
-    if(promotionCode==='BUEN_FIN_EXPIRED')return 'El Buen Fin terminó. Vuelve al carrito para revisar tu pedido sin el regalo antes de pagar.';
+    if(promotionCode==='BUEN_FIN_EXPIRED')return 'El Buen Fin terminó. Vuelve al carrito para revisar los precios y regalos antes de pagar.';
     if(promotionCode==='BUEN_FIN_GIFT_UNAVAILABLE')return 'El regalo de Buen Fin está agotado. Vuelve al carrito para revisar la disponibilidad.';
     if(promotionCode==='BUEN_FIN_GIFT_CHANGED')return 'Tu nivel o color de regalo cambió. Vuelve al carrito y revisa tu regalo de Buen Fin.';
     const code = result.error_code || result.error || '';
@@ -300,7 +300,8 @@
   }
   function cartUnitPrice(item,currency,discountPct=0) {
     const base=Number(currency==='USD'?(item.priceUsd??item.price_usd):item.price);
-    const rate=Math.max(Number(discountPct)||0,Number(item.upsell_discount_pct)||0);
+    const campaignPct=currency==='MXN' ? window.MJBuenFin?.discountPct?.() || 0 : 0;
+    const rate=Math.max(Number(discountPct)||0,Number(item.upsell_discount_pct)||0,campaignPct);
     if(!['MXN','USD'].includes(currency)||!Number.isFinite(base)||base<=0||!Number.isFinite(rate)||rate<0||rate>=100)throw new Error('Invalid product price');
     return Math.round(base*(1-rate/100)*100)/100;
   }

@@ -11,7 +11,8 @@
     if(!current())return null;
     const base=amount(currency==='USD'?(item.price_usd??item.priceUsd):item.price);
     if(base==null)return null;
-    const rate=Math.max(Number(discountPct)||0,Number(item.upsell_discount_pct)||0);
+    const campaignPct=currency==='MXN' ? window.MJBuenFin?.discountPct?.() || 0 : 0;
+    const rate=Math.max(Number(discountPct)||0,Number(item.upsell_discount_pct)||0,campaignPct);
     return Math.round(base*(1-rate/100)*100)/100;
   }
   function summary(discountPct=0){
@@ -62,6 +63,8 @@
   const cartChanged=()=>{if(verifiedKey!==key(cart()))refresh();};
   window.addEventListener('mj:cartUpdated',cartChanged);
   window.addEventListener('cartUpdated',cartChanged);
+  window.addEventListener('mj:buen-fin',notify);
+  window.MJBuenFin?.ready.then(notify);
   window.addEventListener('storage',event=>{if(event.key===null||event.key==='mj_cart')cartChanged();});
   document.addEventListener('DOMContentLoaded',()=>refresh());
 })();
