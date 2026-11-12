@@ -48,3 +48,15 @@ test('server can durably enqueue an order without browser hints or recording an 
  const insert=calls.find(c=>c.q.startsWith('INSERT INTO'));assert.deepEqual(insert.args,['AAAABBBBCCCC1','{}']);assert.match(insert.q,/payload=mahjoy_paypal_sync_jobs.payload \|\| EXCLUDED.payload/);assert.equal(paid,0);
  await assert.rejects(()=>queue.enqueue('../invalid'));assert.equal(calls.filter(c=>c.q.startsWith('INSERT INTO')).length,1);
 });
+test('confirmation retry worker signs an empty command without replaying payment or customer data',async()=>{
+ const calls=[];const before=global.fetch,secret=process.env.PROAX_PAYPAL_SYNC_SECRET;
+ try{
+  process.env.PROAX_PAYPAL_SYNC_SECRET='fixture-signing-secret';
+  global.fetch=async(url,req)=>{calls.push({url,req});return {ok:true,json:async()=>({status:'processed',accepted:1})}};
+  const queue=registerPayPalSync({post(){}},{query:async()=>({rows:[]})},'https://proax.test',async()=>{throw Error('Must not replay purchase')});
+  assert.equal((await queue.processConfirmations()).accepted,1);assert.equal(calls.length,1);
+  assert.equal(calls[0].url,'https://proax.test/api/public/mahjoy/order-confirmations');assert.deepEqual(JSON.parse(calls[0].req.body),{action:'process'});
+  assert.match(calls[0].req.headers['x-mahjoy-signature'],/^[a-f0-9]{64}$/);
+  global.fetch=async()=>({ok:false,status:503});await assert.rejects(()=>queue.processConfirmations(),/HTTP 503/);
+ }finally{global.fetch=before;if(secret===undefined)delete process.env.PROAX_PAYPAL_SYNC_SECRET;else process.env.PROAX_PAYPAL_SYNC_SECRET=secret;}
+});
