@@ -106,7 +106,7 @@
   function schedulePanel() {clearTimeout(panelTimer);panelTimer=setTimeout(updatePanel,150);}
   async function updatePanel() {
     if(!active() || !loaded) return;
-    const host=document.getElementById('cart-summary') || document.getElementById('mj-shipping-checkout');
+    const host=document.getElementById('cart-summary') || document.getElementById('mj-buen-fin-checkout');
     if(!host) return;
     let panel=document.getElementById('mj-bf-cart');
     if(!panel) {panel=node('section','mj-bf-cart');panel.id='mj-bf-cart';panel.setAttribute('aria-label','Tu regalo de Buen Fin');host.prepend(panel);}
@@ -158,7 +158,6 @@
   document.addEventListener('DOMContentLoaded',()=>{ready.then(setState);schedulePanel();window.MJShippingCheckout?.subscribe(schedulePanel);});
   for(const event of ['mj:cartUpdated','mj:cartPrices','mj:discountChanged'])window.addEventListener(event,schedulePanel);
   document.addEventListener('change',event=>{if(event.target.id==='co-qty')schedulePanel();});
-  document.addEventListener('click',event=>{if(event.target.closest('#cart-discount-btn,#co-discount-btn,#co-express-discount-btn,[onclick*=changeQty]'))setTimeout(schedulePanel,700);});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)status();});
   setInterval(()=>{const changed=wasActive!==active();setState();if(changed || (active() && !data))status();},15000);
 })();

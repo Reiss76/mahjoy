@@ -383,6 +383,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           </div>
           
           <p style="font-size:.8rem;text-align:center;color:var(--burgundy);">Los envíos a Estados Unidos usan los precios publicados en USD. Tu carrito se conserva al cambiar de mercado.</p>
+<div id="mj-buen-fin-checkout"></div>
 <div id="mj-shipping-checkout" data-kind="product" data-currency="MXN"></div>
 <div id="paypal-express-container"></div>
           <p style="text-align:center;font-size:.7rem;color:#666;margin-top:.5rem;">No necesitas llenar el formulario</p>
@@ -722,6 +723,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
             expressDiscMsg.textContent = '✗ Error validando código';
             expressDiscBtn.textContent = 'Aplicar';
             expressDiscBtn.disabled = false;
+          } finally {
+            window.dispatchEvent?.(new CustomEvent('mj:discountChanged'));
           }
         });
         

@@ -15,7 +15,7 @@ function fixture(currency='MXN',options={}) {
     MJPayPalSync:{save:async()=>{},errorMessage:(_error,fallback)=>fallback}},
     document:{readyState:'loading',documentElement:{lang:currency==='USD'?'en':'es'},getElementById:node,
       addEventListener:(event,fn)=>(events[event] ||= []).push(fn)},
-    console:{log(){},error(){},warn(){}},alert:message=>alerts.push(message),setTimeout:fn=>fn(),Event:class {constructor(type){this.type=type;}},
+    console:{log(){},error(){},warn(){}},alert:message=>alerts.push(message),setTimeout:fn=>fn(),Event:class {constructor(type){this.type=type;}},CustomEvent:class {constructor(type,options={}){this.type=type;this.detail=options.detail;}},
     fetch:async(path,init={})=>{
       const body=init.body ? JSON.parse(init.body) : undefined;requests.push({path,body});
       if(path==='/api/checkout/paypal/config') {

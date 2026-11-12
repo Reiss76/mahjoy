@@ -42,3 +42,18 @@ test('native checkout signs the zero-price gift and includes it in the physical 
   assert.equal(forwarded.payload.purchase_units[0].amount.value,'6000.00');
  }finally{if(previous===undefined)delete process.env.PROAX_PAYPAL_SYNC_SECRET;else process.env.PROAX_PAYPAL_SYNC_SECRET=previous;}
 });
+
+test('slow coupon validation publishes a gift refresh only after the accepted discount is installed',async()=>{
+ const fs=require('node:fs'),vm=require('node:vm'),{installShippingFixture}=require('./shipping-client-fixtures');
+ const elements={},events=[];let finish;
+ const element=id=>elements[id]||(elements[id]={style:{},textContent:'',value:'SLOW'});
+ const ctx={console,CustomEvent:class{constructor(type){this.type=type;}},window:{MJCart:{getCart:()=>[{sku:'TEST',price:12000,qty:1}]},addEventListener(){},dispatchEvent:event=>events.push({type:event.type,pct:ctx.window.cartDiscount?.pct})},document:{getElementById:element,addEventListener(){}},fetch:()=>new Promise(resolve=>{finish=resolve;})};
+ installShippingFixture(ctx,{currency:'MXN'});vm.createContext(ctx);
+ const scripts=[...fs.readFileSync('cart.html','utf8').matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
+ vm.runInContext(scripts.find(s=>s.includes('function initPayPalCart()')),ctx);
+ const pending=ctx.window.applyCartDiscount();assert.equal(events.length,0);
+ finish({ok:true,json:async()=>({valid:true,discount_pct:25})});await pending;
+ assert.equal(ctx.window.cartDiscount.pct,25);assert.deepEqual(events,[{type:'mj:discountChanged',pct:25}]);
+ const rejected=ctx.window.applyCartDiscount();finish({ok:false,json:async()=>({valid:false})});await rejected;
+ assert.equal(ctx.window.cartDiscount,null);assert.deepEqual(events.at(-1),{type:'mj:discountChanged',pct:undefined});
+});

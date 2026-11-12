@@ -351,6 +351,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       msg.textContent = '✗ Error validando código';
       btn.textContent = 'Aplicar';
       btn.disabled = false;
+    } finally {
+      window.dispatchEvent?.(new CustomEvent('mj:discountChanged'));
     }
   };
   
