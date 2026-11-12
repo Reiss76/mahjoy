@@ -47,9 +47,9 @@ let appliedDiscount = null; // { code, vendorCode, vendorName, pct }
 let selectedShippingCost = 0; // Set by shipping quote script
 function getDiscountedTotal() {
   if (!currentProduct) return 0;
-  const sub = getProductPrice(currentProduct) * qty;
-  if (!appliedDiscount || appliedDiscount.pct <= 0) return sub;
-  return sub * (1 - appliedDiscount.pct / 100);
+  const campaignPct = isEnCheckout ? 0 : window.MJBuenFin?.discountPct?.() || 0;
+  const pct = Math.max((appliedDiscount || window.MJAppliedDiscount)?.pct || 0,campaignPct);
+  return Math.round(getProductPrice(currentProduct) * (1-pct/100) * 100) / 100 * qty;
 }
 
 function resolveImageUrl(url) {
@@ -102,11 +102,14 @@ function updateTotals() {
 
   // Discount row
   const discRow = document.getElementById('co-discount-row');
-  if (appliedDiscount && appliedDiscount.pct > 0 && unit) {
-    const saving = sub * (appliedDiscount.pct / 100);
+  const campaignPct = isEnCheckout ? 0 : window.MJBuenFin?.discountPct?.() || 0;
+  const discount = appliedDiscount || window.MJAppliedDiscount;
+  const pct = Math.max(discount?.pct || 0,campaignPct);
+  if (pct > 0 && unit) {
+    const saving = sub - getDiscountedTotal();
     discRow.style.display = 'flex';
     document.getElementById('co-discount-label').textContent =
-      `Descuento ${appliedDiscount.pct}% (${appliedDiscount.vendorName})`;
+      campaignPct >= (discount?.pct || 0) ? 'Buen Fin (10%)' : `Descuento ${pct}% (${discount.vendorName})`;
     document.getElementById('co-discount-amount').textContent = `-${formatPrice(saving)}`;
   } else {
     discRow.style.display = 'none';
@@ -466,6 +469,8 @@ const newUpdateTotals = function() {
 if (typeof updateTotals !== 'undefined') {
   updateTotals = newUpdateTotals;
 }
+window.addEventListener('mj:buen-fin',()=>updateTotals());
+window.MJBuenFin?.ready.then(()=>updateTotals());
 
 // Also expose on DOMContentLoaded
 document.addEventListener('DOMContentLoaded', function() {

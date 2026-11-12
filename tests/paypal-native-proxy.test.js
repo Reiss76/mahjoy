@@ -1,5 +1,9 @@
 const test=require('node:test'),assert=require('node:assert/strict');
-const {registerPayPalCheckout}=require('../lib/paypal-checkout');
+const {registerPayPalCheckout:registerCheckout}=require('../lib/paypal-checkout');
+// Keep the existing shipping-only scenarios outside temporary commercial offers.
+function registerPayPalCheckout(app,base,fetcher,beforeCapture,verifyQuote,options={}) {
+ return registerCheckout(app,base,fetcher,beforeCapture,verifyQuote,{now:()=>Date.parse('2026-11-05T12:00:00Z'),...options});
+}
 function payload(){return {purchase_units:[{amount:{currency_code:'MXN',value:'1000.00',breakdown:{item_total:{currency_code:'MXN',value:'1000.00'}}},items:[{sku:'TEST',name:'Test',quantity:'1',unit_amount:{currency_code:'MXN',value:'1000.00'}}]}]};}
 function response(){return {set(){return this;},status(n){this.statusCode=n;return this;},json(v){this.value=v;return this;}};}
 async function fixture(run){const old=process.env.PROAX_PAYPAL_SYNC_SECRET;process.env.PROAX_PAYPAL_SYNC_SECRET='fixture-only';try{await run();}finally{if(old===undefined)delete process.env.PROAX_PAYPAL_SYNC_SECRET;else process.env.PROAX_PAYPAL_SYNC_SECRET=old;}}

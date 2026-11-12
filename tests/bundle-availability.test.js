@@ -20,6 +20,6 @@ test('new USD quotes and cart display use the saved bundle price, independently 
  assert.equal(quote.items[0].unit_price,810.50);
  const display=await resolveCartDisplayPrices('https://catalog.test',input,fetcher);
  assert.equal(display.items[0].price_usd,810.50);
- const mxn=await resolveCheckoutQuote('https://catalog.test',{...input,currency:'MXN'},fetcher);
+ const mxn=await resolveCheckoutQuote('https://catalog.test',{...input,currency:'MXN'},fetcher,Date.parse('2026-11-18T06:00:00Z'));
  assert.equal(mxn.items[0].unit_price,14700);
 });
