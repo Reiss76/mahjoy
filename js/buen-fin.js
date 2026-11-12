@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   if (window.location.pathname.startsWith('/en/')) return;
-  const START = Date.parse('2026-11-13T06:00:00Z');
+  const START = Date.parse('2026-11-12T16:58:00Z');
   const END = Date.parse('2026-11-18T06:00:00Z');
   const KEY = 'mj_buen_fin_2026_seen';
   let data = null, anchor = Date.now(), tick = performance.now(), modal = null, priorFocus = null;
@@ -37,7 +37,7 @@
     heading(dialog,'p','mj-bf-eyebrow','MAH JOY · MÉXICO');
     const title=heading(dialog,'h2','mj-bf-title','Buen Fin');title.id='mj-bf-title';
     heading(dialog,'p','mj-bf-intro','Más juego. Un regalo para ti.');
-    heading(dialog,'p','mj-bf-dates','Del 13 al 17 de noviembre de 2026');
+    heading(dialog,'p','mj-bf-dates','Hasta el 17 de noviembre de 2026');
     const tiers=node('ol','mj-bf-tiers');
     for(const tier of data.tiers || []) {
       const card=node('li','mj-bf-tier');
@@ -123,7 +123,7 @@
       const promotion=result.buen_fin;
       if(!promotion?.active) {panel.remove();return;}
       panel.replaceChildren();
-      heading(panel,'p','mj-bf-eyebrow','BUEN FIN · 13–17 NOV');
+      heading(panel,'p','mj-bf-eyebrow','BUEN FIN · HASTA EL 17 NOV');
       const tier=promotion.eligible;
       if(!tier) {
         heading(panel,'h2','mj-bf-panel-title','Tu próxima partida viene con regalo');

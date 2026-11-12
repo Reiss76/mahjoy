@@ -1,7 +1,7 @@
 # Buen Fin 2026 — Mexico storefront
 
 Official campaign dates: November 13–17, 2026 (https://www.elbuenfin.org/?lang=es).
-The application uses Mexico City time, from `2026-11-13T06:00:00Z` through, but excluding, `2026-11-18T06:00:00Z`.
+The owner authorized early activation on November 12 at 10:58 Mexico City time. The application window is `2026-11-12T16:58:00Z` through, but excluding, `2026-11-18T06:00:00Z`; the original closing time is unchanged. Customer copy says "Hasta el 17 de noviembre".
 
 ## Commercial rules
 
