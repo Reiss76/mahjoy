@@ -125,9 +125,10 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(num);
     }
     
-    function getProductImage(sku) {
-      // Try to get image from products API
-      return MJ_API + '/api/public/media?key=products/' + encodeURIComponent(sku) + '/main.jpg';
+    function resolveBundleImage(image) {
+      if (image && image.startsWith('/api/public/media')) return MJ_API + image.slice(4);
+      if (image && image.startsWith('/public/media')) return MJ_API + image;
+      return image || null;
     }
     
     async function loadBundle() {
@@ -182,7 +183,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         document.getElementById('bundle-content').innerHTML = `
           <div class="mj-bundle-hero">
             <div>
-              <img src="${bundle.image || 'images/bundles/bundle-placeholder.jpg'}" alt="${bundle.name}" class="mj-bundle-img">
+              <img src="${resolveBundleImage(bundle.image) || 'images/bundles/bundle-placeholder.jpg'}" alt="${bundle.name}" class="mj-bundle-img">
             </div>
             <div class="mj-bundle-info">
               <p class="mj-bundle-eyebrow">✦ Bundle Completo ✦</p>
@@ -228,6 +229,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       
       if (existingIdx >= 0) {
         cart[existingIdx].qty += 1;
+        cart[existingIdx].image = resolveBundleImage(bundle.image);
       } else {
         cart.push({
           id: 'bundle-' + bundle.id,
@@ -235,7 +237,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           name: bundle.name,
           price: Number(bundle.price),
           price_usd: bundle.priceUsd ?? bundle.price_usd ?? null,
-          image: bundle.image || null,
+          image: resolveBundleImage(bundle.image),
           qty: 1,
           isBundle: true
         });
