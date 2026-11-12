@@ -14,6 +14,7 @@ const CATEGORY_LABELS = {
   'rack-bags': 'Rack Bags',
   'accessories': 'Accessories',
   'card-holders': 'Card Holders',
+  'cards-2026': window.location.pathname.includes('/en/') ? '2026 Cards' : 'Tarjetas 2026',
   'shufflers': 'Shufflers',
   'line-finder': 'Line Finder',
 };
@@ -27,6 +28,7 @@ const CATEGORY_PAGES = {
   'rack-bags': 'shop-rack-bags.html',
   'accessories': 'shop-accessories.html',
   'card-holders': 'shop-card-holders.html',
+  'cards-2026': 'shop-cards-2026.html',
   'shufflers': 'shop-shufflers.html',
   'line-finder': 'shop-line-finder.html',
 };
@@ -100,6 +102,7 @@ function getProductPrice(product) {
 }
 
 function guessCategory(product) {
+  if (window.MJCatalog && window.MJCatalog.is2026Card(product)) return 'cards-2026';
   if (product.category) return product.category;
   const text = ((product.name || '') + ' ' + (product.sku || '') + ' ' + (product.description || '')).toLowerCase();
   for (const [cat, keywords] of Object.entries(CATEGORY_MAP)) {
