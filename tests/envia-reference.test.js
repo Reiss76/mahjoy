@@ -84,6 +84,62 @@ test('Mexico City aliases never apply outside Mexico or bypass postal state vali
   {data:[{country_code:'US',name:'Fixture',code_2_digits:'XX',code_3_digits:'CMX'}]}));
  await assert.rejects(otherCountry.resolveDestination({country:'US',postalCode:'60601',city:'City',state:'CDMX'}),{code:'INVALID_SHIPPING_STATE'});
 });
+test('Polanco municipality and neighborhood names use the verified Envia locality while retaining the exact delivery address',async()=>{
+ const geo=[{zip_code:'11530',country:{code:'MX'},state:{name:'Ciudad de Mexico',code:{'2digit':'CX','3digit':'CMX'}},
+  locality:'Ciudad de México',regions:{region_1:'Ciudad de Mexico',region_2:'Miguel Hidalgo'},suburbs:['Polanco II Sección']}];
+ const ref=reference(async url=>reply(url.includes('geocodes')?geo:{data:[{country_code:'MX',name:'Ciudad de México',code_2_digits:'CX',code_3_digits:'CMX'}]}));
+ for(const city of ['Ciudad de México','ciudad de mexico','Miguel Hidalgo','Polanco II Sección']) {
+  const address={country:'MX',postalCode:'11530',city,state:'CDMX',street:'Calle de prueba',number:'340',interior:'203',name:'Destinataria de prueba'};
+  const result=await ref.resolveDestination(address);
+  assert.equal(result.city,'Ciudad de México');assert.equal(result.state,'CX');
+  assert(result.city_aliases.includes(city));assert(result.city_aliases.includes('Miguel Hidalgo'));
+  assert(sameLocation(result,address));
+  for(const key of ['street','number','interior','name'])assert.equal(result[key],address[key]);
+ }
+ const unknown=await ref.resolveDestination({country:'MX',postalCode:'11530',city:'Guadalajara',state:'CDMX',city_aliases:['Ciudad de México']});
+ assert.equal(unknown.city,'Guadalajara');assert.equal(unknown.city_aliases,undefined);
+ assert.equal(sameLocation(unknown,{country:'MX',postalCode:'11530',city:'Ciudad de México',state:'CDMX'}),false);
+ await assert.rejects(ref.resolveDestination({country:'MX',postalCode:'11530',city:'Miguel Hidalgo',state:'México'}),{code:'INVALID_SHIPPING_STATE'});
+});
+test('postal-code city normalization selects an unambiguous locality and never trusts client aliases',async()=>{
+ const rows=[{locality:'City A',regions:{region_2:'Municipality A'},suburbs:Array.from({length:20},(_,i)=>'Neighborhood '+i)},
+  {locality:'City B',regions:{region_2:'Municipality B'},suburbs:['Neighborhood B']}]
+  .map(row=>({...row,zip_code:'11111',country:{code:'MX'},state:{code:{'2digit':'NL'}}}));
+ const ref=reference(async url=>reply(url.includes('geocodes')?rows:{data:[{country_code:'MX',name:'Nuevo León',code_2_digits:'NL',code_3_digits:'NLE'}]}));
+ const result=await ref.resolveDestination({country:'MX',postalCode:'11111',city:'Neighborhood 19',state:'NL',city_aliases:['Foreign city']});
+ assert.equal(result.city,'City A');assert(result.city_aliases.includes('Neighborhood 19'));assert(result.city_aliases.length<=10);assert(!result.city_aliases.includes('Foreign city'));
+ assert.equal((await ref.resolveDestination({country:'MX',postalCode:'11111',city:'Municipality B',state:'NL'})).city,'City B');
+ rows[1].regions.region_2='Municipality A';
+ const ambiguous=await ref.resolveDestination({country:'MX',postalCode:'11111',city:'Municipality A',state:'NL'});
+ assert.equal(ambiguous.city,'Municipality A');assert.equal(ambiguous.city_aliases,undefined);
+});
+test('the PayPal quote and final shipping verification accept the municipality without changing the buyer address',async()=>{
+ const {createShippingQuoteService,verifyShippingQuote}=require('../lib/shipping-quotes');
+ const {nativeShippingQuote}=require('../lib/paypal-native-shipping-rpc');
+ const base=require('../config/shipping'),secret='local-shipping-regression',calls=[];
+ const ref=reference(async url=>reply(url.includes('geocodes')?
+  [{zip_code:'11530',country:{code:'MX'},state:{code:{'2digit':'CX'}},locality:'Ciudad de México',regions:{region_2:'Miguel Hidalgo'},suburbs:['Polanco II Sección']}]:
+  {data:[{country_code:'MX',name:'Ciudad de México',code_2_digits:'CX',code_3_digits:'CMX'}]}));
+ const config={...base,carriersByCountry:{MX:['fedex']},packageProfiles:[{confirmed:true,country:'MX',items:[{sku:'RACK-COSMIC',qty:1}],
+  packages:[{type:'box',content:'Rack',amount:1,weight:3,weightUnit:'KG',lengthUnit:'CM',dimensions:{length:50,width:20,height:10}}]}]};
+ const service=createShippingQuoteService({config,origins:{MX:base.origin},signingSecret:secret,apiKey:'fixture',
+  resolveDestination:ref.resolveDestination,allowPartialRate:()=>true,fetcher:async(url,request)=>{
+   if(url.includes('/catalog/products'))return reply({products:[{sku:'RACK-COSMIC',name:'Rack Cosmic',price:2400}]});
+   assert(url.endsWith('/ship/rate/'),'Only quote requests are allowed');
+   const payload=JSON.parse(request.body);calls.push(payload);
+   assert.equal(payload.destination.city,'Ciudad de México');assert.equal(payload.destination.state,'CX');
+   return reply({meta:'rate',data:[{carrier:'fedex',service:'ground',dropOff:0,totalPrice:249.85,currency:'MXN',deliveryEstimate:2}]});
+  }});
+ const input={country:'MX',postalCode:'11530',city:'Miguel Hidalgo',state:'CDMX',currency:'MXN',protocolVersion:2,
+  items:[{sku:'RACK-COSMIC',quantity:'1',unit_amount:{currency_code:'MXN',value:'2160.00'}}],frozenPhysicalItems:[{sku:'RACK-COSMIC',qty:1}]};
+ const result=await nativeShippingQuote(service,input,(token,context)=>verifyShippingQuote(token,context,{secret}));
+ assert.equal(result.option.amount.value,'249.85');assert(result.shippingQuote.destination.city_aliases.includes('Miguel Hidalgo'));
+ const buyerAddress={country:'MX',postalCode:'11530',city:'Miguel Hidalgo',state:'CDMX',street:'Calle de prueba',number:'340',interior:'203',name:'Destinataria de prueba',phone:'5550000000'};
+ const before=JSON.stringify(buyerAddress);
+ assert.equal((await service.verifyFinal(result.shippingQuote,buyerAddress)).ok,true);
+ assert.equal(JSON.stringify(buyerAddress),before);assert.equal(calls.length,2);assert.equal(calls[1].destination.street,buyerAddress.street);
+ assert.equal(calls[1].destination.number,'340');assert.equal(calls[1].destination.interior,'203');
+});
 test('carrier print settings prefer tested PDF combinations including UPS PAPER_7X4.75 and reject unsupported combinations',async()=>{
  const ref=reference(async url=>reply(url.includes('/carrier?')?{data:[{id:28,name:'ups',country_code:'US'}]}:{data:[{print_format:'PDF',print_size:'STOCK_4X6.5'},{print_format:'PDF',print_size:'PAPER_7X4.75'}]}));
  assert.deepEqual(await ref.printSettings('US','ups'),{printFormat:'PDF',printSize:'PAPER_7X4.75'});
