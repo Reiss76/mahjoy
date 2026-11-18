@@ -63,7 +63,7 @@ function fixture(overrides = {}) {
   };
   const storage=overrides.store || memoryStore();
   const service = createShippingQuoteService({
-    resolveDestination:async address=>({city:'Fixture city',state:address.country==='US'?'NY':'NL',...address}),
+    resolveDestination:overrides.resolveDestination || (async address=>({city:'Fixture city',state:address.country==='US'?'NY':'NL',...address})),
     getDiscountedValues:overrides.getDiscountedValues,allowPartialRate:()=>true,getPrintSettings:async()=>({printFormat:'PDF',printSize:'STOCK_4X6'}),
     config, origins:{MX:configured.origin,US:configured.originUS},
     signingSecret,apiKey:'test-provider-placeholder',fetcher,
@@ -596,6 +596,34 @@ test('final recotization preserves selected service and buyer price while report
  assert.equal(final.charged,429);assert.equal(final.providerQuotedCost,500);assert.equal(final.absorbed,71);assert.equal(final.service,q.service);
  assert.equal(higher.requests.filter(r=>r.url.endsWith('/ship/generate/')).length,0);
  await assert.rejects(higher.service.verifyFinal(q,{...q.destination,postalCode:'99999'}),/SHIPPING_DESTINATION_CHANGED/);
+});
+test('previously issued municipality quotes remain valid through final verification and label generation',async()=>{
+ const {createEnviaReference}=require('../lib/envia-reference');
+ const reference=createEnviaReference({apiKey:'fixture',fetcher:async url=>({ok:true,json:async()=>url.includes('geocodes')?
+  [{zip_code:'11530',country:{code:'MX'},state:{code:{'2digit':'CX'}},locality:'Ciudad de México',regions:{region_2:'Miguel Hidalgo'},suburbs:['Polanco II Sección']}]:
+  {data:[{country_code:'MX',name:'Ciudad de México',code_2_digits:'CX',code_3_digits:'CMX'}]}})});
+ const f=fixture({resolveDestination:reference.resolveDestination});
+ const original={country:'MX',postalCode:'11530',city:'Miguel Hidalgo',state:'CDMX',name:'Recipient',street:'Fixture street',number:'340',interior:'203',phone:'5550000000'};
+ const result=await f.service.quote({items,destination:original,currency:'MXN'});
+ const legacy=verifyShippingQuote(result.quotes[0].quote_token,{}, {secret:signingSecret,now:fixtureTime});
+ legacy.destination.city='Miguel Hidalgo';delete legacy.destination.city_aliases;
+ const before=JSON.stringify(legacy);
+ assert.equal((await f.service.verifyFinal(legacy,original)).ok,true);
+ assert.equal(JSON.stringify(legacy),before,'The old quote and its original amount stay unchanged');
+ f.store(legacy);
+ const generated=await f.service.generate({orderId:'LEGACY-MUNICIPALITY'});
+ assert.equal(generated.ok,true);assert.equal(generated.label_cost,429);
+ const request=f.requests.find(r=>r.url.endsWith('/ship/generate/'));
+ assert.equal(request.body.destination.city,'Ciudad de México');assert.equal(request.body.destination.number,'1');
+ for(const changes of [{city:'Guadalajara',city_aliases:['Miguel Hidalgo']},{postalCode:'99999'},{state:'Estado de México'}]) {
+  await assert.rejects(f.service.verifyFinal(legacy,{...original,...changes}));
+ }
+});
+test('a caller cannot authorize a changed legacy destination by supplying aliases without the trusted resolver',async()=>{
+ const f=fixture(),q=await quoted(f);let rates=0;
+ const service=createShippingQuoteService({config:configured,signingSecret,now:()=>fixtureTime,fetcher:async()=>{rates++;throw Error('Must not quote');}});
+ await assert.rejects(service.verifyFinal(q,{...q.destination,city:'Other city',city_aliases:[q.destination.city]}),/SHIPPING_DESTINATION_CHANGED/);
+ assert.equal(rates,0);
 });
 test('HTTP 200 error-shaped rate responses cannot create an offer, even when fake rates are present',async()=>{
  const f=fixture({fetcher:async()=>({ok:true,json:async()=>({meta:'rate',success:false,data:[{dropOff:0,totalPrice:1,currency:'MXN',service:'ground'}]})})});
