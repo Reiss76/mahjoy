@@ -3,7 +3,7 @@
   'use strict';
   if (window.location.pathname.startsWith('/en/')) return;
   const START = Date.parse('2026-11-12T16:58:00Z');
-  const END = Date.parse('2026-11-18T06:00:00Z');
+  const END = Date.parse('2026-11-19T06:00:00Z');
   const KEY = 'mj_buen_fin_2026_discount_seen';
   let data = null, anchor = Date.now(), tick = performance.now(), modal = null, priorFocus = null;
   let loaded = false, wasActive = false, wasDiscount = 0, quoteSequence = 0, panelTimer, modalTimer, boundaryTimer;
@@ -38,7 +38,7 @@
     heading(dialog,'p','mj-bf-eyebrow','MAH JOY · MÉXICO');
     const title=heading(dialog,'h2','mj-bf-title','Buen Fin');title.id='mj-bf-title';
     heading(dialog,'p','mj-bf-intro','10% de descuento en todo + regalos');
-    heading(dialog,'p','mj-bf-dates','Hasta el 17 de noviembre de 2026');
+    heading(dialog,'p','mj-bf-dates','Hasta el 18 de noviembre de 2026');
     const tiers=node('ol','mj-bf-tiers');
     for(const tier of data.tiers || []) {
       const card=node('li','mj-bf-tier');
@@ -52,7 +52,7 @@
     heading(dialog,'p','mj-bf-terms','10% automático en productos y bundles al pagar. Se aplica el mayor descuento disponible, sin acumular porcentajes. Además, recibe el regalo del nivel más alto que alcance tu compra después del descuento, sin incluir envío. Un regalo por pedido; colores sujetos a disponibilidad.');
     const shop=node('a','mj-bf-shop','Elegir mis productos');shop.href='/shop-tiles.html';dialog.appendChild(shop);
     const more=node('button','mj-bf-later','Seguir viendo');more.type='button';more.addEventListener('click',close);dialog.appendChild(more);
-    heading(dialog,'p','mj-bf-cutoff','Válido al completar el pago antes de las 00:00 del 18 de noviembre, hora de Ciudad de México.');
+    heading(dialog,'p','mj-bf-cutoff','Válido hasta las 11:59 p. m. del 18 de noviembre, hora de Ciudad de México.');
     modal.appendChild(dialog);
     modal.addEventListener('click',event=>{if(event.target===modal)close();});
     modal.addEventListener('keydown',event=>{
@@ -124,7 +124,7 @@
       const promotion=result.buen_fin;
       if(!promotion?.active) {panel.remove();return;}
       panel.replaceChildren();
-      heading(panel,'p','mj-bf-eyebrow','BUEN FIN · HASTA EL 17 NOV');
+      heading(panel,'p','mj-bf-eyebrow','BUEN FIN · HASTA EL 18 NOV');
       heading(panel,'p','mj-bf-panel-copy','10% automático en productos y bundles. Ya incluido en tu total; sin código.');
       const tier=promotion.eligible;
       if(!tier) {
@@ -149,7 +149,7 @@
         const next=promotion.tiers.find(value=>value.minimum>promotion.subtotal);
         if(next)heading(panel,'p','mj-bf-next','Con '+money(next.minimum-promotion.subtotal)+' MXN más, tu regalo cambia a '+next.name+'.');
       }
-      heading(panel,'p','mj-bf-panel-terms','Un regalo por pedido, según el nivel más alto. No incluye envío. Pago completado antes del 18 de noviembre (hora CDMX).');
+      heading(panel,'p','mj-bf-panel-terms','Un regalo por pedido, según el nivel más alto. No incluye envío. Pago completado hasta las 11:59 p. m. del 18 de noviembre (hora CDMX).');
     } catch (_) {
       if(sequence!==quoteSequence || !active())return;
       panel.replaceChildren();heading(panel,'p','mj-bf-panel-copy','No pudimos verificar tu regalo.');

@@ -1,7 +1,7 @@
 # Buen Fin 2026 — Mexico storefront
 
 Official campaign dates: November 13–17, 2026 (https://www.elbuenfin.org/?lang=es).
-The owner authorized early activation on November 12 at 10:58 Mexico City time. The application window is `2026-11-12T16:58:00Z` through, but excluding, `2026-11-18T06:00:00Z`; the original closing time is unchanged. Customer copy says "Hasta el 17 de noviembre".
+The owner authorized early activation on November 12 at 10:58 Mexico City time and extended the final day through November 18. The application window is `2026-11-12T16:58:00Z` through, but excluding, `2026-11-19T06:00:00Z`: the campaign ends after 11:59 p.m. on November 18 in `America/Mexico_City`. Customer copy says "Hasta el 18 de noviembre de 2026".
 
 ## Commercial rules
 
@@ -16,6 +16,8 @@ The owner authorized early activation on November 12 at 10:58 Mexico City time. 
 ## Automatic return
 
 No scheduler, catalog rewrite or manual reversal is necessary. The popup and gift panel use server time and a boundary timer; the old popup modules resume with their original preference keys. New orders after the boundary use the original checkout. An unpaid order relying on the campaign discount or gift cannot capture after the deadline; already completed payments still reconcile and recover their original prices and gift afterward. The signed storefront uses Buen Fin protocol version 1 so the backend can be deployed first while accepting the older storefront during the rollout.
+
+At 00:00 on November 19 in Mexico City, the automatic campaign discount and gifts stop and the existing lead, Rack Bag and Tile Bag popup behavior resumes. Existing coupon and ordinary bag-offer rules remain unchanged.
 
 The browser's ordinary `mj_cart`, coupons and popup preference keys are never cleared. Campaign selection/seen keys are separate session values and become inert after expiry.
 
