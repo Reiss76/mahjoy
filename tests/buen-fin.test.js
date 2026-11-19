@@ -6,10 +6,12 @@ const products=[{id:1,sku:'TILE-TEST',name:'Tiles',price:6000,priceUsd:380},...T
 const fetcher=async()=>({ok:true,json:async()=>({products})});
 const quote=amount=>({items:[{sku:'TEST',qty:1,unit_price:amount}],_catalog:products});
 const payload=(amount=6000,currency='MXN')=>({intent:'CAPTURE',purchase_units:[{items:[{sku:'TILE-TEST',name:'Tiles',quantity:'1',unit_amount:{currency_code:currency,value:amount.toFixed(2)}}],amount:{currency_code:currency,value:amount.toFixed(2),breakdown:{item_total:{currency_code:currency,value:amount.toFixed(2)}}}}]});
-test('the authorized early opening includes November 12 and still excludes midnight CDMX on the 18th',()=>{
+test('the authorized window includes November 18 until 11:59 p.m. and excludes midnight CDMX on the 19th',()=>{
  assert.equal(active(START-1),false);assert.equal(active(START),true);assert.equal(active(END-1),true);assert.equal(active(END),false);
  assert.equal(active(Date.parse('2026-11-12T17:00:00Z')),true);
- assert.equal(active(Date.parse('2026-11-18T06:00:00Z')),false);
+ assert.equal(active(Date.parse('2026-11-18T06:00:00Z')),true);
+ assert.equal(active(Date.parse('2026-11-19T05:59:59.999Z')),true);
+ assert.equal(active(Date.parse('2026-11-19T06:00:00Z')),false);
  assert.equal(summary(products,quote(20000).items,'USD',START).eligible,null);
  for(const [subtotal,expected] of [[3999.99,null],[4000,4000],[7999.99,4000],[8000,8000],[11999.99,8000],[12000,12000],[100000,12000]])assert.equal(summary(products,quote(subtotal).items,'MXN',START).eligible?.minimum ?? null,expected);
 });
