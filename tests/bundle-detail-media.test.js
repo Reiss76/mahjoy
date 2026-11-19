@@ -65,4 +65,81 @@ for (const lang of ['', 'en/']) {
       assert.equal(cart[0].image, expected);
     }
   });
+
+  test(`${lang}bundle components show their matching catalog photos without changing prices`, async () => {
+    const html = fs.readFileSync(path.join(__dirname, '..', lang, 'bundle-detail.html'), 'utf8');
+    const script = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]
+      .map(match => match[1]).find(source => source.includes('const MJ_API ='));
+    const bundle = {
+      id: 15, name: 'Tennis Club', price: 14700, price_usd: 945,
+      products: [
+        {sku: 'Bag-pink', name: 'Bag Pink', quantity: 1, price: 2400, price_usd: 160},
+        {sku: 'MAT-012', name: 'Mat Tennis Club', quantity: 2, price: 1200, price_usd: 80},
+        {id: 64, name: 'Sensu Tile', quantity: 1, price: 6000, price_usd: 380},
+        {sku: 'direct', name: 'Direct image', image: 'https://cdn.example.com/direct.jpg'},
+        {sku: 'missing', name: 'No photo'},
+      ],
+      // Item order differs from the price summary, so positions cannot match photos.
+      items: [
+        {sku: 'mat-012', primary_image_url: '/public/media?key=products%2Fmat.jpeg&v=2'},
+        {product_id: 64, primary_image_url: 'https://cdn.example.com/tiles.jpg'},
+        {sku: 'Bag-pink', primary_image_url: '/api/public/media?key=products%2Fbag.jpeg&v=2'},
+      ],
+    };
+    const original = JSON.stringify(bundle);
+    const content = {innerHTML: ''};
+    vm.runInNewContext(script, {
+      URLSearchParams, Intl, console,
+      window: {location: {search: '?id=15'}},
+      document: {getElementById: () => content},
+      MJBundleAvailability: () => '',
+      fetch: async () => ({json: async () => [bundle]}),
+    });
+    await new Promise(resolve => setImmediate(resolve));
+    const rows = content.innerHTML.split('<div class="mj-bundle-product">').slice(1);
+    for (const [index, image] of [
+      'https://proax.app/api/public/media?key=products%2Fbag.jpeg&v=2',
+      'https://proax.app/api/public/media?key=products%2Fmat.jpeg&v=2',
+      'https://cdn.example.com/tiles.jpg', 'https://cdn.example.com/direct.jpg',
+    ].entries()) assert.ok(rows[index].includes(`src="${image}"`));
+    assert.ok(!rows[4].includes('<img '), 'Keep the placeholder only when no photo exists');
+    assert.ok(rows[1].includes('2× MAT-012'));
+    assert.ok(rows[1].includes(lang ? '$160.00' : '$2,400.00'));
+    assert.equal(JSON.stringify(bundle), original, 'Rendering must not mutate catalog data');
+  });
+}
+
+for (const lang of ['', 'en/']) {
+  test(`${lang}checkout resolves bundle photos before rendering and exposing the cart item`, async () => {
+    for (const [image, expected] of cases) {
+      for (const field of ['image', 'image_key']) {
+        const bundle = {id: 15, name: 'Tennis Club', price: 14700, price_usd: 945, [field]: image};
+        const elements = new Map();
+        const getElementById = id => {
+          if (id === 'co-wa-btn') return null;
+          if (!elements.has(id)) elements.set(id, {style: {}, addEventListener() {}});
+          return elements.get(id);
+        };
+        const context = {
+          URLSearchParams, Intl, console: {log() {}, error() {}},
+          window: {
+            location: {pathname: `/${lang}checkout.html`, search: '?bundle=15', hash: ''},
+            addEventListener() {}, MJShippingCheckout: {subscribe() {}, refresh() {}},
+          },
+          document: {getElementById, addEventListener() {}},
+          fetch: async () => ({ok: true, json: async () => ({bundles: [bundle]})}),
+        };
+        vm.createContext(context);
+        vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/checkout.js'), 'utf8'), context);
+        await context.loadCheckout();
+        assert.equal(getElementById('co-img').src, expected);
+        assert.equal(getElementById('co-img').alt, bundle.name);
+        assert.equal(context.window.MJCheckoutProduct.primary_image_url, expected);
+        assert.equal(context.window.MJCheckoutProduct.images[0], expected);
+        assert.equal(context.window.MJCheckoutProduct.price, 14700);
+        assert.equal(context.window.MJCheckoutProduct.price_usd, 945);
+        assert.equal(getElementById('co-total').textContent, lang ? '$945.00' : '$14,700.00');
+      }
+    }
+  });
 }
