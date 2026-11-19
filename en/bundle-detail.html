@@ -122,6 +122,15 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       if (image && image.startsWith('/public/media')) return MJ_API + image;
       return image || null;
     }
+
+    function resolveBundleProductImage(product, bundle) {
+      const item = (bundle.items || []).find(item =>
+        (product.sku && String(item.sku).toLowerCase() === String(product.sku).toLowerCase()) ||
+        (product.id != null && String(item.product_id) === String(product.id))
+      );
+      return resolveBundleImage(product.primary_image_url || product.image || product.images?.[0] ||
+        item?.primary_image_url || item?.image);
+    }
     
     function fmtPrice(price) {
       const num = parseFloat(price || 0);
@@ -165,9 +174,12 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
           bundle.products.forEach(p => {
             const qty = p.quantity || 1;
             const lineTotal = parseFloat(p.price_usd || 0) * qty;
+            const image = resolveBundleProductImage(p, bundle);
             productsHtml += `
               <div class="mj-bundle-product">
-                <div class="mj-bundle-product-img" style="background:#f5e8f0;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--orchid);">✦</div>
+                ${image
+                  ? `<img src="${image}" alt="" class="mj-bundle-product-img" loading="lazy" style="flex-shrink:0;">`
+                  : '<div class="mj-bundle-product-img" style="background:#f5e8f0;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--orchid);">✦</div>'}
                 <div class="mj-bundle-product-info">
                   <div class="mj-bundle-product-name">${p.name}</div>
                   <div class="mj-bundle-product-qty">${qty > 1 ? qty + '× ' : ''}${p.sku}</div>

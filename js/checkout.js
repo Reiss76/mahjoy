@@ -54,8 +54,8 @@ function getDiscountedTotal() {
 
 function resolveImageUrl(url) {
   if (!url) return null;
-  if (url.startsWith('/api/public/media')) return MJ_API_BASE + url.replace('/api/public/media', '/public/media');
-  if (url.startsWith('/public/media')) return MJ_API_BASE + url;
+  if (url.startsWith('/api/public/media')) return 'https://proax.app' + url;
+  if (url.startsWith('/public/media')) return 'https://proax.app/api' + url;
   return url;
 }
 
@@ -302,14 +302,15 @@ async function loadBundleCheckout(bundleId) {
     console.log('[Checkout] Bundle loaded:', bundle.name);
     
     // Convert bundle to product-like object for checkout
+    const bundleImage = resolveImageUrl(bundle.image || bundle.image_key);
     const bundleProduct = {
       id: bundle.id,
       name: bundle.name,
       sku: 'BUNDLE-' + bundle.id,
       price: bundle.price || bundle.total_price,
       price_usd: bundle.price_usd, // For EN checkout
-      primary_image_url: bundle.image,
-      images: bundle.image ? [bundle.image] : [],
+      primary_image_url: bundleImage,
+      images: bundleImage ? [bundleImage] : [],
       category: 'Bundles',
       description: bundle.description || '',
       isBundle: true,
