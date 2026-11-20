@@ -24,6 +24,7 @@ const CATEGORY_LABELS = {
   'tiles':'Tiles','mats':'Mats','racks':'Racks','mahjoy-bags':'Mahjoy Bags',
   'tile-bags':'Tile Bags','rack-bags':'Rack Bags','accessories':'Accessories',
   'card-holders':'Card Holders','shufflers':'Shufflers','line-finder':'Line Finder',
+  'cards-2026':isEnCheckout?'2026 Cards':'Tarjetas 2026',
 };
 const CATEGORY_PAGES = {
   'tiles':'shop-tiles.html','mats':'shop-mats.html','racks':'shop-racks.html',
@@ -31,6 +32,7 @@ const CATEGORY_PAGES = {
   'rack-bags':'shop-rack-bags.html','accessories':'shop-accessories.html',
   'card-holders':'shop-card-holders.html','shufflers':'shop-shufflers.html',
   'line-finder':'shop-line-finder.html',
+  'cards-2026':'shop-cards-2026.html',
 };
 const CATEGORY_MAP = {
   'tiles':['tile','ficha','pieza'],'mats':['mat','tapete','base'],
@@ -86,6 +88,7 @@ function formatPriceNum(price) {
 }
 
 function guessCategory(p) {
+  if (window.MJCatalog && window.MJCatalog.is2026Card(p)) return 'cards-2026';
   if (p.category) return p.category;
   const text = ((p.name||'')+(p.sku||'')+(p.description||'')).toLowerCase();
   for (const [cat, kws] of Object.entries(CATEGORY_MAP)) {
