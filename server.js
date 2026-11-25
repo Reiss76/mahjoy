@@ -1,5 +1,5 @@
 /**
- * MAH JOY — Custom server
+ * Mahjoy — Custom server
  * Serves the storefront and its PayPal checkout integrations
  */
 const express = require('express');
@@ -170,7 +170,7 @@ app.use(express.static(path.join(__dirname), {
 // NOTE: Catch-all route moved to END of file (after all API routes)
 
 app.listen(PORT, () => {
-  console.log(`MAH JOY server running on port ${PORT}`);
+  console.log(`Mahjoy server running on port ${PORT}`);
   
 
 });
@@ -661,7 +661,7 @@ async function sendOrderReceivedEmail(order) {
   const html = `
     <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #fdf8fb;">
       <div style="text-align: center; margin-bottom: 30px;">
-        <img src="https://www.playmahjoy.com/images/logo-mahjoy-horizontal.png" alt="MAH JOY" style="height: 40px;">
+        <img src="https://proax.app/mahjoy/logo_tagline.png" width="140" height="140" alt="Mahjoy" style="display:block;width:140px;height:140px;border:0;margin:0 auto;">
       </div>
       
       <div style="background: #fff; border-radius: 16px; padding: 30px; box-shadow: 0 2px 10px rgba(107,15,42,0.08);">
@@ -735,9 +735,9 @@ async function sendOrderReceivedEmail(order) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'MAH JOY <pedidos@playmahjoy.com>',
+        from: 'Mahjoy <pedidos@playmahjoy.com>',
         to: email,
-        subject: `📦 Recibimos tu pedido #${order.orderId}`,
+        subject: `Mahjoy — Recibimos tu pedido #${order.orderId}`,
         html: html
       })
     });
@@ -784,7 +784,7 @@ async function sendAdminOrderNotification(order) {
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: #722F37; color: #fff; padding: 20px; border-radius: 12px 12px 0 0; text-align: center;">
-        <h1 style="margin: 0; font-size: 20px;">🛒 Nueva Orden — MAH JOY</h1>
+        <h1 style="margin: 0; font-size: 20px;">🛒 Nueva Orden — Mahjoy</h1>
       </div>
       
       <div style="background: #fff; border: 1px solid #e0e0e0; border-top: none; padding: 25px; border-radius: 0 0 12px 12px;">
@@ -850,9 +850,9 @@ async function sendAdminOrderNotification(order) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'MAH JOY Orders <pedidos@playmahjoy.com>',
+        from: 'Mahjoy <pedidos@playmahjoy.com>',
         to: ADMIN_EMAIL,
-        subject: `🛒 Nueva orden #${order.orderId} — $${total.toLocaleString('es-MX')} MXN`,
+        subject: `Mahjoy — Nueva orden #${order.orderId} — $${total.toLocaleString('es-MX')} MXN`,
         html: html
       })
     });
@@ -892,6 +892,7 @@ async function sendOrderConfirmationEmail(order) {
   const html = `
     <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="text-align: center; margin-bottom: 30px;">
+        <img src="https://proax.app/mahjoy/logo_tagline.png" width="140" height="140" alt="Mahjoy" style="display:block;width:140px;height:140px;border:0;margin:0 auto 24px;">
         <h1 style="color: #6B0F2A; font-size: 28px; margin: 0;">¡Gracias por tu compra!</h1>
       </div>
       
@@ -960,9 +961,9 @@ async function sendOrderConfirmationEmail(order) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'MAH JOY <pedidos@playmahjoy.com>',
+        from: 'Mahjoy <pedidos@playmahjoy.com>',
         to: email,
-        subject: `✨ ¡Pedido confirmado! #${order.orderId}`,
+        subject: `Mahjoy — ¡Pedido confirmado! #${order.orderId}`,
         html: html
       })
     });
@@ -1156,7 +1157,7 @@ async function sendTelegramNotification(order, trackingNumber) {
     return false;
   }
 
-  const message = `🛒 *¡Nueva venta MAH JOY!*
+  const message = `🛒 *¡Nueva venta Mahjoy!*
 
 📦 *Producto:* ${order.items?.map(i => i.name).join(', ') || 'N/A'}
 💰 *Total:* $${order.total?.toFixed(2) || '0'} MXN
