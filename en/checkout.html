@@ -370,11 +370,12 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
   <script src="../js/vendor-ref.js"></script>
   <script src="../js/currency-en.js"></script>
   <script src="../js/webflow.js"></script>
-  <script src="../js/checkout.js"></script>
+  <script src="../js/paypal-confirmation.js"></script>
+  <script src="../js/checkout.js?v=20261125-receipt"></script>
   <!-- PayPal SDK -->
   <script src="../js/paypal-sync.js"></script>
 <script src="https://www.paypal.com/sdk/js?client-id=BAAbbz1L2qH_VMP2ACU9ua4HeR2A3NfU8Hp_v3POkGyYIuz4_ot1tihAmUP3h-KHzP9AiAjTRblKvZeKn4&currency=USD&locale=en_US"></script>
-  <script src="../js/paypal-checkout.js"></script>
+  <script src="../js/paypal-checkout.js?v=20261125-receipt"></script>
   
   <!-- PayPal Express Checkout with flat US shipping -->
   <script>
@@ -461,6 +462,7 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
     });
     
     async function initPayPalExpress() {
+      if (window.MJPayPalConfirmation?.isReturn()) return;
       if (typeof paypal==='undefined' || !window.MJCheckoutProduct) { setTimeout(function() { initPayPalExpress().catch(function(error) { console.error('[PayPal]',error.message); }); },500); return; }
       var container=document.getElementById('paypal-express-container');
       if (!container || container.hasChildNodes() || container._paypalInitializing) return;
@@ -489,8 +491,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
         onApprove:async function(data) {
           try {
             var receipt=await window.MJPayPalPricing.capture(data.orderID);
+            window.MJPayPal.complete(receipt);
             await window.MJPayPalSync.save(receipt, {discount_code:window.MJAppliedDiscount?.code || null});
-            window.location.href='checkout.html?payment=success&order='+data.orderID+'&method=paypal';
           } catch(error) { alert(window.MJPayPalSync.errorMessage(error,error.message)); }
         },
         onError:function(error) { alert(window.MJPayPalSync.errorMessage(error,error.message)); }

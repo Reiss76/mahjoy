@@ -163,6 +163,7 @@ function updateWaLink() {
 }
 
 async function loadCheckout() {
+  if (window.MJPayPalConfirmation?.restore()) return;
   // Read product ID from hash or query
   const params = new URLSearchParams(window.location.search);
   const restoredQty = Number(params.get('qty'));
