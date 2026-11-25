@@ -39,14 +39,15 @@ function buttonOptions() {
     onApprove:async function(data) {
       try {
         const receipt = await window.MJPayPalPricing.capture(data.orderID);
-        await window.MJPayPalSync.save(receipt, {discount_code:window.MJAppliedDiscount?.code || null,vendor_code:window.MJVendor?.getCode() || null});
         showPaymentSuccess(receipt);
+        await window.MJPayPalSync.save(receipt, {discount_code:window.MJAppliedDiscount?.code || null,vendor_code:window.MJVendor?.getCode() || null});
       } catch (error) { alert(window.MJPayPalSync.errorMessage(error,error.message)); }
     },
     onError:function(error) { alert(window.MJPayPalSync.errorMessage(error,error.message)); }
   };
 }
 async function initPayPalButton() {
+  if (window.MJPayPalConfirmation?.isReturn()) return;
   if (rendering) return rendering;
   const container = document.getElementById('paypal-button-container');
   if (!container || paypalButtonRendered || typeof paypal === 'undefined') return;
@@ -77,11 +78,13 @@ function setupPayPalStaticButton() {
   button.addEventListener('click',function() { processPayPalPayment().catch(error => alert(error.message)); });
 }
 function tryInitPayPal(retries) {
+  if (window.MJPayPalConfirmation?.isReturn()) return;
   if (typeof paypal !== 'undefined' && document.getElementById('paypal-button-container') && window.MJCheckoutProduct) {
     initPayPalButton().catch(error => console.error('[PayPal]',error.message));
   } else if (retries > 0) setTimeout(function() { tryInitPayPal(retries-1); },1000);
 }
 function showPaymentSuccess(details) {
+  if (window.MJPayPalConfirmation) { window.MJPayPalConfirmation.show(details); return; }
   const content = document.getElementById('co-content'); if (content) content.style.display = 'none';
   const thanks = document.getElementById('co-thanks');
   if (thanks) { thanks.style.display = 'block'; if(window.MJWallet)void window.MJWallet.attach(thanks,details.id); }
@@ -89,7 +92,7 @@ function showPaymentSuccess(details) {
   window.scrollTo?.({top:0,behavior:'smooth'});
 }
 window.initPayPalWhenReady = function() {};
-window.MJPayPal = {init:initPayPalButton,pay:processPayPalPayment};
+window.MJPayPal = {init:initPayPalButton,pay:processPayPalPayment,complete:showPaymentSuccess};
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',function() { setupPayPalStaticButton(); setTimeout(function() {tryInitPayPal(10);},1000); });
 else { setupPayPalStaticButton(); setTimeout(function() {tryInitPayPal(10);},1000); }
 })();
