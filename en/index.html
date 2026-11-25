@@ -304,7 +304,10 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       .mj-tagline-headline { font-size: clamp(2rem, 8vw, 3rem); }
     }
   </style>
-<script src="../js/geo-redirect.js"></script></head>
+<script src="../js/geo-redirect.js"></script>
+  <link rel="stylesheet" href="/assets/dragon/style.css?v=20261125">
+  <script type="module" src="/assets/dragon/load.js?v=20261125"></script>
+</head>
 <body>
 
   <!-- ── NAV ── -->
@@ -422,6 +425,30 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       }).catch(()=>{});
     })();
     </script>
+  </section>
+
+  <!-- Scroll-driven dragon, loaded only near this section. -->
+  <section id="mahjoy-dragon" class="mj-dragon" aria-label="MAH JOY tiles in dragon formation" data-copy='{"enable": "Enable sound", "mute": "Disable sound", "on": "Sound on", "statusOn": "Sound is on. Scroll to hear the tiles.", "statusOff": "Sound is off.", "unavailable": "Sound is unavailable in this browser.", "unavailableShort": "Audio unavailable"}'>
+    <div class="mj-dragon-stage">
+      <div class="mj-dragon-canvas" aria-hidden="true"></div>
+      <img class="mj-dragon-fallback" src="/images/home-tiles.jpg" alt="MAH JOY tiles" width="1160" height="1145" loading="lazy">
+      <div class="mj-dragon-intro">
+        <h2>Let joy<br><em>fall into place.</em></h2>
+        <p>A little ritual.<br>Endless reasons to play.</p>
+      </div>
+      <div class="mj-dragon-arrival" aria-hidden="true">
+        <h2>The best moments<br>happen <em>around a table.</em></h2>
+      </div>
+      <div class="mj-dragon-controls">
+        <button type="button" class="mj-dragon-sound" aria-pressed="false" aria-label="Enable sound">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path class="sound-waves" d="M15 8c2 2 2 6 0 8m3-11c4 4 4 10 0 14"/><path class="sound-slash" d="m16 10 4 4m0-4-4 4"/></svg><span class="sound-label">Enable sound</span>
+        </button>
+        <button type="button" class="mj-dragon-replay" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10a8 8 0 1 1 1 8M4 4v6h6"/></svg>Once more</button>
+        <a class="mj-dragon-link" href="shop-tiles.html">Discover the tiles <span aria-hidden="true">→</span></a>
+      </div>
+      <div class="mj-dragon-progress" aria-hidden="true"><span></span></div>
+      <span class="mj-dragon-status" role="status" aria-live="polite">Sound is off.</span>
+    </div>
   </section>
 
   <!-- ── TAGLINE ── -->
