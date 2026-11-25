@@ -1,0 +1,31 @@
+.mj-dragon{position:relative;background:#f5e8f0;color:#6b0f2a;--dragon-body:#71344b;scroll-margin-top:78px;letter-spacing:normal}
+.mj-dragon *{box-sizing:border-box}
+.mj-dragon.is-enhanced{height:280svh}
+.mj-dragon-stage{position:relative;min-height:620px;height:85svh;isolation:isolate;overflow:hidden}
+.is-enhanced .mj-dragon-stage{position:relative;top:0;height:calc(100svh - 72px);min-height:500px}
+.is-enhanced.is-pinned .mj-dragon-stage{position:fixed;top:72px;left:0;right:0;z-index:2}.is-enhanced.is-finished .mj-dragon-stage{position:absolute;top:auto;bottom:0;left:0;right:0}
+.mj-dragon-canvas{position:absolute;inset:0;z-index:1;touch-action:pan-y;opacity:0;transition:opacity .6s ease}
+.mj-dragon-canvas canvas{width:100%;height:100%;display:block}
+.mj-dragon.is-ready .mj-dragon-canvas{opacity:1}
+.mj-dragon-fallback{position:absolute;width:43%;height:65%;object-fit:contain;right:5%;top:18%;border-radius:14px}
+.mj-dragon.is-ready.is-enhanced .mj-dragon-fallback{display:none}
+.mj-dragon-intro{position:absolute;left:7%;top:27%;width:31%;z-index:2;pointer-events:none}
+.mj-dragon h2{margin:0;font-family:var(--font-display,'Awesome Serif',Georgia,serif);font-size:clamp(42px,5.5vw,80px);font-weight:500;line-height:1.03;letter-spacing:-.025em;text-wrap:balance;color:#6b0f2a;text-transform:none!important;font-style:normal}
+.mj-dragon h2 em{font-weight:500}
+.mj-dragon-intro p{font-family:var(--font-ui,'Plus Jakarta Sans',Arial,sans-serif);color:var(--dragon-body);font-size:15px;line-height:1.65;margin:25px 0 0}
+.mj-dragon-arrival{position:absolute;left:6%;right:6%;top:8%;z-index:2;text-align:center;opacity:0;visibility:hidden;pointer-events:none}
+.mj-dragon-arrival h2{font-size:clamp(34px,3.8vw,56px)}
+.mj-dragon-controls{position:absolute;z-index:3;bottom:28px;left:7%;right:7%;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.mj-dragon button,.mj-dragon a{font-family:var(--font-ui,'Plus Jakarta Sans',Arial,sans-serif);font-size:12px;color:#6b0f2a;letter-spacing:0;line-height:1.5}
+.mj-dragon button{display:inline-flex;align-items:center;gap:10px;border:0;background:none;padding:12px 0;cursor:pointer;min-height:44px}
+.mj-dragon button[hidden]{display:none}
+.mj-dragon button:focus-visible,.mj-dragon a:focus-visible{outline:3px solid #c76ba4;outline-offset:5px}
+.mj-dragon button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.mj-dragon .sound-waves{display:none}.mj-dragon-sound[aria-pressed=true] .sound-waves{display:block}.mj-dragon-sound[aria-pressed=true] .sound-slash{display:none}
+.mj-dragon-sound,.mj-dragon-replay{visibility:hidden}.is-ready.is-enhanced .mj-dragon-sound,.is-ready.is-enhanced .mj-dragon-replay{visibility:visible}
+.mj-dragon-link{text-decoration:none;border-bottom:1px solid currentColor;padding:12px 0;min-height:44px}
+.mj-dragon-progress{position:absolute;z-index:4;bottom:0;left:0;right:0;height:2px;background:#6b0f2a0d}
+.mj-dragon-progress span{height:100%;display:block;background:#6b0f2a;transform:scaleX(0);transform-origin:left}
+.mj-dragon-status{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+@media(max-width:760px){.mj-dragon.is-enhanced{height:260svh}.mj-dragon-stage{height:85svh;min-height:620px}.is-enhanced .mj-dragon-stage{height:calc(100svh - 64px);min-height:490px}.is-enhanced.is-pinned .mj-dragon-stage{top:64px}.mj-dragon-intro{top:8%;left:7%;right:7%;width:auto;text-align:center}.mj-dragon h2{font-size:clamp(40px,10.7vw,62px)}.mj-dragon-intro p{font-size:13px;margin-top:16px}.mj-dragon-arrival{top:7%}.mj-dragon-arrival h2{font-size:clamp(32px,8.5vw,46px)}.mj-dragon-fallback{top:40%;right:13%;width:74%;height:42%}.mj-dragon-controls{left:6%;right:6%;bottom:75px;gap:12px;flex-wrap:wrap}.mj-dragon button,.mj-dragon a{font-size:11px}.mj-dragon-replay{order:3}.mj-dragon-link{margin-left:auto}}
+@media(prefers-reduced-motion:reduce){.mj-dragon-canvas{transition:none}.mj-dragon.is-enhanced{height:auto}.is-enhanced .mj-dragon-stage{position:relative;top:0}.mj-dragon-fallback{display:block!important}.mj-dragon-canvas,.mj-dragon-progress{display:none}}
