@@ -1,7 +1,14 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { sampleMotion, VISUAL_HALF_EXTENTS, LOCAL_CENTER_Z, FLOOR_Y } from './physics.mjs';
-async function getMotion(){ const motion=JSON.parse(await readFile(new URL('../../assets/dragon/motion.json',import.meta.url))); const raw=await readFile(new URL('../../assets/dragon/motion.bin',import.meta.url));const packed=new Int16Array(raw.buffer,raw.byteOffset,raw.byteLength/2); motion.frames=Float32Array.from(packed,(v,i)=>v/(i%7<3?1024:32767));return motion; }
+async function getMotion(mobile){
+ const manifest=JSON.parse(await readFile(new URL('../../assets/dragon/motion.json',import.meta.url)));
+ const motion=manifest.profiles[mobile?'mobile':'desktop'];
+ const raw=await readFile(new URL('../../assets/dragon/motion.bin',import.meta.url));
+ const packed=new Int16Array(raw.buffer,raw.byteOffset,raw.byteLength/2);
+ motion.frames=Float32Array.from(packed.subarray(motion.offset,motion.offset+(motion.steps+1)*motion.count*7),(v,i)=>v/(i%7<3?1024:32767));
+ return motion;
+}
 
 const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
 const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
@@ -30,7 +37,7 @@ function overlap(a,b) {
   return penetration;
 }
 
-for(const mobile of [false]) {
+for(const mobile of [false,true]) {
   const motion=await getMotion(mobile), poses=new Float64Array(motion.count*7);
   let tested=0, floorGap=Infinity;
   const intersections=[];

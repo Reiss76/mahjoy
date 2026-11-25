@@ -18,14 +18,19 @@ test('both storefronts retain a navigable fallback and load the dragon below cat
   assert.match(html,/aria-pressed="false"/);
  }
 });
-test('production dragon motion is complete and finite with normalized orientations',()=>{
+test('original desktop and mobile motions are complete with normalized orientations',()=>{
  const data=JSON.parse(fs.readFileSync(path.join(root,'assets/dragon/motion.json')));
  const raw=fs.readFileSync(path.join(root,'assets/dragon/motion.bin'));
- assert.equal(data.count,144);assert.equal(data.fps,90);
- assert.equal(raw.length,(data.steps+1)*data.count*7*2);
+ assert.equal(data.profiles.desktop.count,12);assert.equal(data.profiles.mobile.count,9);
+ let expected=0;
+ for(const profile of Object.values(data.profiles)){
+  assert.equal(profile.offset,expected);
+  expected+=(profile.steps+1)*profile.count*7;
+  assert.ok(profile.impacts.length>0 && profile.impacts.every(i=>i.time>=0&&i.time<=profile.duration));
+ }
+ assert.equal(raw.length,expected*2);
  for(let o=0;o<raw.length;o+=14){
   const q=[6,8,10,12].map(k=>raw.readInt16LE(o+k)/32767);
   assert.ok(Math.abs(Math.hypot(...q)-1)<.0001);
  }
- assert.ok(data.impacts.length>0 && data.impacts.every(i=>i.time>=0&&i.time<=data.duration));
 });

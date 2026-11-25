@@ -18,39 +18,39 @@ export async function getMotion(mobile) {
   await ready;
   const key = mobile ? 'mobile' : 'desktop';
   if (profiles.has(key)) return profiles.get(key);
-  const count = 144, scale = 1;
-  const fps = 180, duration = 6, steps = duration * fps;
+  const count = mobile ? 9 : 12, scale = mobile ? 0.91 : 1.02;
+  const fps = 120, duration = 6, steps = duration * fps;
   const world = new RAPIER.World({ x:0, y:-5.6, z:0 });
   world.timestep = 1 / fps;
-  world.integrationParameters.numSolverIterations = 32;
+  world.integrationParameters.numSolverIterations = 12;
   world.integrationParameters.numInternalPgsIterations = 2;
   world.integrationParameters.maxCcdSubsteps = 8;
   world.integrationParameters.normalizedAllowedLinearError = 0.00005;
   world.createCollider(RAPIER.ColliderDesc.cuboid(40, 0.15, 40).setTranslation(0, FLOOR_Y - 0.15, 0).setFriction(0.9).setRestitution(0.08));
   const queue = new RAPIER.EventQueue(true);
-  // Classic 144-tile dragon/turtle: 87 + 36 + 16 + 4 + 1.
-  const positions = [];
-  [12,8,10,12,12,10,8,12].forEach((length,row) => {
-    for (let col=0;col<length;col++) positions.push([(col-(length-1)/2)*1.59,0,(row-3.5)*2.07]);
-  });
-  positions.push([-6.5*1.59,0,0],[6.5*1.59,0,0],[7.5*1.59,0,0]);
-  for (const [level,size] of [[1,6],[2,4],[3,2],[4,1]])
-    for(let row=0;row<size;row++) for(let col=0;col<size;col++)
-      positions.push([(col-(size-1)/2)*1.59,level*.85,(row-(size-1)/2)*2.07]);
+  const rows = count / 3;
   const colliderIndices = new Map();
-  const bodies = positions.map(([x,y,z],i) => {
+  const bodies = Array.from({length:count}, (_, i) => {
+    const row = Math.floor(i / 3), column = i % 3;
+    const original = quaternion(-0.16 + Math.sin(i * 1.8) * .12, Math.cos(i * 2.1) * .13, Math.sin(i * 2.7) * .12);
+    // Tilt the whole initial arrangement, including each body's orientation.
+    // A shared rigid transform keeps the initial clearances intact.
+    const angle = -0.10, s = Math.sin(angle / 2), c = Math.cos(angle / 2);
+    const rotation = { x:c*original.x-s*original.y, y:c*original.y+s*original.x, z:c*original.z+s*original.w, w:c*original.w-s*original.z };
+    const x = (column - 1) * (mobile ? 1.75 : 1.95);
+    const y = (rows - 1 - row) * 2.25 - 0.6, centerY = (rows - 1) * 1.125 - .6;
     const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic()
-      .setTranslation(x,y+3.0,z)
-      .setRotation(quaternion(-Math.PI/2,0,0))
-      .setLinvel(x*.12,0,z*.09)
-      .setAngvel({x:Math.sin(i*2.3)*.15,y:Math.cos(i*1.7)*.18,z:Math.sin(i)*.18})
-      .setLinearDamping(.35).setAngularDamping(.5).setCcdEnabled(true));
+      .setTranslation(x*Math.cos(angle)-(y-centerY)*Math.sin(angle), x*Math.sin(angle)+(y-centerY)*Math.cos(angle)+centerY, Math.sin(i * 2.3) * .22)
+      .setRotation(rotation)
+      .setLinvel(Math.sin(i * 2.3) * .20, 0, Math.cos(i * 1.7) * .28)
+      .setAngvel({ x:-0.7 + Math.sin(i) * .13, y:Math.sin(i * 2) * .25, z:Math.cos(i * 1.7) * .28 })
+      .setLinearDamping(0.35).setAngularDamping(0.5).setCcdEnabled(true));
     // This slightly conservative collider contains the complete printed tile,
     // including the layered back. It leaves room for solver/interpolation error.
     const collider = world.createCollider(RAPIER.ColliderDesc.cuboid(
-      (VISUAL_HALF_EXTENTS[0] + .07) * scale,
-      (VISUAL_HALF_EXTENTS[1] + .07) * scale,
-      (VISUAL_HALF_EXTENTS[2] + .07) * scale)
+      (VISUAL_HALF_EXTENTS[0] + .025) * scale,
+      (VISUAL_HALF_EXTENTS[1] + .025) * scale,
+      (VISUAL_HALF_EXTENTS[2] + .025) * scale)
       .setTranslation(0, 0, LOCAL_CENTER_Z * scale)
       .setDensity(1).setFriction(.86).setRestitution(.10)
       .setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS), body);

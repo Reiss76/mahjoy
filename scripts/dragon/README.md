@@ -1,8 +1,8 @@
-# MAH JOY home dragon
+# MAH JOY original falling tiles
 
 The homepages insert a scoped motion section after the four shop categories. Copy stays in English; controls follow the storefront language. Existing navigation, prices, promotions, checkout and footer stay outside the section.
 
-The 144-tile dragon uses five layers (87, 36, 16, 4, 1). `physics.mjs` bakes a deterministic Rapier rigid-body simulation at 180 Hz, with conservative cuboid colliders containing every tile mesh and continuous collision detection. No physics engine runs in shoppers' browsers. `bake.mjs` samples at 90 Hz and quantizes positions/quaternions into the ~1 MB production file. The browser interpolates one shared timeline, including during reverse scrolling.
+The original free-falling composition uses 12 tiles on desktop and 9 on mobile. The larger pieces start suspended, then fall with scroll. `physics.mjs` restores the original deterministic Rapier simulation at 120 Hz, with conservative colliders and continuous collision detection. No physics engine runs in shoppers' browsers. `bake.mjs` stores both viewport profiles in one compact binary. The browser interpolates a shared timeline, including during reverse scrolling. The legacy `dragon` asset path and section anchor remain stable for existing links.
 
 Regenerate and validate after changing geometry, physics or motion encoding:
 
