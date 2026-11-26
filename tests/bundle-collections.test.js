@@ -7,7 +7,7 @@ for(const lang of ['', 'en/']) {
   for(const type of ['essentials','ultimate','','unknown']) {
    const cards=[],heading={};const grid={innerHTML:'',appendChild:c=>cards.push(c)};
    const nodes={};
-   const context={URLSearchParams,location:{search:'?type='+type},Intl,console,Promise,document:{addEventListener:()=>{},title:'',getElementById:id=>id==='bundle-heading'?heading:grid,querySelectorAll:()=>[],createElement:()=>({})},MJBundleAvailability:()=>'',fetch:async()=>({ok:true,json:async()=>[
+   const context={URLSearchParams,location:{search:'?type='+type},Intl,console,Promise,document:{addEventListener:()=>{},title:'',getElementById:id=>id==='bundle-heading'?heading:grid,querySelectorAll:()=>[],createElement:()=>({})},MJBundleAvailability:()=>'',MJBundlePurchase:{mount:()=>{}},fetch:async()=>({ok:true,json:async()=>[
     {id:1,name:'Ultimate name but Essentials metadata',bundle_type:'essentials',price:100,price_usd:10},
     {id:2,name:'Other',bundle_type:'ultimate',price:200,price_usd:20},
     {id:3,name:'Legacy unclassified',price:300,price_usd:30}
