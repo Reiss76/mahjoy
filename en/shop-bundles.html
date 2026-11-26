@@ -3,6 +3,8 @@
 <head>
 <!-- Meta Pixel Code -->
 <script src="../js/bundle-availability.js?v=1"></script>
+<script src="../js/bundle-purchase.js?v=20261125"></script>
+<link rel="stylesheet" href="../css/bundle-purchase.css?v=20261125">
   <script>
 !function(f,b,e,v,n,t,s)
 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -205,8 +207,8 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
               ? MJ_API + imgSrc
               : MJ_API + '/' + imgSrc;
       }
-      var card = document.createElement('a');
-      card.href = 'bundle-detail.html?id=' + b.id;
+      var card = document.createElement('article');
+      var detailUrl = 'bundle-detail.html?id=' + encodeURIComponent(b.id);
       card.className = 'mj-prod-card';
       var imgHtml = imgSrc 
         ? '<img src="' + imgSrc + '" alt="' + b.name + '" class="mj-prod-card-img" loading="lazy">'
@@ -220,15 +222,15 @@ src="https://www.facebook.com/tr?id=2509578242818132&ev=PageView&noscript=1"
       var bundlePrice = parseFloat(b.price_usd || 0);
       var savings = originalTotal > bundlePrice ? originalTotal - bundlePrice : 0;
       
-      card.innerHTML = imgHtml
+      card.innerHTML = '<a class="mj-bundle-detail-link" href="' + detailUrl + '">' + imgHtml + '</a>'
         + '<div class="mj-prod-card-body">'
-        + '<div class="mj-prod-card-name">' + b.name + '</div>'
+        + '<a class="mj-bundle-detail-link" href="' + detailUrl + '"><div class="mj-prod-card-name">' + b.name + '</div></a>'
         + (MJBundleAvailability(b, true) ? '<p class="mj-bundle-availability">' + MJBundleAvailability(b, true) + '</p>' : '')
         + (b.products ? '<div style="font-size:.6rem;color:#888;margin-bottom:4px;">' + b.products.length + ' products included</div>' : '')
         + (savings > 0 ? '<div style="font-size:.65rem;font-weight:700;color:#16a34a;margin-bottom:4px;">Save ' + fmtPrice(savings) + '</div>' : '')
         + '<div class="mj-prod-card-price">' + fmtPrice(b.price_usd) + '</div>'
-        + '<span style="display:inline-block;margin-top:10px;background:var(--burgundy);color:#fff;font-family:Plus Jakarta Sans,sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:8px 18px;border-radius:999px;">View Set</span>'
         + '</div>';
+      MJBundlePurchase.mount(card, b, imgSrc, true);
       grid.appendChild(card);
     });
   }).catch(function(err){
